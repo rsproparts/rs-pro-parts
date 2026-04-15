@@ -174,7 +174,8 @@ function sFeed(){
     html+='<div style="position:absolute;bottom:0;left:0;width:100%;padding:12px;pointer-events:none;">';
     html+='<p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 2px;">Piloto</p>';
     html+='<h3 style="font-size:20px;font-weight:900;font-style:italic;text-transform:uppercase;margin:0 0 4px;">'+(e.username||'ANONIMO')+'</h3>';
-    html+='<p style="font-size:11px;color:rgba(255,255,255,0.5);margin:0;">📍 '+(e.location||'')+' · '+(e.moto||'')+'</p>';
+    html+='<p style="font-size:11px;color:rgba(255,255,255,0.5);margin:0 0 3px;">📍 '+(e.location||'')+' · '+(e.moto||'')+'</p>';
+    html+=(e.instagram?'<p style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.7);margin:0;"><span style="color:#E31B23;">@</span>'+e.instagram+'</p>':'');
     html+='</div>';
     html+='</div>';
     // Vote bar
@@ -205,7 +206,8 @@ function sRank(){
     html+='<img src="'+e.imageUrl+'" onclick="openLB(\''+e.imageUrl+'\')" style="width:56px;height:56px;object-fit:cover;border-radius:2px;flex-shrink:0;cursor:zoom-in;" />';
     html+='<div style="flex:1;min-width:0;">';
     html+='<p style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:14px;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(e.username||'ANONIMO')+'</p>';
-    html+='<p style="color:rgba(255,255,255,0.4);font-size:10px;margin:0 0 6px;">'+(e.moto||'')+'</p>';
+    html+='<p style="color:rgba(255,255,255,0.4);font-size:10px;margin:0 2px;">'+(e.moto||'')+'</p>';
+    html+=(e.instagram?'<p style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.6);margin:0 0 6px;"><span style="color:#E31B23;">@</span>'+e.instagram+'</p>':'<p style="margin:0 0 6px;height:10px;"></p>');
     html+='<div style="background:rgba(255,255,255,0.1);height:2px;border-radius:99px;overflow:hidden;"><div style="background:#E31B23;height:100%;width:'+Math.round((e.votes||0)/max*100)+'%;"></div></div>';
     html+='</div>';
     html+='<div style="text-align:right;flex-shrink:0;"><p style="color:#E31B23;font-weight:900;font-size:18px;margin:0;">'+fv(e.votes)+'</p><p style="color:rgba(255,255,255,0.3);font-size:9px;text-transform:uppercase;margin:0;">votos</p></div>';
@@ -233,6 +235,7 @@ function sUpload(){
   html+='<input type="file" id="finput" accept="image/*" style="display:none;" onchange="prevFile(this)" />';
   html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Modelo de moto *</label><input id="imoto" type="text" placeholder="Ej: Yamaha R1 2023" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:10px 12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
   html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Ciudad *</label><input id="iloc" type="text" placeholder="Ej: Mar del Plata" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:10px 12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
+  html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Instagram *</label><div id="instawrap" style="display:flex;align-items:center;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);"><span style="padding:0 10px;color:rgba(255,255,255,0.4);font-size:14px;font-weight:700;">@</span><input id="iinsta" type="text" placeholder="tuusuario" style="flex:1;background:transparent;border:none;outline:none;padding:10px 10px 10px 0;font-size:13px;color:white;" onfocus="document.getElementById(\'instawrap\').style.borderColor=\'#E31B23\'" onblur="document.getElementById(\'instawrap\').style.borderColor=\'rgba(255,255,255,0.1)\'"/></div></div>';
   html+='<div>';
   html+='<div onclick="var c=document.getElementById(\'partsbox\');var a=document.getElementById(\'partsarr\');if(c.style.display===\'none\'){c.style.display=\'block\';a.textContent=\'\u25b2\';}else{c.style.display=\'none\';a.textContent=\'\u25bc\';}" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:#1c1b1b;padding:10px 12px;border:1px solid rgba(255,255,255,0.1);">';
   html+='<label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;">Modificaciones instaladas (opcional)</label>';
@@ -265,7 +268,9 @@ window.doSubmit=async function(){
   var fi=$("finput");
   var err=$("uerr");
   var btn=$("sbtn");
+  var insta=$("iinsta")&&$("iinsta").value.trim().replace("@","");
   if(!moto||!loc){err.textContent="Completa modelo y ciudad";err.style.display="block";return;}
+  if(!insta){err.textContent="Ingresa tu usuario de Instagram";err.style.display="block";return;}
   if(!fi||!fi.files[0]){err.textContent="Elegi una foto";err.style.display="block";return;}
   err.style.display="none";btn.textContent="Subiendo...";btn.disabled=true;
   try{
@@ -280,6 +285,7 @@ window.doSubmit=async function(){
     await addDoc(collection(db,"entries"),{
       uid:user.uid,
       username:user.displayName||user.email.split("@")[0].toUpperCase(),
+      instagram:insta,
       moto:moto,location:loc,parts:parts,imageUrl:d.secure_url,
       votes:0,voters:[],createdAt:new Date().toISOString(),month:new Date().toISOString().slice(0,7)
     });
