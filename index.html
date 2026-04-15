@@ -126,11 +126,7 @@ function sFeed(){
   }
   var max=entries[0].votes||1;
   var html='<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">';
-  var now=new Date();
-  var lastDay=new Date(now.getFullYear(),now.getMonth()+1,0);
-  var daysLeft=lastDay.getDate()-now.getDate();
-  var urgency=daysLeft<=3?'#ff4444':daysLeft<=7?'#ff8800':'#E31B23';
-  html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Votacion activa</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">MOTO DEL MES</h2><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(227,27,35,0.1);border:1px solid rgba(227,27,35,0.3);padding:5px 12px;margin-top:8px;"><span style="font-size:11px;color:'+urgency+';font-weight:900;">⏱ '+daysLeft+' dia'+(daysLeft!==1?'s':'')+' para el cierre</span></div></div>';
+  html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Votacion activa</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">MOTO DEL MES</h2></div>';
   html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.3);">';
   html+='<div style="background:#E31B23;padding:8px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">⚡</span><p style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Como ganar descuentos</p></div>';
   html+='<div style="padding:12px;display:flex;flex-direction:column;gap:8px;">';
@@ -189,10 +185,7 @@ function sFeed(){
     // Parts dropdown
     html+=partsHtml;
     // Vote button
-    var shareUrl='https://beamish-centaur-e857f7.netlify.app';
-    var shareText='Vota por '+e.username+' en el concurso Moto del Mes de RS Pro Parts! '+shareUrl;
-    var shareBtn='<button onclick="if(navigator.share){navigator.share({title:\'Moto del Mes RS Pro Parts\',text:\'Vota por '+e.username+'!\',url:\''+shareUrl+'\'})}else{window.open(\'https://www.instagram.com/\')}" style="width:100%;padding:8px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-weight:700;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:6px;" onmouseover="this.style.borderColor=\'#E31B23\';this.style.color=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\';this.style.color=\'rgba(255,255,255,0.5)\'">📲 Compartir en Instagram</button>';
-    html+='<div style="padding:12px;">'+voteHtml+shareBtn+'</div>';
+    html+='<div style="padding:12px;">'+voteHtml+'</div>';
     html+='</div>';
   });
   html+='</div>';
@@ -203,10 +196,7 @@ function sRank(){
   if(!entries.length)return'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,0.3);font-size:13px;">No hay participantes aun.</div>';
   var max=entries[0].votes||1;
   var html='<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">';
-  var now2=new Date();
-  var lastDay2=new Date(now2.getFullYear(),now2.getMonth()+1,0);
-  var dLeft=lastDay2.getDate()-now2.getDate();
-  html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Sorteo Mensual</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0 0 4px;font-size:22px;">MOTO DEL MES</h2><p style="color:rgba(255,255,255,0.3);font-size:11px;margin:0;">'+mo()+' · ⏱ '+dLeft+' dia'+(dLeft!==1?'s':'')+' para el cierre</p></div>';
+  html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Sorteo Mensual</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0 0 4px;font-size:22px;">MOTO DEL MES</h2><p style="color:rgba(255,255,255,0.3);font-size:11px;margin:0;">'+mo()+' · Votacion activa</p></div>';
   var top=entries.slice(0,3);
   top.forEach(function(e,i){
     html+='<div style="border-radius:2px;overflow:hidden;border:'+(i===0?'1px solid rgba(227,27,35,0.5)':'1px solid rgba(255,255,255,0.05)')+';">';
@@ -232,12 +222,7 @@ function sRank(){
     html+='</div>';
   }
   html+='<div style="background:#1c1b1b;padding:16px;border-radius:2px;border-left:2px solid rgba(227,27,35,0.3);"><p style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px;">Como funciona?</p><p style="color:rgba(255,255,255,0.4);font-size:12px;line-height:1.6;margin:0;">Subi la foto de tu moto. La comunidad vota durante el mes. Al cierre, entre los mas votados se sortea el premio.</p></div>';
-  html+='<div id="winners-section" style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.3);">';
-  html+='<div style="background:#E31B23;padding:10px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🏆</span><p style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Historial de Ganadores</p></div>';
-  html+='<div style="padding:12px;" id="winners-list"><p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin:8px 0;">Cargando...</p></div>';
   html+='</div>';
-  html+='</div>';
-  setTimeout(function(){loadWinners();},100);
   return html;
 }
 
@@ -328,20 +313,7 @@ function sProfile(){
   html+='</div>';
   if(isAdmin){
     html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.4);">';
-    // Stats
-  var totalVotesAll=entries.reduce(function(s,e){return s+(e.votes||0);},0);
-  html+='<div style="background:#E31B23;padding:10px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🛡️</span><p style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Panel Admin</p><span style="margin-left:auto;font-size:11px;font-weight:700;opacity:0.8;">'+entries.length+' entradas</span></div>';
-  // Dashboard stats
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px;background:#1c1b1b;border-bottom:1px solid rgba(255,255,255,0.05);">';
-  html+='<div style="background:#131313;padding:10px;border-radius:2px;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">'+entries.length+'</p><p style="font-size:9px;color:rgba(255,255,255,0.4);margin:2px 0 0;text-transform:uppercase;font-weight:700;">Fotos</p></div>';
-  html+='<div style="background:#131313;padding:10px;border-radius:2px;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">'+totalVotesAll+'</p><p style="font-size:9px;color:rgba(255,255,255,0.4);margin:2px 0 0;text-transform:uppercase;font-weight:700;">Votos</p></div>';
-  html+='<div style="background:#131313;padding:10px;border-radius:2px;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">'+(entries.length>0?entries[0].username||'-':'-')+'</p><p style="font-size:9px;color:rgba(255,255,255,0.4);margin:2px 0 0;text-transform:uppercase;font-weight:700;">Lider</p></div>';
-  html+='</div>';
-  // Sorteo automatico button
-  html+='<div style="padding:12px;background:#1c1b1b;border-bottom:1px solid rgba(255,255,255,0.05);">';
-  html+='<button onclick="doSorteo()" style="width:100%;padding:12px;background:rgba(227,27,35,0.15);border:2px solid #E31B23;color:white;font-weight:900;font-size:12px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;" onmouseover="this.style.background='#E31B23'" onmouseout="this.style.background='rgba(227,27,35,0.15)'">🎲 Realizar Sorteo del Mes</button>';
-  html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);text-align:center;margin:6px 0 0;">Elige al ganador entre los 3 mas votados</p>';
-  html+='</div>';
+    html+='<div style="background:#E31B23;padding:10px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🛡️</span><p style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Panel de Moderacion</p><span style="margin-left:auto;font-size:11px;font-weight:700;opacity:0.8;">'+entries.length+' entradas</span></div>';
     html+='<div style="padding:12px;display:flex;flex-direction:column;gap:10px;">';
     if(entries.length===0){
       html+='<p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin:8px 0;">No hay entradas aun</p>';
@@ -451,52 +423,6 @@ window.doAuth=async function(){
     err.style.display="block";
     btn.textContent=amode==="login"?"Entrar":"Crear cuenta";
     btn.disabled=false;
-  }
-};
-
-// Load winners history
-function loadWinners(){
-  var wlist=document.getElementById("winners-list");
-  if(!wlist)return;
-  onSnapshot(query(collection(db,"winners"),orderBy("date","desc")),function(snap){
-    if(snap.empty){wlist.innerHTML='<p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin:8px 0;">Aun no hay ganadores registrados.</p>';return;}
-    var whtml="";
-    snap.docs.forEach(function(d){
-      var w=d.data();
-      whtml+='<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#131313;border-radius:2px;margin-bottom:6px;">';
-      whtml+='<img src="'+w.imageUrl+'" style="width:52px;height:52px;object-fit:cover;border-radius:2px;flex-shrink:0;" />';
-      whtml+='<div style="flex:1;min-width:0;"><p style="font-weight:900;font-size:13px;text-transform:uppercase;margin:0;">'+w.username+'</p>';
-      whtml+='<p style="color:rgba(255,255,255,0.4);font-size:10px;margin:2px 0;">'+w.month+' · '+w.votes+' votos</p>';
-      whtml+='<p style="color:#E31B23;font-size:10px;font-weight:700;margin:0;">🏆 Ganador</p></div>';
-      whtml+='</div>';
-    });
-    wlist.innerHTML=whtml;
-  });
-}
-
-// Sorteo automatico
-window.doSorteo=async function(){
-  if(!entries.length){alert("No hay participantes.");return;}
-  var top3=entries.slice(0,3);
-  var winner=top3[Math.floor(Math.random()*top3.length)];
-  var now3=new Date();
-  var monthName=now3.toLocaleString("es-AR",{month:"long",year:"numeric"}).toUpperCase();
-  if(!confirm("El ganador del sorteo es: "+winner.username+" ("+winner.votes+" votos). Confirmar y guardar?")){return;}
-  try{
-    await addDoc(collection(db,"winners"),{
-      uid:winner.uid,
-      username:winner.username,
-      instagram:winner.instagram||"",
-      moto:winner.moto||"",
-      imageUrl:winner.imageUrl,
-      votes:winner.votes||0,
-      month:monthName,
-      date:new Date().toISOString()
-    });
-    alert("Ganador guardado! "+winner.username+" quedo registrado en el historial.");
-    rScr();
-  }catch(err){
-    alert("Error al guardar: "+err.message);
   }
 };
 
