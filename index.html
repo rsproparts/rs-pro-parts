@@ -2,141 +2,422 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
 <title>RS Pro Parts</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com"></script>
-
 <style>
+*{box-sizing:border-box;}
 body{margin:0;background:#131313;font-family:"Space Grotesk",sans-serif;color:white;}
-#app{max-width:430px;margin:0 auto;height:100vh;display:flex;flex-direction:column;}
-.screen{flex:1;overflow:auto;}
-button{cursor:pointer;}
+#app{max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;}
+input,button{font-family:"Space Grotesk",sans-serif;}
+.fade-in{animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:0;}
+#lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:9999;align-items:center;justify-content:center;}
+#lb.open{display:flex;}
+#lb img{max-width:95vw;max-height:90vh;object-fit:contain;}
+#lb-x{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:white;font-size:18px;width:40px;height:40px;border-radius:50%;cursor:pointer;}
+.togparts{cursor:pointer;}
 </style>
 </head>
-
 <body>
-
+<div id="lb" onclick="closeLB()">
+  <button id="lb-x" onclick="closeLB()">&#10005;</button>
+  <img id="lb-img" src="" onclick="event.stopPropagation()"/>
+</div>
 <div id="app">
-  <header style="padding:12px;background:#131313;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;">
-    <strong>RS PRO PARTS</strong>
-    <button onclick="go('auth')">Entrar</button>
+  <header style="background:#131313;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="background:#E31B23;width:32px;height:32px;display:flex;align-items:center;justify-content:center;"><span style="font-size:11px;font-weight:900;">RS</span></div>
+      <span style="font-weight:900;letter-spacing:0.2em;font-size:13px;text-transform:uppercase;">Pro Parts</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span id="mlabel" style="font-size:10px;color:rgba(255,255,255,0.2);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;"></span>
+      <div id="huser"></div>
+    </div>
   </header>
-
-  <div id="scr" class="screen"></div>
-
-  <nav style="display:flex;border-top:1px solid rgba(255,255,255,0.1);">
-    <button onclick="go('feed')" style="flex:1">Feed</button>
-    <button onclick="go('upload')" style="flex:1">Subir</button>
-    <button onclick="go('profile')" style="flex:1">Perfil</button>
-  </nav>
+  <div class="screen" id="scr"></div>
+  <nav id="bnav" style="background:#131313;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;display:flex;"></nav>
 </div>
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import{getFirestore,collection,addDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import{getFirestore,collection,addDoc,doc,updateDoc,deleteDoc,increment,arrayUnion,onSnapshot,query,orderBy}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-const firebaseConfig={
-  apiKey:"TU_API_KEY",
-  authDomain:"TU_DOMINIO.firebaseapp.com",
-  projectId:"TU_PROJECT_ID"
-};
-
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
-
-let user=null;
-let tab="feed";
-let entries=[];
-
+const CC="ddozrdmok",CP="rs_pro_parts",ADMIN="rsmotoparts.mdp@gmail.com";
+const FC={apiKey:"AIzaSyDdetAoPKD2jw4-Ar0breOf3fKCxGG8bdM",authDomain:"rs-pro-parts.firebaseapp.com",projectId:"rs-pro-parts",storageBucket:"rs-pro-parts.firebasestorage.app",messagingSenderId:"10474406260",appId:"1:10474406260:web:937cdd1db33fdf2d406c21"};
+const FA=initializeApp(FC),auth=getAuth(FA),db=getFirestore(FA);
+let user=null,tab="feed",entries=[],amode="login";
 const $=id=>document.getElementById(id);
+const fv=n=>n>=1000?(n/1000).toFixed(1)+"k":String(n||0);
+const MEDALS=["🥇","🥈","🥉"];
+const rk=i=>MEDALS[i]||("#"+(i+1));
+const mo=()=>new Date().toLocaleString("es-AR",{month:"long",year:"numeric"}).toUpperCase();
 
+window.openLB=function(url){if(!url)return;$("lb-img").src=url;$("lb").classList.add("open");};
+window.closeLB=function(){$("lb").classList.remove("open");};
+window.togMods=function(id){
+  var c=$("mods-"+id);
+  var a=$("modsarr-"+id);
+  if(!c)return;
+  if(c.style.display==="none"){c.style.display="block";if(a)a.textContent="▲";}
+  else{c.style.display="none";if(a)a.textContent="▼";}
+};
 window.go=function(t){
-  tab=t;
-  render();
+  if((t==="upload"||t==="profile")&&!user){tab="auth";rNav();rScr();return;}
+  tab=t;rNav();rScr();
+};
+window.doVote=async function(id){
+  if(!user)return;
+  await updateDoc(doc(db,"entries",id),{votes:increment(1),voters:arrayUnion(user.uid)});
+};
+window.doDelete=async function(id){
+  if(!confirm("Eliminar esta entrada?"))return;
+  await deleteDoc(doc(db,"entries",id));
+};
+window.doLogout=async function(){await signOut(auth);tab="feed";rNav();rScr();};
+window.toggleAM=function(){amode=amode==="login"?"register":"login";rScr();};
+
+function rNav(){
+  var nav=$("bnav");if(!nav)return;
+  var tabs=[{id:"feed",ic:"🏍️",lb:"Explorar"},{id:"ranking",ic:"🏆",lb:"Ranking"},{id:"upload",ic:"➕",lb:"Subir"},{id:"profile",ic:"👤",lb:"Garaje"}];
+  var html="";
+  tabs.forEach(function(t){
+    var active=tab===t.id;
+    var col=active?"#E31B23":"rgba(255,255,255,0.3)";
+    html+='<button onclick="go(\''+t.id+'\')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0;background:transparent;border:none;cursor:pointer;color:'+col+';">';
+    html+='<span style="font-size:18px;line-height:1;">'+t.ic+'</span>';
+    html+='<span style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">'+t.lb+'</span>';
+    if(active)html+='<div style="width:16px;height:2px;background:#E31B23;margin-top:1px;"></div>';
+    html+='</button>';
+  });
+  nav.innerHTML=html;
 }
 
-function render(){
-  const el=$("scr");
-
-  if(tab==="feed"){
-    el.innerHTML=entries.map(e=>`
-      <div style="padding:10px;border-bottom:1px solid #333;">
-        <img src="${e.image}" style="width:100%">
-        <p>${e.name}</p>
-      </div>
-    `).join("") || "<p style='padding:20px'>No hay motos aún</p>";
-  }
-
-  if(tab==="upload"){
-    if(!user){
-      el.innerHTML="<p style='padding:20px'>Tenes que loguearte</p>";
-      return;
-    }
-
-    el.innerHTML=`
-      <div style="padding:20px">
-        <input id="name" placeholder="Nombre"><br><br>
-        <input id="img" placeholder="URL imagen"><br><br>
-        <button onclick="upload()">Subir</button>
-      </div>
-    `;
-  }
-
-  if(tab==="profile"){
-    el.innerHTML=user
-      ? `<p style="padding:20px">Logueado como ${user.email}</p>`
-      : `<p style="padding:20px">No logueado</p>`;
-  }
-
-  if(tab==="auth"){
-    el.innerHTML=`
-      <div style="padding:20px">
-        <input id="email" placeholder="email"><br><br>
-        <input id="pass" type="password" placeholder="password"><br><br>
-        <button onclick="login()">Entrar</button>
-        <button onclick="register()">Crear cuenta</button>
-      </div>
-    `;
+function rHdr(){
+  var el=$("huser");if(!el)return;
+  if(user){
+    var l=(user.displayName||user.email)[0].toUpperCase();
+    el.innerHTML='<div onclick="go(\'profile\')" style="width:32px;height:32px;background:#E31B23;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;cursor:pointer;">'+l+'</div>';
+  }else{
+    el.innerHTML='<button onclick="go(\'auth\')" style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:#E31B23;border:1px solid rgba(227,27,35,0.4);padding:4px 12px;background:transparent;cursor:pointer;text-transform:uppercase;">Entrar</button>';
   }
 }
 
-window.login=async function(){
-  const email=$("email").value;
-  const pass=$("pass").value;
-  await signInWithEmailAndPassword(auth,email,pass);
-}
-
-window.register=async function(){
-  const email=$("email").value;
-  const pass=$("pass").value;
-  await createUserWithEmailAndPassword(auth,email,pass);
-}
-
-window.upload=async function(){
-  const name=$("name").value;
-  const image=$("img").value;
-
-  await addDoc(collection(db,"entries"),{
-    name,
-    image
+function loadE(){
+  onSnapshot(query(collection(db,"entries"),orderBy("votes","desc")),function(snap){
+    entries=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(["feed","ranking","profile"].includes(tab))rScr();
   });
 }
 
-onAuthStateChanged(auth,u=>{
-  user=u;
-  render();
-});
+function rScr(){
+  var el=$("scr");if(!el)return;
+  el.className="screen fade-in";
+  var map={feed:sFeed,ranking:sRank,upload:sUpload,profile:sProfile,auth:sAuth};
+  el.innerHTML=(map[tab]||sFeed)();
+}
 
-onSnapshot(collection(db,"entries"),snap=>{
-  entries=snap.docs.map(d=>d.data());
-  render();
-});
+function sFeed(){
+  if(!entries.length){
+    return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;padding:32px;text-align:center;"><div style="font-size:48px;">🏍️</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;">Se el primero</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0;">Subi tu moto y arranca!</p></div>';
+  }
+  var max=entries[0].votes||1;
+  var html='<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">';
+  html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Votacion activa</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">MOTO DEL MES</h2></div>';
+  html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.3);">';
+  html+='<div style="background:#E31B23;padding:8px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">⚡</span><p style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Como ganar descuentos</p></div>';
+  html+='<div style="padding:12px;display:flex;flex-direction:column;gap:8px;">';
+  html+='<p style="font-size:11px;color:rgba(255,255,255,0.5);margin:0 0 4px;">Subi tu moto y recibí votos. Cada voto vale <strong style="color:white;">10 Puntos RS</strong>.</p>';
+  html+='<div style="display:flex;gap:8px;">';
+  html+='<div style="flex:1;background:#131313;border-radius:2px;padding:10px;border-left:3px solid #E31B23;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">100 PRS</p><p style="font-size:9px;color:rgba(255,255,255,0.5);margin:2px 0 0;text-transform:uppercase;font-weight:700;">= 5% descuento</p></div>';
+  html+='<div style="flex:1;background:#131313;border-radius:2px;padding:10px;border-left:3px solid #E31B23;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">200 PRS</p><p style="font-size:9px;color:rgba(255,255,255,0.5);margin:2px 0 0;text-transform:uppercase;font-weight:700;">= 10% descuento</p></div>';
+  html+='</div>';
+  html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:0;">&#128247; Subi tu moto → recibis votos → acumulas Puntos RS → canjeas descuentos en la tienda.</p>';
+  html+='</div></div>';
+  entries.forEach(function(e,i){
+    var voted=user&&e.voters&&e.voters.includes(user.uid);
+    var pct=Math.round((e.votes||0)/max*100);
+    var parts=e.parts?e.parts.filter(Boolean):[];
 
-render();
+    // Parts dropdown HTML (below image, no overlap)
+    var partsHtml="";
+    if(parts.length>0){
+      partsHtml+='<div style="border-top:1px solid rgba(255,255,255,0.06);">';
+      partsHtml+='<button onclick="togMods(\''+e.id+'\')" style="width:100%;padding:10px 12px;background:transparent;border:none;color:rgba(255,255,255,0.5);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">';
+      partsHtml+='<span>&#9881; '+parts.length+' MODIFICACIONES</span><span id="modsarr-'+e.id+'">&#9660;</span>';
+      partsHtml+='</button>';
+      partsHtml+='<div id="mods-'+e.id+'" style="display:none;padding:0 12px 12px 12px;border-left:3px solid #E31B23;margin:0 12px 0 12px;">';
+      parts.forEach(function(p){partsHtml+='<p style="font-size:11px;color:rgba(255,255,255,0.65);margin:0 0 5px;">&#9881; '+p+'</p>';});
+      partsHtml+='</div></div>';
+    }
+
+    // Vote button
+    var voteHtml="";
+    if(user){
+      voteHtml='<button onclick="doVote(\''+e.id+'\')" '+(voted?'disabled':'')+' style="width:100%;padding:12px;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;border:none;cursor:'+(voted?'not-allowed':'pointer')+';background:'+(voted?'rgba(255,255,255,0.05)':'#E31B23')+';color:'+(voted?'rgba(255,255,255,0.3)':'white')+';">'+(voted?'&#10003; YA VOTASTE':'&#128293; VOTAR')+'</button>';
+    }else{
+      voteHtml='<p style="text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:8px 0;margin:0;">Registrate para votar</p>';
+    }
+
+    html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid '+(i===0?'rgba(227,27,35,0.4)':'rgba(255,255,255,0.05)')+';">';
+    // Image area - CLEAN, no parts overlay
+    html+='<div style="position:relative;overflow:hidden;">';
+    html+='<img src="'+e.imageUrl+'" onclick="openLB(\''+e.imageUrl+'\')" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block;cursor:zoom-in;" />';
+    html+='<div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 50%);pointer-events:none;"></div>';
+    html+='<div style="position:absolute;top:12px;left:12px;font-size:24px;pointer-events:none;">'+rk(i)+'</div>';
+    html+='<div style="position:absolute;top:12px;right:12px;background:#E31B23;padding:6px 10px;text-align:center;pointer-events:none;"><span style="display:block;font-size:8px;font-weight:700;text-transform:uppercase;opacity:0.8;">Votos</span><span style="font-size:18px;font-weight:900;">'+fv(e.votes)+'</span></div>';
+    // Only pilot name + location at bottom - no parts
+    html+='<div style="position:absolute;bottom:0;left:0;width:100%;padding:12px;pointer-events:none;">';
+    html+='<p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 2px;">Piloto</p>';
+    html+='<h3 style="font-size:20px;font-weight:900;font-style:italic;text-transform:uppercase;margin:0 0 4px;">'+(e.username||'ANONIMO')+'</h3>';
+    html+='<p style="font-size:11px;color:rgba(255,255,255,0.5);margin:0;">📍 '+(e.location||'')+' · '+(e.moto||'')+'</p>';
+    html+='</div>';
+    html+='</div>';
+    // Vote bar
+    html+='<div style="padding:10px 12px 0;">';
+    html+='<div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.3);margin-bottom:3px;"><span>VOTOS ESTE MES</span><span>'+pct+'% del lider</span></div>';
+    html+='<div style="background:rgba(255,255,255,0.1);height:3px;border-radius:99px;overflow:hidden;"><div style="background:#E31B23;height:100%;border-radius:99px;width:'+pct+'%;"></div></div>';
+    html+='</div>';
+    // Parts dropdown
+    html+=partsHtml;
+    // Vote button
+    html+='<div style="padding:12px;">'+voteHtml+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+function sRank(){
+  if(!entries.length)return'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,0.3);font-size:13px;">No hay participantes aun.</div>';
+  var max=entries[0].votes||1;
+  var html='<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">';
+  html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Sorteo Mensual</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0 0 4px;font-size:22px;">MOTO DEL MES</h2><p style="color:rgba(255,255,255,0.3);font-size:11px;margin:0;">'+mo()+' · Votacion activa</p></div>';
+  var top=entries.slice(0,3);
+  top.forEach(function(e,i){
+    html+='<div style="border-radius:2px;overflow:hidden;border:'+(i===0?'1px solid rgba(227,27,35,0.5)':'1px solid rgba(255,255,255,0.05)')+';">';
+    html+='<div style="display:flex;align-items:center;gap:12px;background:#1c1b1b;padding:12px;">';
+    html+='<span style="font-size:22px;width:32px;text-align:center;flex-shrink:0;">'+rk(i)+'</span>';
+    html+='<img src="'+e.imageUrl+'" onclick="openLB(\''+e.imageUrl+'\')" style="width:56px;height:56px;object-fit:cover;border-radius:2px;flex-shrink:0;cursor:zoom-in;" />';
+    html+='<div style="flex:1;min-width:0;">';
+    html+='<p style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:14px;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(e.username||'ANONIMO')+'</p>';
+    html+='<p style="color:rgba(255,255,255,0.4);font-size:10px;margin:0 0 6px;">'+(e.moto||'')+'</p>';
+    html+='<div style="background:rgba(255,255,255,0.1);height:2px;border-radius:99px;overflow:hidden;"><div style="background:#E31B23;height:100%;width:'+Math.round((e.votes||0)/max*100)+'%;"></div></div>';
+    html+='</div>';
+    html+='<div style="text-align:right;flex-shrink:0;"><p style="color:#E31B23;font-weight:900;font-size:18px;margin:0;">'+fv(e.votes)+'</p><p style="color:rgba(255,255,255,0.3);font-size:9px;text-transform:uppercase;margin:0;">votos</p></div>';
+    html+='</div>';
+    if(i===0)html+='<div style="background:rgba(227,27,35,0.1);padding:6px 12px;"><span style="font-size:9px;color:#E31B23;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">🏆 Lider del mes — maximas chances de ganar</span></div>';
+    html+='</div>';
+  });
+  if(entries.length>3){
+    html+='<div><p style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px;">Aspirantes</p>';
+    entries.slice(3).forEach(function(e,i){
+      html+='<div style="display:flex;align-items:center;gap:12px;background:rgba(28,27,27,0.5);padding:10px 12px;border-radius:2px;margin-bottom:6px;"><span style="color:rgba(255,255,255,0.3);font-family:monospace;width:24px;">'+(i+4)+'</span><p style="flex:1;font-weight:700;text-transform:uppercase;font-size:13px;margin:0;">'+(e.username||'ANONIMO')+'</p><p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+fv(e.votes)+' votos</p></div>';
+    });
+    html+='</div>';
+  }
+  html+='<div style="background:#1c1b1b;padding:16px;border-radius:2px;border-left:2px solid rgba(227,27,35,0.3);"><p style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px;">Como funciona?</p><p style="color:rgba(255,255,255,0.4);font-size:12px;line-height:1.6;margin:0;">Subi la foto de tu moto. La comunidad vota durante el mes. Al cierre, entre los mas votados se sortea el premio.</p></div>';
+  html+='</div>';
+  return html;
+}
+
+function sUpload(){
+  if(!user)return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:48px;">📸</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;">Registrate primero</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0;">Necesitas una cuenta para participar.</p><button onclick="go(\'auth\')" style="background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Crear cuenta</button></div>';
+  var html='<div style="padding:16px;display:flex;flex-direction:column;gap:14px;">';
+  html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Participar</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">Subi tu Moto</h2></div>';
+  html+='<div id="pzone" onclick="document.getElementById(\'finput\').click()" style="border:2px dashed rgba(255,255,255,0.15);border-radius:2px;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;" onmouseover="this.style.borderColor=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.15)\'"><span style="font-size:36px;">📸</span><p style="font-weight:900;text-transform:uppercase;font-size:13px;margin:0;">Elegi una foto</p><p style="color:rgba(255,255,255,0.3);font-size:11px;margin:0;">JPG o PNG · Max 10MB</p></div>';
+  html+='<input type="file" id="finput" accept="image/*" style="display:none;" onchange="prevFile(this)" />';
+  html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Modelo de moto *</label><input id="imoto" type="text" placeholder="Ej: Yamaha R1 2023" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:10px 12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
+  html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Ciudad *</label><input id="iloc" type="text" placeholder="Ej: Mar del Plata" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:10px 12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
+  html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Piezas RS Pro Parts (opcional)</label>';
+  for(var pi=1;pi<=3;pi++){
+    html+='<input id="ip'+pi+'" type="text" placeholder="Pieza '+pi+'" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:10px 12px;font-size:13px;color:white;margin-bottom:6px;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" />';
+  }
+  html+='</div>';
+  html+='<div id="uerr" style="color:#E31B23;font-size:12px;text-align:center;display:none;"></div>';
+  html+='<button id="sbtn" onclick="doSubmit()" style="width:100%;padding:14px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;" onmouseover="this.style.background=\'#ff2229\'" onmouseout="this.style.background=\'#E31B23\'">🏁 Publicar en el concurso</button>';
+  html+='</div>';
+  return html;
+}
+
+window.prevFile=function(input){
+  var file=input.files[0];if(!file)return;
+  var url=URL.createObjectURL(file);
+  var z=$("pzone");
+  z.style.cssText="border-radius:2px;overflow:hidden;position:relative;";
+  z.onclick=null;z.onmouseover=null;z.onmouseout=null;
+  z.innerHTML='<img src="'+url+'" style="width:100%;height:200px;object-fit:cover;display:block;" /><button onclick="document.getElementById(\'finput\').click()" style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);border:none;color:white;padding:4px 10px;font-size:10px;font-weight:700;text-transform:uppercase;cursor:pointer;">Cambiar</button>';
+};
+
+window.doSubmit=async function(){
+  var moto=$("imoto")&&$("imoto").value.trim();
+  var loc=$("iloc")&&$("iloc").value.trim();
+  var fi=$("finput");
+  var err=$("uerr");
+  var btn=$("sbtn");
+  if(!moto||!loc){err.textContent="Completa modelo y ciudad";err.style.display="block";return;}
+  if(!fi||!fi.files[0]){err.textContent="Elegi una foto";err.style.display="block";return;}
+  err.style.display="none";btn.textContent="Subiendo...";btn.disabled=true;
+  try{
+    var fd=new FormData();
+    fd.append("file",fi.files[0]);
+    fd.append("upload_preset",CP);
+    var r=await fetch("https://api.cloudinary.com/v1_1/"+CC+"/image/upload",{method:"POST",body:fd});
+    var d=await r.json();
+    if(!d.secure_url)throw new Error(d.error&&d.error.message||"Error Cloudinary");
+    var parts=[];
+    for(var pi=1;pi<=3;pi++){var v=$("ip"+pi);if(v&&v.value.trim())parts.push(v.value.trim());}
+    await addDoc(collection(db,"entries"),{
+      uid:user.uid,
+      username:user.displayName||user.email.split("@")[0].toUpperCase(),
+      moto:moto,location:loc,parts:parts,imageUrl:d.secure_url,
+      votes:0,voters:[],createdAt:new Date().toISOString(),month:new Date().toISOString().slice(0,7)
+    });
+    $("scr").innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;" class="fade-in"><div style="width:80px;height:80px;background:#E31B23;display:flex;align-items:center;justify-content:center;font-size:36px;">✓</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:22px;margin:0;">Moto publicada!</h3><p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;line-height:1.6;">Tu entrada ya esta en el concurso.</p><button onclick="go(\'feed\')" style="margin-top:8px;background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Ver el Feed 🏍️</button></div>';
+  }catch(e){
+    console.error(e);
+    if(err){err.textContent="Error al subir. Intenta de nuevo.";err.style.display="block";}
+    if(btn){btn.textContent="🏁 Publicar en el concurso";btn.disabled=false;}
+  }
+};
+
+function sProfile(){
+  if(!user)return sAuth();
+  var l=(user.displayName||user.email)[0].toUpperCase();
+  var mine=entries.filter(function(e){return e.uid===user.uid;});
+  var tv=mine.reduce(function(s,e){return s+(e.votes||0);},0);
+  var mr=entries.findIndex(function(e){return e.uid===user.uid;});
+  var isAdmin=user.email===ADMIN;
+  var html='<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">';
+  html+='<div style="display:flex;align-items:center;gap:16px;background:#1c1b1b;padding:16px;border-radius:2px;"><div style="width:56px;height:56px;background:#E31B23;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;flex-shrink:0;">'+l+'</div><div><p style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:18px;margin:0;">'+(user.displayName||user.email.split("@")[0].toUpperCase())+'</p><p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+user.email+'</p></div></div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  var stats=[{l:"Motos cargadas",v:mine.length},{l:"Votos recibidos",v:tv},{l:"Puntos RS",v:String(tv*10),u:"PRS"},{l:"Ranking",v:mr>=0?"#"+(mr+1):"---"}];
+  stats.forEach(function(s){
+    html+='<div style="background:#1c1b1b;padding:16px;border-radius:2px;border-bottom:2px solid transparent;" onmouseover="this.style.borderColor=\'#E31B23\'" onmouseout="this.style.borderColor=\'transparent\'"><p style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;">'+s.l+'</p><div style="display:flex;align-items:baseline;gap:4px;"><span style="font-size:26px;font-weight:900;">'+s.v+'</span>'+(s.u?'<span style="color:#E31B23;font-size:11px;font-weight:700;font-style:italic;">'+s.u+'</span>':'')+'</div></div>';
+  });
+  html+='</div>';
+  if(isAdmin){
+    html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.4);">';
+    html+='<div style="background:#E31B23;padding:10px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🛡️</span><p style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Panel de Moderacion</p><span style="margin-left:auto;font-size:11px;font-weight:700;opacity:0.8;">'+entries.length+' entradas</span></div>';
+    html+='<div style="padding:12px;display:flex;flex-direction:column;gap:10px;">';
+    if(entries.length===0){
+      html+='<p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin:8px 0;">No hay entradas aun</p>';
+    }else{
+      entries.forEach(function(e){
+        html+='<div style="background:#131313;border-radius:2px;overflow:hidden;">';
+        html+='<img src="'+e.imageUrl+'" onclick="openLB(\''+e.imageUrl+'\')" style="width:100%;height:160px;object-fit:cover;display:block;cursor:zoom-in;" />';
+        html+='<div style="padding:10px;">';
+        html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><p style="font-weight:900;text-transform:uppercase;font-size:13px;margin:0;">'+(e.username||'ANONIMO')+'</p><span style="font-size:11px;color:#E31B23;font-weight:700;">'+fv(e.votes)+' votos</span></div>';
+        html+='<p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0 0 8px;">📍 '+(e.location||'')+' · '+(e.moto||'')+'</p>';
+        if(e.parts&&e.parts.filter(Boolean).length){
+          html+='<p style="color:rgba(255,255,255,0.3);font-size:10px;margin:0 0 8px;">⚙ '+e.parts.filter(Boolean).join(' · ')+'</p>';
+        }
+        html+='<button onclick="doDelete(\''+e.id+'\')" style="width:100%;padding:8px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.4);color:#ff5050;font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;" onmouseover="this.style.background=\'rgba(255,50,50,0.3)\'" onmouseout="this.style.background=\'rgba(255,50,50,0.15)\'">🗑️ Eliminar entrada</button>';
+        html+='</div></div>';
+      });
+    }
+    html+='</div></div>';
+  }
+  var pts=tv*10;
+  var pct5=Math.min(Math.round(pts/100*100),100);
+  var pct10=Math.min(Math.round(pts/200*100),100);
+
+  html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.3);">';
+  html+='<div style="background:#E31B23;padding:8px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:14px;">🏆</span><p style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Mis descuentos</p></div>';
+  html+='<div style="padding:12px;display:flex;flex-direction:column;gap:12px;">';
+
+  // LEVEL 1 - 5% OFF
+  html+='<div style="background:#131313;padding:12px;border-radius:2px;border-left:3px solid '+(pts>=100?'#E31B23':'rgba(255,255,255,0.1)+')+'">';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
+  html+='<div><p style="font-size:12px;font-weight:900;text-transform:uppercase;margin:0;color:'+(pts>=100?'#E31B23':'rgba(255,255,255,0.5)')+'">5% OFF</p>';
+  html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:2px 0 0;">100 Puntos RS</p></div>';
+  html+=(pts>=100?'<span style="font-size:18px;">✅</span>':'<span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.3);">'+pts+'/100</span>');
+  html+='</div>';
+  html+='<div style="background:rgba(255,255,255,0.08);height:6px;border-radius:99px;overflow:hidden;margin-bottom:8px;"><div style="background:#E31B23;height:100%;border-radius:99px;width:'+pct5+'%;transition:width 1s;"></div></div>';
+  if(pts>=100){
+    html+='<div style="background:rgba(227,27,35,0.1);border:1px dashed rgba(227,27,35,0.5);border-radius:4px;padding:8px;text-align:center;">';
+    html+='<p style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;font-weight:700;margin:0 0 4px;">Tu cupon de descuento</p>';
+    html+='<p style="font-size:20px;font-weight:900;letter-spacing:0.2em;color:#E31B23;margin:0;">TRS5</p>';
+    html+='<p style="font-size:9px;color:rgba(255,255,255,0.3);margin:4px 0 0;">Ingresalo al momento de comprar</p>';
+    html+='</div>';
+  }else{
+    html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:0;">Te faltan <strong style="color:white;">'+(100-pts)+'</strong> PRS · recibis '+(10-Math.floor(pts/10))+' votos mas</p>';
+  }
+  html+='</div>';
+
+  // LEVEL 2 - 10% OFF
+  html+='<div style="background:#131313;padding:12px;border-radius:2px;border-left:3px solid '+(pts>=200?'#E31B23':'rgba(255,255,255,0.1)')+';">';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
+  html+='<div><p style="font-size:12px;font-weight:900;text-transform:uppercase;margin:0;color:'+(pts>=200?'#E31B23':'rgba(255,255,255,0.5)')+'">10% OFF</p>';
+  html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:2px 0 0;">200 Puntos RS</p></div>';
+  html+=(pts>=200?'<span style="font-size:18px;">✅</span>':'<span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.3);">'+pts+'/200</span>');
+  html+='</div>';
+  html+='<div style="background:rgba(255,255,255,0.08);height:6px;border-radius:99px;overflow:hidden;margin-bottom:8px;"><div style="background:#E31B23;height:100%;border-radius:99px;width:'+pct10+'%;transition:width 1s;"></div></div>';
+  if(pts>=200){
+    html+='<div style="background:rgba(227,27,35,0.1);border:1px dashed rgba(227,27,35,0.5);border-radius:4px;padding:8px;text-align:center;">';
+    html+='<p style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;font-weight:700;margin:0 0 4px;">Tu cupon de descuento</p>';
+    html+='<p style="font-size:20px;font-weight:900;letter-spacing:0.2em;color:#E31B23;margin:0;">PRS10</p>';
+    html+='<p style="font-size:9px;color:rgba(255,255,255,0.3);margin:4px 0 0;">Ingresalo al momento de comprar</p>';
+    html+='</div>';
+  }else{
+    html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:0;">Te faltan <strong style="color:white;">'+(200-pts)+'</strong> PRS · recibis '+(20-Math.floor(pts/10))+' votos mas</p>';
+  }
+  html+='</div>';
+
+  html+='</div></div>';
+
+  html+='<button onclick="doLogout()" style="border:1px solid rgba(255,255,255,0.1);background:transparent;color:rgba(255,255,255,0.3);padding:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;border-radius:2px;" onmouseover="this.style.color=\'white\';this.style.borderColor=\'rgba(255,255,255,0.3)\'" onmouseout="this.style.color=\'rgba(255,255,255,0.3)\';this.style.borderColor=\'rgba(255,255,255,0.1)\'">Cerrar sesion</button>';
+  html+='</div>';
+  return html;
+}
+
+function sAuth(){
+  var isReg=amode==="register";
+  var html='<div style="display:flex;flex-direction:column;justify-content:center;height:100%;padding:24px;gap:20px;">';
+  html+='<div style="text-align:center;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 6px;">Concurso mensual</p>';
+  html+='<h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:22px;">'+(isReg?"Sumate al concurso":"Bienvenido de vuelta")+'</h2>';
+  html+='<p style="color:rgba(255,255,255,0.3);font-size:12px;margin:6px 0 0;">'+(isReg?"Registrate para subir tu moto":"Ingresa para votar y participar")+'</p></div>';
+  html+='<div style="display:flex;flex-direction:column;gap:12px;">';
+  if(isReg){
+    html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Nombre de piloto</label><input id="auser" type="text" placeholder="DARK_KNIGHT_88" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;text-transform:uppercase;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" oninput="this.value=this.value.toUpperCase()" /></div>';
+  }
+  html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Email</label><input id="aemail" type="email" placeholder="tu@email.com" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
+  html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Contrasena</label><input id="apass" type="password" placeholder="..." style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
+  html+='<div id="aerr" style="color:#E31B23;font-size:12px;text-align:center;display:none;"></div>';
+  html+='<button id="abtn" onclick="doAuth()" style="width:100%;padding:14px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;margin-top:4px;" onmouseover="this.style.background=\'#ff2229\'" onmouseout="this.style.background=\'#E31B23\'">'+(isReg?"Crear cuenta":"Entrar")+'</button>';
+  html+='<button onclick="toggleAM()" style="background:transparent;border:none;color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;padding:4px;" onmouseover="this.style.color=\'rgba(255,255,255,0.6)\'" onmouseout="this.style.color=\'rgba(255,255,255,0.3)\'">'+(isReg?"Ya tenes cuenta? Ingresa":"No tenes cuenta? Registrate")+'</button>';
+  html+='</div></div>';
+  return html;
+}
+
+window.doAuth=async function(){
+  var email=$("aemail")&&$("aemail").value.trim();
+  var pass=$("apass")&&$("apass").value;
+  var uname=$("auser")&&$("auser").value.trim();
+  var err=$("aerr"),btn=$("abtn");
+  if(!email||!pass){err.textContent="Completa email y contrasena";err.style.display="block";return;}
+  if(amode==="register"&&!uname){err.textContent="Elegi un nombre de piloto";err.style.display="block";return;}
+  err.style.display="none";btn.textContent="...";btn.disabled=true;
+  try{
+    if(amode==="register"){var c=await createUserWithEmailAndPassword(auth,email,pass);await updateProfile(c.user,{displayName:uname});}
+    else{await signInWithEmailAndPassword(auth,email,pass);}
+    amode="login";tab="feed";rNav();rScr();
+  }catch(e){
+    var msgs={"auth/email-already-in-use":"Ese email ya esta registrado","auth/weak-password":"La contrasena debe tener al menos 6 caracteres","auth/invalid-credential":"Email o contrasena incorrectos","auth/invalid-email":"Email invalido"};
+    err.textContent=msgs[e.code]||"Error. Intenta de nuevo.";
+    err.style.display="block";
+    btn.textContent=amode==="login"?"Entrar":"Crear cuenta";
+    btn.disabled=false;
+  }
+};
+
+$("mlabel").textContent=mo();
+onAuthStateChanged(auth,function(u){user=u;rHdr();rNav();rScr();});
+loadE();rNav();rScr();
 </script>
 
 </body>
