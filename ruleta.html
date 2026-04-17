@@ -314,16 +314,12 @@ function showScreen(id) {
 
 /* ── VALIDATE ── */
 function validateAndSpin() {
-  const order = document.getElementById('input-order').value.trim();
-  if (!order) { alert('Ingresá tu número de orden.'); return; }
-  if (getUsed().includes(order)) { alert('Este número de orden ya fue utilizado. Cada orden tiene un único giro.'); return; }
-  addUsed(order);
-  document.getElementById('spin-name').textContent = '#' + order;
-  window._currentOrder = order;
+  const uid = 'usr_' + Math.random().toString(36).slice(2,10);
+  window._currentOrder = uid;
+  document.getElementById('spin-name').textContent = '¡Buena suerte!';
   drawWheel(0);
   showScreen('spin');
 }
-
 /* ── WHEEL ── */
 const CS = 440;
 function drawWheel(rot) {
