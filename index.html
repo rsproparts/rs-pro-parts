@@ -296,7 +296,22 @@ window.doSubmit=async function(){
       moto:moto,location:loc,parts:parts,imageUrl:d.secure_url,
       votes:0,voters:[],createdAt:new Date().toISOString(),month:new Date().toISOString().slice(0,7)
     });
-    $("scr").innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;" class="fade-in"><div style="width:80px;height:80px;background:#E31B23;display:flex;align-items:center;justify-content:center;font-size:36px;">✓</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:22px;margin:0;">Moto publicada!</h3><p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;line-height:1.6;">Tu entrada ya esta en el concurso.</p><button onclick="go(\'feed\')" style="margin-top:8px;background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Ver el Feed 🏍️</button></div>';
+  $("scr").innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;" class="fade-in"><div style="width:80px;height:80px;background:#E31B23;display:flex;align-items:center;justify-content:center;font-size:36px;">✓</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:22px;margin:0;">Moto publicada!</h3><p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;line-height:1.6;">Tu entrada ya esta en el concurso.</p><button onclick="go(\'feed\')" style="margin-top:8px;background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Ver el Feed 🏍️</button></div>';
+setTimeout(function(){
+  var pop=document.createElement('div');
+  pop.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9998;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 0.3s ease;';
+  pop.innerHTML='<div style="width:100%;max-width:430px;background:#131313;border-radius:16px 16px 0 0;padding:28px 24px 36px;text-align:center;border-top:2px solid #E31B23;">'
+    +'<div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:99px;margin:0 auto 20px;"></div>'
+    +'<div style="font-size:36px;margin-bottom:10px;">🎰</div>'
+    +'<p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px;">Premio por participar</p>'
+    +'<h3 style="font-size:22px;font-weight:900;text-transform:uppercase;font-style:italic;margin:0 0 8px;">¡GIRÁ LA RULETA!</h3>'
+    +'<p style="font-size:12px;color:rgba(255,255,255,0.4);margin:0 0 20px;line-height:1.6;">Por subir tu moto tenés una tirada gratis.<br>Podés ganar descuentos o productos.</p>'
+    +'<a href="https://rsproparts.github.io/rs-pro-parts/ruleta.html" target="_blank" style="display:block;background:#E31B23;color:white;font-weight:900;font-size:14px;letter-spacing:0.12em;text-transform:uppercase;padding:14px;border-radius:4px;text-decoration:none;margin-bottom:10px;">🎰 GIRAR AHORA</a>'
+    +'<button onclick="this.parentElement.parentElement.remove()" style="background:transparent;border:none;color:rgba(255,255,255,0.25);font-size:12px;cursor:pointer;padding:8px;">Ahora no</button>'
+    +'</div>';
+  document.body.appendChild(pop);
+  pop.addEventListener('click',function(e){if(e.target===pop)pop.remove();});
+},800);
   }catch(e){
     console.error(e);
     if(err){err.textContent="Error al subir. Intenta de nuevo.";err.style.display="block";}
