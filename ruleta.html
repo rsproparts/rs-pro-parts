@@ -235,7 +235,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <button class="coupon-copy" onclick="copyCoupon()">📋 Copiar cupón</button>
     <div class="coupon-conditions" id="coupon-conditions"></div>
   </div>
-  <p id="urgency" class="urgency">⏱ Este premio vence en <span class="timer" id="countdown">15:00</span> — ¡usalo ahora!</p>
+  <p id="urgency" class="urgency">📅 Tenés <strong>30 días</strong> para usar tu premio — ¡no lo dejes pasar!</p>
   <a id="btn-cta" href="https://rsproparts.com/productos/" class="btn-cta">🛒 &nbsp;IR A LA TIENDA</a>
   <button class="btn-secondary" onclick="goHome()">← Volver al inicio</button>
 </div>
@@ -445,7 +445,6 @@ function showResult(prize) {
   box.classList.add('show');
 
   document.getElementById('urgency').classList.add('show');
-  startCountdown(20*60);
 
   document.getElementById('btn-cta').textContent = '🛒  USAR MI PREMIO EN LA TIENDA';
   document.getElementById('btn-cta').href = CONFIG.storeUrl;
