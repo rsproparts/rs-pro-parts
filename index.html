@@ -94,95 +94,91 @@ window.doStory=async function(entry){
     var canvas=$("story-canvas");
     var ctx=canvas.getContext("2d");
     var W=1080,H=1920;
+    canvas.width=W; canvas.height=H;
     ctx.clearRect(0,0,W,H);
 
     // background
-    ctx.fillStyle="#131313";
+    ctx.fillStyle="#0f0f0f";
     ctx.fillRect(0,0,W,H);
 
-    // red top bar
-    ctx.fillStyle="#E31B23";
-    ctx.fillRect(0,0,W,12);
-
-    // load moto image
+    // load moto image - square crop, full width
     var img=new Image();
     img.crossOrigin="anonymous";
-    await new Promise(function(res,rej){
-      img.onload=res;img.onerror=res;
-      img.src=entry.imageUrl;
-    });
-    // fixed square zone: starts at y=240, size=W (1080x1080)
-    var SQ=W; // square size = full width
-    var SY=240; // top of square
+    await new Promise(function(res){img.onload=res;img.onerror=res;img.src=entry.imageUrl;});
     var iS=Math.min(img.width,img.height);
     var iX=(img.width-iS)/2;
     var iY=(img.height-iS)/2;
-    // clip to square
+    // draw square image from y=0 to y=1080
     ctx.save();
-    ctx.beginPath();
-    ctx.rect(0,SY,W,SQ);
+    ctx.rect(0,0,W,W);
     ctx.clip();
-    ctx.drawImage(img,iX,iY,iS,iS,0,SY,W,SQ);
+    ctx.drawImage(img,iX,iY,iS,iS,0,0,W,W);
     ctx.restore();
 
-    // dark gradient over image bottom
-    var grd=ctx.createLinearGradient(0,SY+SQ*0.45,0,SY+SQ);
-    grd.addColorStop(0,"rgba(19,19,19,0)");
-    grd.addColorStop(1,"rgba(19,19,19,0.97)");
+    // gradient from middle of image to bottom
+    var grd=ctx.createLinearGradient(0,W*0.4,0,W);
+    grd.addColorStop(0,"rgba(15,15,15,0)");
+    grd.addColorStop(1,"rgba(15,15,15,1)");
     ctx.fillStyle=grd;
-    ctx.fillRect(0,SY,W,SQ);
+    ctx.fillRect(0,0,W,W);
+
+    // red top bar
+    ctx.fillStyle="#E31B23";
+    ctx.fillRect(0,0,W,14);
 
     // RS logo
     var logo=new Image();
     logo.crossOrigin="anonymous";
-    await new Promise(function(res){
-      logo.onload=res;logo.onerror=res;
-      logo.src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776258543/Logo_rama_1_uuvrq1.png";
-    });
-    ctx.drawImage(logo,W/2-120,60,240,140);
+    await new Promise(function(res){logo.onload=res;logo.onerror=res;logo.src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776258543/Logo_rama_1_uuvrq1.png";});
+    var logoH=100, logoW=logoH*(logo.width/logo.height);
+    ctx.drawImage(logo,W/2-logoW/2,30,logoW,logoH);
 
-
+    // text area starts at W (below image)
+    var TY = W + 60;
 
     // pilot name
     ctx.fillStyle="white";
-    ctx.font="bold 64px 'Arial'";
-    ctx.fillText((entry.username||"PILOTO").toUpperCase(),W/2,SY+SQ+90);
+    ctx.font="bold 72px Arial";
+    ctx.textAlign="center";
+    ctx.textBaseline="top";
+    // measure and reduce if needed
+    var nameText=(entry.username||"PILOTO").toUpperCase();
+    var fs=72;
+    ctx.font="bold "+fs+"px Arial";
+    while(ctx.measureText(nameText).width > W-80 && fs > 36){
+      fs-=4;
+      ctx.font="bold "+fs+"px Arial";
+    }
+    ctx.fillText(nameText, W/2, TY);
 
     // moto model
-    ctx.fillStyle="rgba(255,255,255,0.5)";
-    ctx.font="52px 'Arial'";
-    ctx.fillText(entry.moto||"",W/2,SY+SQ+160);
+    ctx.fillStyle="rgba(255,255,255,0.6)";
+    ctx.font="48px Arial";
+    ctx.fillText(entry.moto||"", W/2, TY+fs+30);
 
     // location
-    ctx.fillText("📍 "+(entry.location||""),W/2,SY+SQ+220);
+    ctx.font="44px Arial";
+    ctx.fillText("📍 "+(entry.location||""), W/2, TY+fs+110);
 
     // instagram
     if(entry.instagram){
       ctx.fillStyle="#E31B23";
-      ctx.font="bold 56px 'Arial'";
-      ctx.fillText("@"+entry.instagram,W/2,SY+SQ+290);
+      ctx.font="bold 52px Arial";
+      ctx.fillText("@"+entry.instagram, W/2, TY+fs+200);
     }
-
-
-
-
 
     // red bottom bar
     ctx.fillStyle="#E31B23";
-    ctx.fillRect(0,H-8,W,8);
+    ctx.fillRect(0,H-14,W,14);
 
     // export
     canvas.toBlob(async function(blob){
       if(!blob){showStoryFallback(entry);return;}
       var file=new File([blob],"moto-del-mes.png",{type:"image/png"});
       if(navigator.canShare&&navigator.canShare({files:[file]})){
-        try{
-          await navigator.share({files:[file],title:"Moto del Mes RS Pro Parts",text:"Vota por "+entry.username+"!"});
-        }catch(e){
-          if(e.name!=="AbortError")showStoryFallback(entry);
-        }
+        try{await navigator.share({files:[file],title:"Moto del Mes RS Pro Parts",text:"Vota por "+entry.username+"!"});}
+        catch(e){if(e.name!=="AbortError")showStoryFallback(entry);}
       }else{
-        // fallback: download image
         var a=document.createElement("a");
         a.href=URL.createObjectURL(blob);
         a.download="moto-del-mes-rspro.png";
@@ -197,20 +193,6 @@ window.doStory=async function(entry){
     if(btn){btn.textContent="📸 Story";btn.disabled=false;}
   }
 };
-
-function roundRect(ctx,x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.lineTo(x+w-r,y);
-  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h-r);
-  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-  ctx.lineTo(x+r,y+h);
-  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-  ctx.lineTo(x,y+r);
-  ctx.quadraticCurveTo(x,y,x+r,y);
-  ctx.closePath();
-}
 
 function showStoryFallback(entry){
   var pop=document.createElement("div");
