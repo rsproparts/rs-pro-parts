@@ -114,14 +114,14 @@ window.doStory=async function(entry){
     // draw moto image centered, square crop
     var iS=Math.min(img.width,img.height);
     var iX=(img.width-iS)/2;var iY=(img.height-iS)/2;
-    ctx.drawImage(img,iX,iY,iS,iS,0,300,W,W);
+    ctx.drawImage(img,iX,iY,iS,iS,0,220,W,W+200);
 
     // dark gradient over image bottom
-    var grd=ctx.createLinearGradient(0,300+W*0.5,0,300+W);
+    var grd=ctx.createLinearGradient(0,220+W*0.5,0,220+W+200);
     grd.addColorStop(0,"rgba(19,19,19,0)");
     grd.addColorStop(1,"rgba(19,19,19,1)");
     ctx.fillStyle=grd;
-    ctx.fillRect(0,300,W,W);
+    ctx.fillRect(0,220,W,W+200);
 
     // RS logo
     var logo=new Image();
@@ -142,43 +142,40 @@ window.doStory=async function(entry){
     // pilot name
     ctx.fillStyle="white";
     ctx.font="bold 96px 'Arial'";
-    ctx.fillText((entry.username||"PILOTO").toUpperCase(),W/2,300+W+120);
+    ctx.fillText((entry.username||"PILOTO").toUpperCase(),W/2,220+W+200+100);
 
     // moto model
     ctx.fillStyle="rgba(255,255,255,0.5)";
     ctx.font="52px 'Arial'";
-    ctx.fillText(entry.moto||"",W/2,300+W+200);
+    ctx.fillText(entry.moto||"",W/2,220+W+200+180);
 
     // location
-    ctx.fillText("📍 "+(entry.location||""),W/2,300+W+270);
+    ctx.fillText("📍 "+(entry.location||""),W/2,220+W+200+250);
 
     // instagram
     if(entry.instagram){
       ctx.fillStyle="#E31B23";
       ctx.font="bold 56px 'Arial'";
-      ctx.fillText("@"+entry.instagram,W/2,300+W+370);
+      ctx.fillText("@"+entry.instagram,W/2,220+W+200+350);
     }
 
     // votes badge
     ctx.fillStyle="#E31B23";
-    roundRect(ctx,W/2-130,300+W+430,260,130,20);
+    roundRect(ctx,W/2-130,220+W+200+410,260,130,20);
     ctx.fill();
     ctx.fillStyle="white";
     ctx.font="bold 80px 'Arial'";
-    ctx.fillText(fv(entry.votes),W/2,300+W+525);
+    ctx.fillText(fv(entry.votes),W/2,220+W+200+505);
     ctx.font="bold 32px 'Arial'";
-    ctx.fillText("VOTOS",W/2,300+W+570);
+    ctx.fillText("VOTOS",W/2,220+W+200+550);
 
     // vote CTA
-    ctx.fillStyle="rgba(255,255,255,0.1)";
-    roundRect(ctx,80,H-280,W-160,160,20);
+    ctx.fillStyle="rgba(255,255,255,0.08)";
+    roundRect(ctx,80,H-220,W-160,140,20);
     ctx.fill();
-    ctx.fillStyle="white";
-    ctx.font="bold 44px 'Arial'";
-    ctx.fillText("Votá en rsproparts.github.io/rs-pro-parts",W/2,H-180);
-    ctx.fillStyle="rgba(255,255,255,0.4)";
-    ctx.font="36px 'Arial'";
-    ctx.fillText("Concurso Moto del Mes · RS Pro Parts",W/2,H-120);
+    ctx.fillStyle="rgba(255,255,255,0.5)";
+    ctx.font="bold 40px 'Arial'";
+    ctx.fillText("Concurso Moto del Mes · RS Pro Parts",W/2,H-130);
 
     // red bottom bar
     ctx.fillStyle="#E31B23";
