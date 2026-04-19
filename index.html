@@ -111,17 +111,26 @@ window.doStory=async function(entry){
       img.onload=res;img.onerror=res;
       img.src=entry.imageUrl;
     });
-    // draw moto image centered, square crop
+    // fixed square zone: starts at y=240, size=W (1080x1080)
+    var SQ=W; // square size = full width
+    var SY=240; // top of square
     var iS=Math.min(img.width,img.height);
-    var iX=(img.width-iS)/2;var iY=(img.height-iS)/2;
-    ctx.drawImage(img,iX,iY,iS,iS,0,220,W,W+200);
+    var iX=(img.width-iS)/2;
+    var iY=(img.height-iS)/2;
+    // clip to square
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0,SY,W,SQ);
+    ctx.clip();
+    ctx.drawImage(img,iX,iY,iS,iS,0,SY,W,SQ);
+    ctx.restore();
 
     // dark gradient over image bottom
-    var grd=ctx.createLinearGradient(0,220+W*0.5,0,220+W+200);
+    var grd=ctx.createLinearGradient(0,SY+SQ*0.45,0,SY+SQ);
     grd.addColorStop(0,"rgba(19,19,19,0)");
-    grd.addColorStop(1,"rgba(19,19,19,1)");
+    grd.addColorStop(1,"rgba(19,19,19,0.97)");
     ctx.fillStyle=grd;
-    ctx.fillRect(0,220,W,W+200);
+    ctx.fillRect(0,SY,W,SQ);
 
     // RS logo
     var logo=new Image();
@@ -142,40 +151,40 @@ window.doStory=async function(entry){
     // pilot name
     ctx.fillStyle="white";
     ctx.font="bold 96px 'Arial'";
-    ctx.fillText((entry.username||"PILOTO").toUpperCase(),W/2,220+W+200+100);
+    ctx.fillText((entry.username||"PILOTO").toUpperCase(),W/2,SY+SQ+110);
 
     // moto model
     ctx.fillStyle="rgba(255,255,255,0.5)";
     ctx.font="52px 'Arial'";
-    ctx.fillText(entry.moto||"",W/2,220+W+200+180);
+    ctx.fillText(entry.moto||"",W/2,SY+SQ+185);
 
     // location
-    ctx.fillText("📍 "+(entry.location||""),W/2,220+W+200+250);
+    ctx.fillText("📍 "+(entry.location||""),W/2,SY+SQ+255);
 
     // instagram
     if(entry.instagram){
       ctx.fillStyle="#E31B23";
       ctx.font="bold 56px 'Arial'";
-      ctx.fillText("@"+entry.instagram,W/2,220+W+200+350);
+      ctx.fillText("@"+entry.instagram,W/2,SY+SQ+355);
     }
 
     // votes badge
     ctx.fillStyle="#E31B23";
-    roundRect(ctx,W/2-130,220+W+200+410,260,130,20);
+    roundRect(ctx,W/2-130,SY+SQ+415,260,130,20);
     ctx.fill();
     ctx.fillStyle="white";
     ctx.font="bold 80px 'Arial'";
-    ctx.fillText(fv(entry.votes),W/2,220+W+200+505);
+    ctx.fillText(fv(entry.votes),W/2,SY+SQ+510);
     ctx.font="bold 32px 'Arial'";
-    ctx.fillText("VOTOS",W/2,220+W+200+550);
+    ctx.fillText("VOTOS",W/2,SY+SQ+555);
 
     // vote CTA
     ctx.fillStyle="rgba(255,255,255,0.08)";
-    roundRect(ctx,80,H-220,W-160,140,20);
+    roundRect(ctx,80,H-200,W-160,120,20);
     ctx.fill();
     ctx.fillStyle="rgba(255,255,255,0.5)";
     ctx.font="bold 40px 'Arial'";
-    ctx.fillText("Concurso Moto del Mes · RS Pro Parts",W/2,H-130);
+    ctx.fillText("Concurso Moto del Mes · RS Pro Parts",W/2,H-120);
 
     // red bottom bar
     ctx.fillStyle="#E31B23";
