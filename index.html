@@ -141,12 +141,7 @@ window.doStory=async function(entry){
     });
     ctx.drawImage(logo,W/2-120,60,240,140);
 
-    // MOTO DEL MES label
-    ctx.fillStyle="#E31B23";
-    ctx.font="bold 52px 'Arial'";
-    ctx.textAlign="center";
-    ctx.letterSpacing="8px";
-    ctx.fillText("MOTO DEL MES",W/2,260);
+
 
     // pilot name
     ctx.fillStyle="white";
@@ -168,15 +163,7 @@ window.doStory=async function(entry){
       ctx.fillText("@"+entry.instagram,W/2,SY+SQ+290);
     }
 
-    // votes badge - centered
-    var badgeW=220, badgeH=110, badgeX=W/2-badgeW/2, badgeY=SY+SQ+340;
-    ctx.fillStyle="#E31B23";
-    roundRect(ctx,badgeX,badgeY,badgeW,badgeH,16);
-    ctx.fill();
-    ctx.fillStyle="white";
-    ctx.textAlign="center";
-    ctx.font="bold 52px 'Arial'";
-    ctx.fillText(fv(entry.votes)+" VOTOS",W/2,badgeY+badgeH/2+18);
+
 
 
 
