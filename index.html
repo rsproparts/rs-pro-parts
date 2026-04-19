@@ -131,7 +131,8 @@ function sFeed(){
   var daysLeft=lastDay.getDate()-now.getDate();
   var urgColor=daysLeft<=3?'#ff4444':daysLeft<=7?'#ff8800':'#E31B23';
   html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Votacion activa</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">MOTO DEL MES</h2><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(227,27,35,0.1);border:1px solid rgba(227,27,35,0.3);padding:5px 14px;margin-top:8px;border-radius:2px;"><span style="font-size:11px;font-weight:900;color:'+urgColor+'">&#9201; '+daysLeft+' dia'+(daysLeft!==1?'s':'')+' para el cierre</span></div>';
-  html+='<div style="margin-top:14px;width:100%;background:#1c1b1b;border-radius:4px;overflow:hidden;border:1px solid rgba(227,27,35,0.45);"><div style="background:#E31B23;padding:7px 14px;text-align:center;"><span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.18em;">🏆 Participá por</span></div><div style="padding:12px;display:flex;align-items:center;gap:12px;"><img src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776399304/PEDALIN_nbqwzc.jpg" style="width:120px;height:100px;object-fit:cover;border-radius:3px;cursor:zoom-in;" onclick="openLB(\'https://res.cloudinary.com/ddozrdmok/image/upload/v1776399304/PEDALIN_nbqwzc.jpg\')" /><div style="flex:1;"><p style="font-size:17px;font-weight:900;text-transform:uppercase;font-style:italic;margin:0;color:white;">PEDALINES</p><p style="font-size:12px;font-weight:900;color:#E31B23;margin:3px 0 5px;text-transform:uppercase;">RS DESIGN</p><p style="font-size:10px;color:rgba(255,255,255,0.35);margin:0;">Aluminio CNC · Anodizado rojo</p></div></div></div></div>';  html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.3);">';
+  html+='<div style="margin-top:14px;display:flex;justify-content:center;"><div style="width:100%;max-width:340px;background:#1c1b1b;border-radius:4px;overflow:hidden;border:1px solid rgba(227,27,35,0.45);box-shadow:0 0 20px rgba(227,27,35,0.1);"><div style="background:#E31B23;padding:7px 14px;text-align:center;"><span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.18em;">🏆 Participá por</span></div><div style="padding:12px;display:flex;align-items:center;gap:12px;"><img src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776399304/PEDALIN_nbqwzc.jpg" onclick="openLB(\'https://res.cloudinary.com/ddozrdmok/image/upload/v1776399304/PEDALIN_nbqwzc.jpg\')" style="width:88px;height:75px;object-fit:cover;border-radius:3px;flex-shrink:0;cursor:zoom-in;" /><div style="flex:1;"><p style="font-size:17px;font-weight:900;text-transform:uppercase;font-style:italic;margin:0;color:white;line-height:1.1;">PEDALINES</p><p style="font-size:12px;font-weight:900;color:#E31B23;margin:3px 0 5px;text-transform:uppercase;letter-spacing:0.05em;">RS DESIGN</p><p style="font-size:10px;color:rgba(255,255,255,0.35);margin:0;line-height:1.5;">Aluminio CNC · Anodizado rojo</p></div></div></div></div></div>';
+  html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.3);">';
   html+='<div style="background:#E31B23;padding:8px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">⚡</span><p style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Como ganar descuentos</p></div>';
   html+='<div style="padding:12px;display:flex;flex-direction:column;gap:8px;">';
   html+='<p style="font-size:11px;color:rgba(255,255,255,0.5);margin:0 0 4px;">Subi tu moto y recibí votos. Cada voto vale <strong style="color:white;">10 Puntos RS</strong>.</p>';
@@ -145,8 +146,6 @@ function sFeed(){
     var voted=user&&e.voters&&e.voters.includes(user.uid);
     var pct=Math.round((e.votes||0)/max*100);
     var parts=e.parts?e.parts.filter(Boolean):[];
-
-    // Parts dropdown HTML (below image, no overlap)
     var partsHtml="";
     if(parts.length>0){
       partsHtml+='<div style="border-top:1px solid rgba(255,255,255,0.06);">';
@@ -157,23 +156,18 @@ function sFeed(){
       parts.forEach(function(p){partsHtml+='<p style="font-size:11px;color:rgba(255,255,255,0.65);margin:0 0 5px;">&#9881; '+p+'</p>';});
       partsHtml+='</div></div>';
     }
-
-    // Vote button
     var voteHtml="";
     if(user){
       voteHtml='<button onclick="doVote(\''+e.id+'\')" '+(voted?'disabled':'')+' style="width:100%;padding:12px;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;border:none;cursor:'+(voted?'not-allowed':'pointer')+';background:'+(voted?'rgba(255,255,255,0.05)':'#E31B23')+';color:'+(voted?'rgba(255,255,255,0.3)':'white')+';">'+(voted?'&#10003; YA VOTASTE':'&#128293; VOTAR')+'</button>';
     }else{
       voteHtml='<p style="text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:8px 0;margin:0;">Registrate para votar</p>';
     }
-
     html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid '+(i===0?'rgba(227,27,35,0.4)':'rgba(255,255,255,0.05)')+';">';
-    // Image area - CLEAN, no parts overlay
     html+='<div style="position:relative;overflow:hidden;">';
     html+='<img src="'+e.imageUrl+'" onclick="openLB(\''+e.imageUrl+'\')" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block;cursor:zoom-in;" />';
     html+='<div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 50%);pointer-events:none;"></div>';
     html+='<div style="position:absolute;top:12px;left:12px;font-size:24px;pointer-events:none;">'+rk(i)+'</div>';
     html+='<div style="position:absolute;top:12px;right:12px;background:#E31B23;padding:6px 10px;text-align:center;pointer-events:none;"><span style="display:block;font-size:8px;font-weight:700;text-transform:uppercase;opacity:0.8;">Votos</span><span style="font-size:18px;font-weight:900;">'+fv(e.votes)+'</span></div>';
-    // Only pilot name + location at bottom - no parts
     html+='<div style="position:absolute;bottom:0;left:0;width:100%;padding:12px;pointer-events:none;">';
     html+='<p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 2px;">Piloto</p>';
     html+='<h3 style="font-size:20px;font-weight:900;font-style:italic;text-transform:uppercase;margin:0 0 4px;">'+(e.username||'ANONIMO')+'</h3>';
@@ -181,14 +175,11 @@ function sFeed(){
     html+=(e.instagram?'<p style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.7);margin:0;"><span style="color:#E31B23;">@</span>'+e.instagram+'</p>':'');
     html+='</div>';
     html+='</div>';
-    // Vote bar
     html+='<div style="padding:10px 12px 0;">';
     html+='<div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.3);margin-bottom:3px;"><span>VOTOS ESTE MES</span><span>'+pct+'% del lider</span></div>';
     html+='<div style="background:rgba(255,255,255,0.1);height:3px;border-radius:99px;overflow:hidden;"><div style="background:#E31B23;height:100%;border-radius:99px;width:'+pct+'%;"></div></div>';
     html+='</div>';
-    // Parts dropdown
     html+=partsHtml;
-    // Vote button
     var shareBtn='<button onclick="if(navigator.share){navigator.share({title:\'Moto del Mes RS Pro Parts\',text:\'Vota por '+e.username+'!\',url:\'https://rsproparts.github.io/rs-pro-parts\'})}else{window.open(\'https://www.instagram.com/\')};" style="width:100%;padding:8px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-weight:700;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:6px;" onmouseover="this.style.borderColor=\'#E31B23\';this.style.color=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\';this.style.color=\'rgba(255,255,255,0.5)\'">📲 Compartir</button>';
     html+='<div style="padding:12px;">'+voteHtml+shareBtn+'</div>';
     html+='</div>';
@@ -296,22 +287,7 @@ window.doSubmit=async function(){
       moto:moto,location:loc,parts:parts,imageUrl:d.secure_url,
       votes:0,voters:[],createdAt:new Date().toISOString(),month:new Date().toISOString().slice(0,7)
     });
-  $("scr").innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;" class="fade-in"><div style="width:80px;height:80px;background:#E31B23;display:flex;align-items:center;justify-content:center;font-size:36px;">✓</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:22px;margin:0;">Moto publicada!</h3><p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;line-height:1.6;">Tu entrada ya esta en el concurso.</p><button onclick="go(\'feed\')" style="margin-top:8px;background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Ver el Feed 🏍️</button></div>';
-setTimeout(function(){
-  var pop=document.createElement('div');
-  pop.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9998;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 0.3s ease;';
-  pop.innerHTML='<div style="width:100%;max-width:430px;background:#131313;border-radius:16px 16px 0 0;padding:28px 24px 36px;text-align:center;border-top:2px solid #E31B23;">'
-    +'<div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:99px;margin:0 auto 20px;"></div>'
-    +'<div style="font-size:36px;margin-bottom:10px;">🎰</div>'
-    +'<p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px;">Premio por participar</p>'
-    +'<h3 style="font-size:22px;font-weight:900;text-transform:uppercase;font-style:italic;margin:0 0 8px;">¡GIRÁ LA RULETA!</h3>'
-    +'<p style="font-size:12px;color:rgba(255,255,255,0.4);margin:0 0 20px;line-height:1.6;">Por subir tu moto tenés una tirada gratis.<br>Podés ganar descuentos o productos.</p>'
-    +'<a href="https://rsproparts.github.io/rs-pro-parts/ruleta.html" target="_blank" style="display:block;background:#E31B23;color:white;font-weight:900;font-size:14px;letter-spacing:0.12em;text-transform:uppercase;padding:14px;border-radius:4px;text-decoration:none;margin-bottom:10px;">🎰 GIRAR AHORA</a>'
-    +'<button onclick="this.parentElement.parentElement.remove()" style="background:transparent;border:none;color:rgba(255,255,255,0.25);font-size:12px;cursor:pointer;padding:8px;">Ahora no</button>'
-    +'</div>';
-  document.body.appendChild(pop);
-  pop.addEventListener('click',function(e){if(e.target===pop)pop.remove();});
-},800);
+    $("scr").innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;" class="fade-in"><div style="width:80px;height:80px;background:#E31B23;display:flex;align-items:center;justify-content:center;font-size:36px;">✓</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:22px;margin:0;">Moto publicada!</h3><p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;line-height:1.6;">Tu entrada ya esta en el concurso.</p><button onclick="go(\'feed\')" style="margin-top:8px;background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Ver el Feed 🏍️</button></div>';
   }catch(e){
     console.error(e);
     if(err){err.textContent="Error al subir. Intenta de nuevo.";err.style.display="block";}
@@ -337,16 +313,16 @@ function sProfile(){
   if(isAdmin){
     html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.4);">';
     var totalV=entries.reduce(function(s,e){return s+(e.votes||0);},0);
-  html+='<div style="background:#E31B23;padding:10px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🛡️</span><p style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Panel Admin</p><span style="margin-left:auto;font-size:11px;font-weight:700;opacity:0.8;">'+entries.length+' entradas</span></div>';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:10px;background:#1c1b1b;border-bottom:1px solid rgba(255,255,255,0.05);">';
-  html+='<div style="background:#131313;padding:10px;border-radius:2px;text-align:center;"><p style="font-size:20px;font-weight:900;margin:0;color:#E31B23;">'+entries.length+'</p><p style="font-size:9px;color:rgba(255,255,255,0.4);margin:2px 0 0;text-transform:uppercase;font-weight:700;">Fotos</p></div>';
-  html+='<div style="background:#131313;padding:10px;border-radius:2px;text-align:center;"><p style="font-size:20px;font-weight:900;margin:0;color:#E31B23;">'+totalV+'</p><p style="font-size:9px;color:rgba(255,255,255,0.4);margin:2px 0 0;text-transform:uppercase;font-weight:700;">Votos</p></div>';
-  html+='<div style="background:#131313;padding:8px;border-radius:2px;text-align:center;overflow:hidden;"><p style="font-size:11px;font-weight:900;margin:0;color:#E31B23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(entries.length>0?entries[0].username||'-':'-')+'</p><p style="font-size:9px;color:rgba(255,255,255,0.4);margin:2px 0 0;text-transform:uppercase;font-weight:700;">Lider</p></div>';
-  html+='</div>';
-  html+='<div style="padding:10px;background:#1c1b1b;border-bottom:1px solid rgba(255,255,255,0.05);">';
-  html+='<button onclick="doSorteo()" style="width:100%;padding:11px;background:rgba(227,27,35,0.15);border:2px solid #E31B23;color:white;font-weight:900;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🎲 Realizar Sorteo del Mes</button>';
-  html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);text-align:center;margin:5px 0 0;">Elige al azar entre los 3 mas votados</p>';
-  html+='</div>';
+    html+='<div style="background:#E31B23;padding:10px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🛡️</span><p style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Panel Admin</p><span style="margin-left:auto;font-size:11px;font-weight:700;opacity:0.8;">'+entries.length+' entradas</span></div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:10px;background:#1c1b1b;border-bottom:1px solid rgba(255,255,255,0.05);">';
+    html+='<div style="background:#131313;padding:10px;border-radius:2px;text-align:center;"><p style="font-size:20px;font-weight:900;margin:0;color:#E31B23;">'+entries.length+'</p><p style="font-size:9px;color:rgba(255,255,255,0.4);margin:2px 0 0;text-transform:uppercase;font-weight:700;">Fotos</p></div>';
+    html+='<div style="background:#131313;padding:10px;border-radius:2px;text-align:center;"><p style="font-size:20px;font-weight:900;margin:0;color:#E31B23;">'+totalV+'</p><p style="font-size:9px;color:rgba(255,255,255,0.4);margin:2px 0 0;text-transform:uppercase;font-weight:700;">Votos</p></div>';
+    html+='<div style="background:#131313;padding:8px;border-radius:2px;text-align:center;overflow:hidden;"><p style="font-size:11px;font-weight:900;margin:0;color:#E31B23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(entries.length>0?entries[0].username||'-':'-')+'</p><p style="font-size:9px;color:rgba(255,255,255,0.4);margin:2px 0 0;text-transform:uppercase;font-weight:700;">Lider</p></div>';
+    html+='</div>';
+    html+='<div style="padding:10px;background:#1c1b1b;border-bottom:1px solid rgba(255,255,255,0.05);">';
+    html+='<button onclick="doSorteo()" style="width:100%;padding:11px;background:rgba(227,27,35,0.15);border:2px solid #E31B23;color:white;font-weight:900;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🎲 Realizar Sorteo del Mes</button>';
+    html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);text-align:center;margin:5px 0 0;">Elige al azar entre los 3 mas votados</p>';
+    html+='</div>';
     html+='<div style="padding:12px;display:flex;flex-direction:column;gap:10px;">';
     if(entries.length===0){
       html+='<p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin:8px 0;">No hay entradas aun</p>';
@@ -369,13 +345,10 @@ function sProfile(){
   var pts=tv*10;
   var pct5=Math.min(Math.round(pts/100*100),100);
   var pct10=Math.min(Math.round(pts/200*100),100);
-
   html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.3);">';
   html+='<div style="background:#E31B23;padding:8px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:14px;">🏆</span><p style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Mis descuentos</p></div>';
   html+='<div style="padding:12px;display:flex;flex-direction:column;gap:12px;">';
-
-  // LEVEL 1 - 5% OFF
-  html+='<div style="background:#131313;padding:12px;border-radius:2px;border-left:3px solid '+(pts>=100?'#E31B23':'rgba(255,255,255,0.1)+')+'">';
+  html+='<div style="background:#131313;padding:12px;border-radius:2px;border-left:3px solid '+(pts>=100?'#E31B23':'rgba(255,255,255,0.1)')+';">';
   html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
   html+='<div><p style="font-size:12px;font-weight:900;text-transform:uppercase;margin:0;color:'+(pts>=100?'#E31B23':'rgba(255,255,255,0.5)')+'">5% OFF</p>';
   html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:2px 0 0;">100 Puntos RS</p></div>';
@@ -392,8 +365,6 @@ function sProfile(){
     html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:0;">Te faltan <strong style="color:white;">'+(100-pts)+'</strong> PRS · recibis '+(10-Math.floor(pts/10))+' votos mas</p>';
   }
   html+='</div>';
-
-  // LEVEL 2 - 10% OFF
   html+='<div style="background:#131313;padding:12px;border-radius:2px;border-left:3px solid '+(pts>=200?'#E31B23':'rgba(255,255,255,0.1)')+';">';
   html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
   html+='<div><p style="font-size:12px;font-weight:900;text-transform:uppercase;margin:0;color:'+(pts>=200?'#E31B23':'rgba(255,255,255,0.5)')+'">10% OFF</p>';
@@ -411,9 +382,7 @@ function sProfile(){
     html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:0;">Te faltan <strong style="color:white;">'+(200-pts)+'</strong> PRS · recibis '+(20-Math.floor(pts/10))+' votos mas</p>';
   }
   html+='</div>';
-
   html+='</div></div>';
-
   html+='<button onclick="doLogout()" style="border:1px solid rgba(255,255,255,0.1);background:transparent;color:rgba(255,255,255,0.3);padding:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;border-radius:2px;" onmouseover="this.style.color=\'white\';this.style.borderColor=\'rgba(255,255,255,0.3)\'" onmouseout="this.style.color=\'rgba(255,255,255,0.3)\';this.style.borderColor=\'rgba(255,255,255,0.1)\'">Cerrar sesion</button>';
   html+='</div>';
   return html;
@@ -472,6 +441,29 @@ function loadWinners(){
       whtml+='<div style="flex:1;min-width:0;"><p style="font-weight:900;font-size:13px;text-transform:uppercase;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+w.username+'</p>';
       whtml+='<p style="color:rgba(255,255,255,0.4);font-size:10px;margin:2px 0;">'+w.month+' · '+w.votes+' votos</p>';
       whtml+=(w.instagram?'<p style="font-size:10px;font-weight:700;margin:0;"><span style="color:#E31B23;">@</span>'+w.instagram+'</p>':'');
+      whtml+='</div><spanlogin";tab="feed";rNav();rScr();
+  }catch(e){
+    var msgs={"auth/email-already-in-use":"Ese email ya esta registrado","auth/weak-password":"La contrasena debe tener al menos 6 caracteres","auth/invalid-credential":"Email o contrasena incorrectos","auth/invalid-email":"Email invalido"};
+    err.textContent=msgs[e.code]||"Error. Intenta de nuevo.";
+    err.style.display="block";
+    btn.textContent=amode==="login"?"Entrar":"Crear cuenta";
+    btn.disabled=false;
+  }
+};
+
+function loadWinners(){
+  var wlist=document.getElementById("winners-list");
+  if(!wlist)return;
+  onSnapshot(query(collection(db,"winners"),orderBy("date","desc")),function(snap){
+    if(snap.empty){wlist.innerHTML='<p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin:8px 0;">Aun no hay ganadores registrados.</p>';return;}
+    var whtml="";
+    snap.docs.forEach(function(d){
+      var w=d.data();
+      whtml+='<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#131313;border-radius:2px;margin-bottom:6px;">';
+      whtml+='<img src="'+w.imageUrl+'" style="width:52px;height:52px;object-fit:cover;border-radius:2px;flex-shrink:0;" />';
+      whtml+='<div style="flex:1;min-width:0;"><p style="font-weight:900;font-size:13px;text-transform:uppercase;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+w.username+'</p>';
+      whtml+='<p style="color:rgba(255,255,255,0.4);font-size:10px;margin:2px 0;">'+w.month+' · '+w.votes+' votos</p>';
+      whtml+=(w.instagram?'<p style="font-size:10px;font-weight:700;margin:0;"><span style="color:#E31B23;">@</span>'+w.instagram+'</p>':'');
       whtml+='</div><span style="font-size:22px;">🏆</span></div>';
     });
     wlist.innerHTML=whtml;
@@ -507,6 +499,5 @@ $("mlabel").textContent=mo();
 onAuthStateChanged(auth,function(u){user=u;rHdr();rNav();rScr();});
 loadE();rNav();rScr();
 </script>
-
 </body>
 </html>
