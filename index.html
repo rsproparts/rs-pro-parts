@@ -150,33 +150,33 @@ window.doStory=async function(entry){
 
     // pilot name
     ctx.fillStyle="white";
-    ctx.font="bold 96px 'Arial'";
-    ctx.fillText((entry.username||"PILOTO").toUpperCase(),W/2,SY+SQ+110);
+    ctx.font="bold 64px 'Arial'";
+    ctx.fillText((entry.username||"PILOTO").toUpperCase(),W/2,SY+SQ+90);
 
     // moto model
     ctx.fillStyle="rgba(255,255,255,0.5)";
     ctx.font="52px 'Arial'";
-    ctx.fillText(entry.moto||"",W/2,SY+SQ+185);
+    ctx.fillText(entry.moto||"",W/2,SY+SQ+160);
 
     // location
-    ctx.fillText("📍 "+(entry.location||""),W/2,SY+SQ+255);
+    ctx.fillText("📍 "+(entry.location||""),W/2,SY+SQ+220);
 
     // instagram
     if(entry.instagram){
       ctx.fillStyle="#E31B23";
       ctx.font="bold 56px 'Arial'";
-      ctx.fillText("@"+entry.instagram,W/2,SY+SQ+355);
+      ctx.fillText("@"+entry.instagram,W/2,SY+SQ+290);
     }
 
     // votes badge
     ctx.fillStyle="#E31B23";
-    roundRect(ctx,W/2-130,SY+SQ+415,260,130,20);
+    roundRect(ctx,W/2-130,SY+SQ+360,260,120,20);
     ctx.fill();
     ctx.fillStyle="white";
     ctx.font="bold 80px 'Arial'";
-    ctx.fillText(fv(entry.votes),W/2,SY+SQ+510);
+    ctx.fillText(fv(entry.votes),W/2,SY+SQ+450);
     ctx.font="bold 32px 'Arial'";
-    ctx.fillText("VOTOS",W/2,SY+SQ+555);
+    ctx.fillText("VOTOS",W/2,SY+SQ+490);
 
     // vote CTA
     ctx.fillStyle="rgba(255,255,255,0.08)";
