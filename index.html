@@ -168,23 +168,17 @@ window.doStory=async function(entry){
       ctx.fillText("@"+entry.instagram,W/2,SY+SQ+290);
     }
 
-    // votes badge
+    // votes badge - centered
+    var badgeW=220, badgeH=110, badgeX=W/2-badgeW/2, badgeY=SY+SQ+340;
     ctx.fillStyle="#E31B23";
-    roundRect(ctx,W/2-130,SY+SQ+360,260,120,20);
+    roundRect(ctx,badgeX,badgeY,badgeW,badgeH,16);
     ctx.fill();
     ctx.fillStyle="white";
-    ctx.font="bold 80px 'Arial'";
-    ctx.fillText(fv(entry.votes),W/2,SY+SQ+450);
-    ctx.font="bold 32px 'Arial'";
-    ctx.fillText("VOTOS",W/2,SY+SQ+490);
+    ctx.textAlign="center";
+    ctx.font="bold 52px 'Arial'";
+    ctx.fillText(fv(entry.votes)+" VOTOS",W/2,badgeY+badgeH/2+18);
 
-    // vote CTA
-    ctx.fillStyle="rgba(255,255,255,0.08)";
-    roundRect(ctx,80,H-200,W-160,120,20);
-    ctx.fill();
-    ctx.fillStyle="rgba(255,255,255,0.5)";
-    ctx.font="bold 40px 'Arial'";
-    ctx.fillText("Concurso Moto del Mes · RS Pro Parts",W/2,H-120);
+
 
     // red bottom bar
     ctx.fillStyle="#E31B23";
