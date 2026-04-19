@@ -181,7 +181,7 @@ function sFeed(){
     html+='</div>';
     html+=partsHtml;
     var shareBtn='<button onclick="if(navigator.share){navigator.share({title:\'Moto del Mes RS Pro Parts\',text:\'Vota por '+e.username+'!\',url:\'https://rsproparts.github.io/rs-pro-parts\'})}else{window.open(\'https://www.instagram.com/\')};" style="width:100%;padding:8px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-weight:700;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:6px;" onmouseover="this.style.borderColor=\'#E31B23\';this.style.color=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\';this.style.color=\'rgba(255,255,255,0.5)\'">📲 Compartir</button>';
-    html+='<div style="padding:12px;">'+voteHtml+shareBtn+'</div>';
+    html+='<div style="padding:8px 12px;display:flex;gap:6px;">'+voteHtml+commentBtn+shareBtn+'</div>';
     html+='</div>';
   });
   html+='</div>';
