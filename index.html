@@ -219,7 +219,7 @@ function rHdr(){
 }
 
 function loadE(){
-  getCountFromServer(collection(db,"users")).then(function(snap){userCount=snap.data().count;}).catch(function(){userCount=0;});
+  getCountFromServer(collection(db,"users")).then(function(snap){userCount=214+snap.data().count;if(["feed"].includes(tab))rScr();}).catch(function(){userCount=214;});
   onSnapshot(query(collection(db,"entries"),orderBy("votes","desc")),function(snap){
     entries=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(["feed","ranking","profile"].includes(tab))rScr();
