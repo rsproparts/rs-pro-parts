@@ -45,7 +45,7 @@ input,button{font-family:"Space Grotesk",sans-serif;}
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile,sendEmailVerification}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import{getFirestore,collection,addDoc,doc,setDoc,updateDoc,deleteDoc,increment,arrayUnion,onSnapshot,query,orderBy}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const CC="ddozrdmok",CP="rs_pro_parts",ADMIN="rsmotoparts.mdp@gmail.com";
@@ -72,6 +72,10 @@ window.go=function(t){
 };
 window.doVote=async function(id){
   if(!user)return;
+  if(!user.emailVerified){
+    alert("Tenés que verificar tu email antes de votar. Revisá tu casilla de correo.");
+    return;
+  }
   await updateDoc(doc(db,"entries",id),{votes:increment(1),voters:arrayUnion(user.uid)});
 };
 window.doDelete=async function(id){
@@ -79,6 +83,15 @@ window.doDelete=async function(id){
   await deleteDoc(doc(db,"entries",id));
 };
 window.doLogout=async function(){await signOut(auth);tab="feed";rNav();rScr();};
+window.doResendVerif=async function(){
+  if(!user)return;
+  try{
+    await sendEmailVerification(user);
+    alert("Email reenviado. Revisá tu casilla.");
+  }catch(e){
+    alert("Esperá unos minutos antes de reenviar.");
+  }
+};
 window.toggleAM=function(){amode=amode==="login"?"register":"login";rScr();};
 
 window.doStoryById=function(id){
@@ -223,8 +236,10 @@ function sFeed(){
       partsHtml+='</div></div>';
     }
     var voteHtml="";
-    if(user){
+    if(user&&user.emailVerified){
       voteHtml='<button onclick="doVote(\''+e.id+'\')" '+(voted?'disabled':'')+' style="flex:1;padding:12px;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;border:none;cursor:'+(voted?'not-allowed':'pointer')+';background:'+(voted?'rgba(255,255,255,0.05)':'#E31B23')+';color:'+(voted?'rgba(255,255,255,0.3)':'white')+';">'+(voted?'&#10003; VOTASTE':'&#128293; VOTAR')+'</button>';
+    }else if(user&&!user.emailVerified){
+      voteHtml='<button onclick="alert(\'Verificá tu email para poder votar. Revisá tu casilla.\')" style="flex:1;padding:12px;font-weight:900;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;border:none;cursor:pointer;background:rgba(255,180,0,0.12);color:rgba(255,180,0,0.8);">⚠️ VERIFICÁ TU EMAIL</button>';
     }else{
       voteHtml='<button onclick="go(\'profile\')" style="flex:1;padding:12px;font-weight:900;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;background:#E31B23;color:white;">👤 REGISTRATE PARA VOTAR</button>';
     }
@@ -291,6 +306,7 @@ function sRank(){
 
 function sUpload(){
   if(!user)return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:48px;">📸</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;">Registrate primero</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0;">Necesitas una cuenta para participar.</p><button onclick="go(\'auth\')" style="background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Crear cuenta</button></div>';
+  if(!user.emailVerified)return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:56px;">✉️</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:18px;">Verificá tu email</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:8px 0;line-height:1.6;">Para subir tu moto necesitás confirmar<br>tu dirección de email.</p><p style="color:rgba(255,255,255,0.3);font-size:12px;margin:0;">Revisá tu casilla y hacé click en el link.</p><button onclick="window.doResendVerif()" style="margin-top:16px;background:transparent;border:1px solid rgba(227,27,35,0.5);color:#E31B23;padding:10px 24px;font-weight:700;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Reenviar email</button></div>';
   var html='<div style="padding:16px;display:flex;flex-direction:column;gap:14px;">';
   html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Participar</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">Subi tu Moto</h2></div>';
   html+='<div id="pzone" onclick="document.getElementById(\'finput\').click()" style="border:2px dashed rgba(255,255,255,0.15);border-radius:2px;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;" onmouseover="this.style.borderColor=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.15)\'"><span style="font-size:36px;">📸</span><p style="font-weight:900;text-transform:uppercase;font-size:13px;margin:0;">Elegi una foto</p><p style="color:rgba(255,255,255,0.3);font-size:11px;margin:0;">JPG o PNG · Max 10MB</p></div>';
@@ -438,6 +454,7 @@ window.doAuth=async function(){
     if(amode==="register"){
       var c=await createUserWithEmailAndPassword(auth,email,pass);
       await updateProfile(c.user,{displayName:uname});
+      await sendEmailVerification(c.user);
       userCount++;
       try{await setDoc(doc(db,"users",c.user.uid),{username:uname,createdAt:new Date().toISOString()});}catch(ex){}
     }else{
