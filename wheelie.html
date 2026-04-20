@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -56,9 +55,11 @@ canvas{display:block;touch-action:none;}
 .score-item .n{font-family:'Bebas Neue',sans-serif;font-size:36px;color:white;line-height:1;}
 .score-item .l{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:0.15em;text-transform:uppercase;}
 
-/* HOLD BUTTON */
-#hold-btn{position:fixed;bottom:0;left:0;width:100%;height:45%;background:transparent;z-index:5;touch-action:none;-webkit-tap-highlight-color:transparent;}
-#hold-hint{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;color:rgba(255,255,255,0.2);letter-spacing:0.2em;text-transform:uppercase;pointer-events:none;animation:pulse 2s infinite;}
+/* TWO BUTTONS */
+#btn-accel{position:fixed;bottom:0;right:0;width:50%;height:45%;background:rgba(227,27,35,0.04);z-index:5;touch-action:none;-webkit-tap-highlight-color:transparent;border-left:1px solid rgba(227,27,35,0.1);}
+#btn-brake{position:fixed;bottom:0;left:0;width:50%;height:45%;background:rgba(255,255,255,0.02);z-index:5;touch-action:none;-webkit-tap-highlight-color:transparent;}
+#btn-accel-label{position:fixed;bottom:20px;right:0;width:50%;text-align:center;font-size:11px;color:rgba(227,27,35,0.4);letter-spacing:0.2em;text-transform:uppercase;pointer-events:none;animation:pulse 2s infinite;}
+#btn-brake-label{position:fixed;bottom:20px;left:0;width:50%;text-align:center;font-size:11px;color:rgba(255,255,255,0.2);letter-spacing:0.2em;text-transform:uppercase;pointer-events:none;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:0.3}50%{opacity:0.8}}
 
 /* GROUND FLASH */
@@ -110,9 +111,11 @@ canvas{display:block;touch-action:none;}
   <div id="combo"></div>
 </div>
 
-<!-- HOLD BUTTON -->
-<div id="hold-btn"></div>
-<div id="hold-hint">MANTENÉ PRESIONADO</div>
+<!-- TWO BUTTONS -->
+<div id="btn-accel"></div>
+<div id="btn-brake"></div>
+<div id="btn-accel-label">🔴 ACELERADOR</div>
+<div id="btn-brake-label">FRENO ⬇</div>
 
 <!-- CRASH FLASH -->
 <div id="crash-flash"></div>
@@ -134,7 +137,7 @@ const RS_RED = '#E31B23';
 // ── STATE ──
 let canvas, ctx, W, H, GY;
 let gameState = 'idle'; // idle, playing, dead
-let holding = false;
+let accelerating = false, braking = false;
 let score = 0, bestScore = 0, wheelieCount = 0;
 let wheelieDist = 0, currentWheelieTime = 0;
 let frameId;
@@ -179,13 +182,26 @@ function resize() {
 
 // ── INPUT ──
 function setupInput() {
-  const btn = document.getElementById('hold-btn');
-  btn.addEventListener('touchstart', e => { e.preventDefault(); holding = true; }, {passive:false});
-  btn.addEventListener('touchend', e => { e.preventDefault(); holding = false; }, {passive:false});
-  btn.addEventListener('mousedown', () => holding = true);
-  btn.addEventListener('mouseup', () => holding = false);
-  document.addEventListener('keydown', e => { if(e.code === 'Space') { e.preventDefault(); holding = true; }});
-  document.addEventListener('keyup', e => { if(e.code === 'Space') holding = false; });
+  const accel = document.getElementById('btn-accel');
+  const brake = document.getElementById('btn-brake');
+  accel.addEventListener('touchstart', e => { e.preventDefault(); accelerating = true; }, {passive:false});
+  accel.addEventListener('touchend', e => { e.preventDefault(); accelerating = false; }, {passive:false});
+  accel.addEventListener('touchcancel', e => { e.preventDefault(); accelerating = false; }, {passive:false});
+  brake.addEventListener('touchstart', e => { e.preventDefault(); braking = true; }, {passive:false});
+  brake.addEventListener('touchend', e => { e.preventDefault(); braking = false; }, {passive:false});
+  brake.addEventListener('touchcancel', e => { e.preventDefault(); braking = false; }, {passive:false});
+  accel.addEventListener('mousedown', () => accelerating = true);
+  accel.addEventListener('mouseup', () => accelerating = false);
+  brake.addEventListener('mousedown', () => braking = true);
+  brake.addEventListener('mouseup', () => braking = false);
+  document.addEventListener('keydown', e => {
+    if(e.code === 'ArrowRight') { e.preventDefault(); accelerating = true; }
+    if(e.code === 'ArrowLeft') { e.preventDefault(); braking = true; }
+  });
+  document.addEventListener('keyup', e => {
+    if(e.code === 'ArrowRight') accelerating = false;
+    if(e.code === 'ArrowLeft') braking = false;
+  });
 }
 
 // ── START ──
@@ -196,7 +212,7 @@ function startGame() {
 
   score = 0; wheelieCount = 0; wheelieDist = 0; scoreFloat = 0;
   camX = 0; obstacles = []; particles = []; comboMult = 1; comboTimer = 0;
-  holding = false;
+  accelerating = false; braking = false;
 
   moto = {
     x: W * 0.25, y: GY,
@@ -252,12 +268,14 @@ function update() {
   m.vx = m.speed;
 
   // Wheelie physics
-  if (holding && onGround) {
-    m.angVel += WHEELIE_POWER * 0.06;
-    document.getElementById('hold-hint').style.opacity = '0';
+  if (accelerating && onGround) {
+    m.angVel += WHEELIE_POWER * 0.06; // nose up
+    document.getElementById('btn-accel-label').style.opacity = '0';
+    document.getElementById('btn-brake-label').style.opacity = '0';
+  } else if (braking) {
+    m.angVel += 0.12; // nose down fast
   } else {
-    // gravity on angle
-    m.angVel += 0.04;
+    m.angVel += 0.035; // gravity brings nose down
   }
 
   m.angVel *= WHEELIE_DAMPING;
@@ -356,7 +374,7 @@ function update() {
 function crash() {
   if (gameState !== 'playing') return;
   gameState = 'dead';
-  holding = false;
+  accelerating = false; braking = false;
 
   // Flash
   const flash = document.getElementById('crash-flash');
@@ -541,129 +559,284 @@ function drawMoto() {
   ctx.fill();
   ctx.restore();
 
-  // MOTO BODY (simple side-view pixel art style)
-  // Rear wheel
-  drawWheel(ctx, -28, 0, 18);
-  // Front wheel
-  drawWheel(ctx, 28, 0, 16);
+  // ── ENDURO XR STYLE MOTO ──
+  const t = Date.now();
 
-  // Frame
+  // Rear wheel (bigger, knobby)
+  drawEnduroWheel(ctx, -32, 0, 22);
+  // Front wheel (bigger)
+  drawEnduroWheel(ctx, 34, 0, 22);
+
+  // Swing arm
   ctx.strokeStyle = '#555';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(-6, -8);
+  ctx.lineTo(-32, 0);
+  ctx.stroke();
+
+  // Main frame (high, enduro style)
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 4;
+  // Down tube
+  ctx.beginPath();
+  ctx.moveTo(0, -10);
+  ctx.lineTo(-8, -34);
+  ctx.stroke();
+  // Top tube
+  ctx.beginPath();
+  ctx.moveTo(-8, -34);
+  ctx.lineTo(14, -34);
+  ctx.stroke();
+  // Seat tube
+  ctx.beginPath();
+  ctx.moveTo(14, -34);
+  ctx.lineTo(8, -12);
+  ctx.stroke();
+  // Fork
+  ctx.strokeStyle = '#aaa';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(20, -28);
+  ctx.lineTo(34, 0);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(22, -28);
+  ctx.lineTo(36, 0);
+  ctx.stroke();
+
+  // Fork brace
+  ctx.strokeStyle = '#888';
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(-20, -8);
-  ctx.lineTo(10, -22);
-  ctx.lineTo(28, -12);
+  ctx.moveTo(21, -14);
+  ctx.lineTo(35, -14);
   ctx.stroke();
 
+  // Subframe (seat area)
+  ctx.strokeStyle = '#666';
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(-20, -8);
-  ctx.lineTo(-10, -24);
-  ctx.lineTo(10, -22);
+  ctx.moveTo(-8, -34);
+  ctx.lineTo(-18, -28);
+  ctx.lineTo(-22, -14);
   ctx.stroke();
 
-  // Engine/body
-  ctx.fillStyle = '#222';
+  // Engine block
+  ctx.fillStyle = '#2a2a2a';
   ctx.beginPath();
-  ctx.moveTo(-18, -6);
-  ctx.lineTo(-8, -24);
-  ctx.lineTo(10, -22);
-  ctx.lineTo(22, -10);
-  ctx.lineTo(10, -4);
+  ctx.moveTo(-2, -10);
+  ctx.lineTo(0, -28);
+  ctx.lineTo(14, -28);
+  ctx.lineTo(14, -10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#444';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Engine fins
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 1;
+  for(let fi=0; fi<4; fi++){
+    ctx.beginPath();
+    ctx.moveTo(1, -12 - fi*4);
+    ctx.lineTo(13, -12 - fi*4);
+    ctx.stroke();
+  }
+
+  // Exhaust pipe (high mount enduro style)
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(8, -12);
+  ctx.quadraticCurveTo(20, -4, 24, 4);
+  ctx.stroke();
+  // Muffler
+  ctx.fillStyle = '#666';
+  ctx.beginPath();
+  ctx.roundRect(18, 0, 20, 8, 3);
+  ctx.fill();
+
+  // Red plastic side cover
+  ctx.fillStyle = RS_RED;
+  ctx.beginPath();
+  ctx.moveTo(-2, -28);
+  ctx.lineTo(12, -30);
+  ctx.lineTo(16, -22);
+  ctx.lineTo(12, -16);
+  ctx.lineTo(-4, -16);
   ctx.closePath();
   ctx.fill();
 
-  // Tank
+  // White lower panel
+  ctx.fillStyle = '#e8e8e8';
+  ctx.beginPath();
+  ctx.moveTo(-4, -16);
+  ctx.lineTo(12, -16);
+  ctx.lineTo(14, -10);
+  ctx.lineTo(-2, -10);
+  ctx.closePath();
+  ctx.fill();
+
+  // Red tank
   ctx.fillStyle = RS_RED;
   ctx.beginPath();
-  ctx.moveTo(-8, -24);
-  ctx.lineTo(8, -28);
-  ctx.lineTo(16, -22);
-  ctx.lineTo(10, -22);
+  ctx.moveTo(-6, -34);
+  ctx.lineTo(14, -36);
+  ctx.lineTo(18, -28);
+  ctx.lineTo(12, -28);
+  ctx.lineTo(-2, -28);
   ctx.closePath();
   ctx.fill();
 
   // Seat
   ctx.fillStyle = '#1a1a1a';
   ctx.beginPath();
-  ctx.moveTo(-18, -18);
-  ctx.lineTo(-8, -26);
-  ctx.lineTo(6, -26);
-  ctx.lineTo(0, -18);
+  ctx.moveTo(-20, -28);
+  ctx.lineTo(-8, -36);
+  ctx.lineTo(6, -36);
+  ctx.lineTo(0, -28);
   ctx.closePath();
   ctx.fill();
 
-  // Exhaust
-  ctx.strokeStyle = '#444';
+  // Headlight (round enduro style)
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.arc(30, -24, 9, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,220,100,0.8)';
+  ctx.beginPath();
+  ctx.arc(30, -24, 6, 0, Math.PI*2);
+  ctx.fill();
+
+  // Headlight shroud (red)
+  ctx.fillStyle = RS_RED;
+  ctx.beginPath();
+  ctx.moveTo(16, -32);
+  ctx.lineTo(36, -32);
+  ctx.lineTo(40, -22);
+  ctx.lineTo(34, -18);
+  ctx.lineTo(20, -20);
+  ctx.lineTo(14, -26);
+  ctx.closePath();
+  ctx.fill();
+
+  // Headlight cutout
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.arc(30, -24, 8, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,220,150,0.9)';
+  ctx.beginPath();
+  ctx.arc(30, -24, 5, 0, Math.PI*2);
+  ctx.fill();
+
+  // Handlebar (high, wide enduro style)
+  ctx.strokeStyle = '#888';
   ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.moveTo(-10, -4);
-  ctx.lineTo(-30, -2);
-  ctx.lineTo(-34, 4);
+  ctx.moveTo(14, -36);
+  ctx.lineTo(12, -44);
+  ctx.stroke();
+  ctx.strokeStyle = '#777';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(2, -44);
+  ctx.lineTo(22, -44);
+  ctx.stroke();
+  // Grips
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(2, -44);
+  ctx.lineTo(6, -44);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(18, -44);
+  ctx.lineTo(22, -44);
   ctx.stroke();
 
   // Exhaust smoke when wheeling
-  if (m.angle < -0.2) {
-    ctx.globalAlpha = 0.4 * Math.abs(m.angle);
-    ctx.fillStyle = '#666';
-    ctx.beginPath();
-    ctx.arc(-36 + Math.sin(Date.now()*0.01)*2, 6 + Math.sin(Date.now()*0.008)*2, 6, 0, Math.PI*2);
-    ctx.fill();
+  if (m.angle < -0.3) {
+    for(let s=0;s<3;s++){
+      ctx.globalAlpha = 0.2 * Math.abs(m.angle) * (1-s*0.3);
+      ctx.fillStyle = '#888';
+      ctx.beginPath();
+      ctx.arc(38 + s*8 + Math.sin(t*0.01+s)*3, 4 + s*3, 4+s*2, 0, Math.PI*2);
+      ctx.fill();
+    }
     ctx.globalAlpha = 1;
   }
 
-  // Handlebar
-  ctx.strokeStyle = '#666';
-  ctx.lineWidth = 3;
+  // Headlight glow
+  ctx.globalAlpha = 0.25;
+  const gl = ctx.createRadialGradient(30, -24, 0, 30, -24, 30);
+  gl.addColorStop(0, 'rgba(255,220,100,0.9)');
+  gl.addColorStop(1, 'rgba(255,220,100,0)');
+  ctx.fillStyle = gl;
   ctx.beginPath();
-  ctx.moveTo(18, -22);
-  ctx.lineTo(22, -30);
-  ctx.stroke();
+  ctx.arc(30, -24, 30, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
 
   // Rider
   drawRider(ctx, m.angle);
-
-  // Headlight glow
-  if (m.speed > 4) {
-    ctx.globalAlpha = 0.3;
-    const gl = ctx.createRadialGradient(30, -14, 0, 30, -14, 25);
-    gl.addColorStop(0, 'rgba(255,220,100,0.8)');
-    gl.addColorStop(1, 'rgba(255,220,100,0)');
-    ctx.fillStyle = gl;
-    ctx.beginPath();
-    ctx.arc(30, -14, 25, 0, Math.PI*2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
 
   ctx.restore();
 }
 
 function drawWheel(ctx, x, y, r) {
+  drawEnduroWheel(ctx, x, y, r);
+}
+
+function drawEnduroWheel(ctx, x, y, r) {
   ctx.save();
   ctx.translate(x, y);
-  // Tire
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 6;
+  const t = Date.now();
+  // Knobby tire (thick)
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 10;
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, Math.PI*2);
   ctx.stroke();
-  // Rim
-  ctx.strokeStyle = '#888';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(0, 0, r - 4, 0, Math.PI*2);
-  ctx.stroke();
-  // Spokes
-  ctx.strokeStyle = '#666';
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2 + Date.now() * 0.005;
+  // Tire tread knobs
+  ctx.strokeStyle = '#2a2a2a';
+  ctx.lineWidth = 3;
+  for(let i=0;i<12;i++){
+    const a = (i/12)*Math.PI*2 + t*0.004;
+    const ox = Math.cos(a)*(r+2), oy = Math.sin(a)*(r+2);
+    const ix = Math.cos(a)*(r-4), iy = Math.sin(a)*(r-4);
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(Math.cos(a)*(r-4), Math.sin(a)*(r-4));
+    ctx.moveTo(ix,iy);
+    ctx.lineTo(ox,oy);
     ctx.stroke();
   }
+  // Rim (silver spoked enduro style)
+  ctx.strokeStyle = '#ccc';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 0, r-6, 0, Math.PI*2);
+  ctx.stroke();
+  // Spokes (thin, many)
+  ctx.strokeStyle = '#aaa';
+  ctx.lineWidth = 1;
+  for(let i=0;i<18;i++){
+    const a = (i/18)*Math.PI*2 + t*0.004;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(Math.cos(a)*(r-6), Math.sin(a)*(r-6));
+    ctx.stroke();
+  }
+  // Hub
+  ctx.fillStyle = '#888';
+  ctx.beginPath();
+  ctx.arc(0,0,5,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.arc(0,0,3,0,Math.PI*2);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -731,30 +904,21 @@ function drawPreview() {
   pctx.lineTo(260, 85);
   pctx.stroke();
 
-  // Moto preview
+  // Moto preview (enduro style)
   pctx.save();
   pctx.translate(130, 85);
-  pctx.rotate(-0.4); // wheelie pose
-  drawWheel(pctx, -28, 0, 18);
-  drawWheel(pctx, 28, 0, 16);
+  pctx.rotate(-0.35);
+  drawEnduroWheel(pctx, -32, 0, 22);
+  drawEnduroWheel(pctx, 34, 0, 22);
+  // Frame
+  pctx.strokeStyle = '#888'; pctx.lineWidth = 4;
+  pctx.beginPath(); pctx.moveTo(0,-10); pctx.lineTo(-8,-34); pctx.stroke();
+  pctx.beginPath(); pctx.moveTo(-8,-34); pctx.lineTo(14,-34); pctx.stroke();
+  // Red panels
   pctx.fillStyle = RS_RED;
-  pctx.beginPath();
-  pctx.moveTo(-8, -24);
-  pctx.lineTo(8, -28);
-  pctx.lineTo(16, -22);
-  pctx.lineTo(10, -22);
-  pctx.closePath();
-  pctx.fill();
-  pctx.fillStyle = '#222';
-  pctx.beginPath();
-  pctx.moveTo(-18, -6);
-  pctx.lineTo(-8, -24);
-  pctx.lineTo(10, -22);
-  pctx.lineTo(22, -10);
-  pctx.lineTo(10, -4);
-  pctx.closePath();
-  pctx.fill();
-  drawRider(pctx, -0.4);
+  pctx.beginPath(); pctx.moveTo(-2,-28); pctx.lineTo(12,-30); pctx.lineTo(16,-22); pctx.lineTo(-4,-16); pctx.closePath(); pctx.fill();
+  pctx.beginPath(); pctx.moveTo(-6,-34); pctx.lineTo(14,-36); pctx.lineTo(16,-28); pctx.lineTo(-2,-28); pctx.closePath(); pctx.fill();
+  drawRider(pctx, -0.35);
   pctx.restore();
 
   // Text
