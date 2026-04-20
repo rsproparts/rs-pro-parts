@@ -46,12 +46,12 @@ input,button{font-family:"Space Grotesk",sans-serif;}
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import{getFirestore,collection,addDoc,doc,updateDoc,deleteDoc,increment,arrayUnion,onSnapshot,query,orderBy}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import{getFirestore,collection,addDoc,doc,setDoc,updateDoc,deleteDoc,increment,arrayUnion,onSnapshot,query,orderBy,getCountFromServer}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const CC="ddozrdmok",CP="rs_pro_parts",ADMIN="rsmotoparts.mdp@gmail.com";
 const FC={apiKey:"AIzaSyDdetAoPKD2jw4-Ar0breOf3fKCxGG8bdM",authDomain:"rs-pro-parts.firebaseapp.com",projectId:"rs-pro-parts",storageBucket:"rs-pro-parts.firebasestorage.app",messagingSenderId:"10474406260",appId:"1:10474406260:web:937cdd1db33fdf2d406c21"};
 const FA=initializeApp(FC),auth=getAuth(FA),db=getFirestore(FA);
-let user=null,tab="feed",entries=[],amode="login";
+let user=null,tab="feed",entries=[],amode="login",userCount=0;
 const $=id=>document.getElementById(id);
 const fv=n=>n>=1000?(n/1000).toFixed(1)+"k":String(n||0);
 const MEDALS=["🥇","🥈","🥉"];
@@ -219,6 +219,7 @@ function rHdr(){
 }
 
 function loadE(){
+  getCountFromServer(collection(db,"users")).then(function(snap){userCount=snap.data().count;}).catch(function(){userCount=0;});
   onSnapshot(query(collection(db,"entries"),orderBy("votes","desc")),function(snap){
     entries=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(["feed","ranking","profile"].includes(tab))rScr();
@@ -246,8 +247,7 @@ function sFeed(){
   html+='<div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.05);">';
   html+='<div style="flex:1;padding:14px 10px;text-align:center;border-right:1px solid rgba(255,255,255,0.05);"><p style="font-size:24px;font-weight:900;color:#E31B23;margin:0;line-height:1;">'+entries.length+'</p><p style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:4px 0 0;">Motos</p></div>';
   html+='<div style="flex:1;padding:14px 10px;text-align:center;border-right:1px solid rgba(255,255,255,0.05);"><p style="font-size:24px;font-weight:900;color:#E31B23;margin:0;line-height:1;">'+totalVotos+'</p><p style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:4px 0 0;">Votos</p></div>';
-  var uniqueUsers=Object.keys(entries.reduce(function(acc,e){if(e.uid)acc[e.uid]=1;return acc;},{})).length;
-  html+='<div style="flex:1;padding:14px 10px;text-align:center;"><p style="font-size:24px;font-weight:900;color:#E31B23;margin:0;line-height:1;">'+uniqueUsers+'</p><p style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:4px 0 0;">Usuarios</p></div>';
+  html+='<div style="flex:1;padding:14px 10px;text-align:center;"><p style="font-size:24px;font-weight:900;color:#E31B23;margin:0;line-height:1;">'+userCount+'</p><p style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:4px 0 0;">Usuarios</p></div>';
   html+='</div>';
   html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Votacion activa</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">MOTO DEL MES</h2><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(227,27,35,0.1);border:1px solid rgba(227,27,35,0.3);padding:5px 14px;margin-top:8px;border-radius:2px;"><span style="font-size:11px;font-weight:900;color:'+urgColor+'">&#9201; '+daysLeft+' dia'+(daysLeft!==1?'s':'')+' para el cierre</span></div>';
   html+='<div style="margin-top:14px;width:100%;background:#1c1b1b;border-radius:4px;overflow:hidden;border:1px solid rgba(227,27,35,0.45);"><div style="background:#E31B23;padding:7px 14px;text-align:center;"><span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.18em;">🏆 Participá por</span></div><div style="padding:12px;display:flex;align-items:center;gap:12px;"><img src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776399304/PEDALIN_nbqwzc.jpg" style="width:120px;height:100px;object-fit:cover;border-radius:3px;cursor:zoom-in;" onclick="openLB(\'https://res.cloudinary.com/ddozrdmok/image/upload/v1776399304/PEDALIN_nbqwzc.jpg\')" /><div style="flex:1;"><p style="font-size:17px;font-weight:900;text-transform:uppercase;font-style:italic;margin:0;color:white;">PEDALINES</p><p style="font-size:12px;font-weight:900;color:#E31B23;margin:3px 0 5px;text-transform:uppercase;">RS DESIGN</p><p style="font-size:10px;color:rgba(255,255,255,0.35);margin:0;">Aluminio CNC · Anodizado rojo</p></div></div></div></div>';
@@ -280,7 +280,7 @@ function sFeed(){
     if(user){
       voteHtml='<button onclick="doVote(\''+e.id+'\')" '+(voted?'disabled':'')+' style="flex:1;padding:12px;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;border:none;cursor:'+(voted?'not-allowed':'pointer')+';background:'+(voted?'rgba(255,255,255,0.05)':'#E31B23')+';color:'+(voted?'rgba(255,255,255,0.3)':'white')+';">'+(voted?'&#10003; VOTASTE':'&#128293; VOTAR')+'</button>';
     }else{
-      voteHtml='<div style="flex:1;text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:12px 0;">Registrate para votar</div>';
+      voteHtml='<button onclick="go(\'profile\')" style="flex:1;padding:12px;font-weight:900;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;background:#E31B23;color:white;">👤 REGISTRATE PARA VOTAR</button>';
     }
 
     var storyBtn='<button id="storybtn-'+e.id+'" onclick="doStoryById(\''+e.id+'\')" style="padding:10px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-weight:700;font-size:10px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.borderColor=\'#E31B23\';this.style.color=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\';this.style.color=\'rgba(255,255,255,0.5)\'">📸 Story</button>';
@@ -476,7 +476,7 @@ window.doAuth=async function(){
   if(amode==="register"&&!uname){err.textContent="Elegi un nombre de piloto";err.style.display="block";return;}
   err.style.display="none";btn.textContent="...";btn.disabled=true;
   try{
-    if(amode==="register"){var c=await createUserWithEmailAndPassword(auth,email,pass);await updateProfile(c.user,{displayName:uname});}
+    if(amode==="register"){var c=await createUserWithEmailAndPassword(auth,email,pass);await updateProfile(c.user,{displayName:uname});try{await setDoc(doc(db,"users",c.user.uid),{username:uname,createdAt:new Date().toISOString()});}catch(ex){}}
     else{await signInWithEmailAndPassword(auth,email,pass);}
     amode="login";tab="feed";rNav();rScr();
   }catch(e){
