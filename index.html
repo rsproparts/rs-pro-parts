@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <style>
 *{box-sizing:border-box;}
 body{margin:0;background:#131313;font-family:"Space Grotesk",sans-serif;color:white;}
@@ -21,7 +20,6 @@ input,button{font-family:"Space Grotesk",sans-serif;}
 #lb.open{display:flex;}
 #lb img{max-width:95vw;max-height:90vh;object-fit:contain;}
 #lb-x{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:white;font-size:18px;width:40px;height:40px;border-radius:50%;cursor:pointer;}
-/* Story canvas hidden */
 #story-canvas{display:none;}
 </style>
 </head>
@@ -48,7 +46,7 @@ input,button{font-family:"Space Grotesk",sans-serif;}
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import{getFirestore,collection,addDoc,doc,setDoc,updateDoc,deleteDoc,increment,arrayUnion,getDocs,onSnapshot,query,orderBy}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import{getFirestore,collection,addDoc,doc,setDoc,updateDoc,deleteDoc,increment,arrayUnion,onSnapshot,query,orderBy}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const CC="ddozrdmok",CP="rs_pro_parts",ADMIN="rsmotoparts.mdp@gmail.com";
 const FC={apiKey:"AIzaSyDdetAoPKD2jw4-Ar0breOf3fKCxGG8bdM",authDomain:"rs-pro-parts.firebaseapp.com",projectId:"rs-pro-parts",storageBucket:"rs-pro-parts.firebasestorage.app",messagingSenderId:"10474406260",appId:"1:10474406260:web:937cdd1db33fdf2d406c21"};
@@ -74,10 +72,6 @@ window.go=function(t){
 };
 window.doVote=async function(id){
   if(!user)return;
-  if(!user.emailVerified){
-    alert("Verificá tu email antes de votar. Revisá tu casilla de correo.");
-    return;
-  }
   await updateDoc(doc(db,"entries",id),{votes:increment(1),voters:arrayUnion(user.uid)});
 };
 window.doDelete=async function(id){
@@ -85,87 +79,40 @@ window.doDelete=async function(id){
   await deleteDoc(doc(db,"entries",id));
 };
 window.doLogout=async function(){await signOut(auth);tab="feed";rNav();rScr();};
-
 window.toggleAM=function(){amode=amode==="login"?"register":"login";rScr();};
 
-// ── SHARE STORY ──
 window.doStoryById=function(id){
   var entry=entries.find(function(e){return e.id===id;});
   if(entry) window.doStory(entry);
 };
-
 window.doStory=async function(entry){
   var btn=$("storybtn-"+entry.id);
   if(btn){btn.textContent="⏳";btn.disabled=true;}
   try{
-    var canvas=$("story-canvas");
-    var ctx=canvas.getContext("2d");
-    var W=1080, H=1920;
-    canvas.width=W; canvas.height=H;
-
-    // ── ZONA 1: HEADER negro con logo (0 a 200)
-    ctx.fillStyle="#0f0f0f";
-    ctx.fillRect(0,0,W,200);
-    var logo=new Image();
-    logo.crossOrigin="anonymous";
+    var canvas=$("story-canvas");var ctx=canvas.getContext("2d");
+    var W=1080,H=1920;canvas.width=W;canvas.height=H;
+    ctx.fillStyle="#0f0f0f";ctx.fillRect(0,0,W,200);
+    var logo=new Image();logo.crossOrigin="anonymous";
     await new Promise(function(res){logo.onload=res;logo.onerror=res;logo.src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776258543/Logo_rama_1_uuvrq1.png";});
-    var lH=120, lW=lH*(logo.width/logo.height);
-    ctx.drawImage(logo, W/2-lW/2, 40, lW, lH);
-
-    // ── ZONA 2: FOTO cuadrada (200 a 1280 = 1080px)
-    var img=new Image();
-    img.crossOrigin="anonymous";
+    var lH=120,lW=lH*(logo.width/logo.height);
+    ctx.drawImage(logo,W/2-lW/2,40,lW,lH);
+    var img=new Image();img.crossOrigin="anonymous";
     await new Promise(function(res){img.onload=res;img.onerror=res;img.src=entry.imageUrl;});
-    var iS=Math.min(img.width,img.height);
-    var iX=(img.width-iS)/2;
-    var iY=(img.height-iS)/2;
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0,200,W,W);
-    ctx.clip();
-    ctx.drawImage(img,iX,iY,iS,iS,0,200,W,W);
-    ctx.restore();
-
-    // ── ZONA 3: TEXTO negro debajo (1280 a 1920)
-    ctx.fillStyle="#0f0f0f";
-    ctx.fillRect(0,200+W,W,H-(200+W));
-
-    // separador rojo
-    ctx.fillStyle="#E31B23";
-    ctx.fillRect(0,200+W,W,6);
-
-    ctx.textAlign="center";
-    ctx.textBaseline="top";
-
-    // nombre - auto tamaño
+    var iS=Math.min(img.width,img.height),iX=(img.width-iS)/2,iY=(img.height-iS)/2;
+    ctx.save();ctx.beginPath();ctx.rect(0,200,W,W);ctx.clip();
+    ctx.drawImage(img,iX,iY,iS,iS,0,200,W,W);ctx.restore();
+    ctx.fillStyle="#0f0f0f";ctx.fillRect(0,200+W,W,H-(200+W));
+    ctx.fillStyle="#E31B23";ctx.fillRect(0,200+W,W,6);
+    ctx.textAlign="center";ctx.textBaseline="top";
     var name=(entry.username||"PILOTO").toUpperCase();
-    var fs=80;
-    ctx.font="bold "+fs+"px Arial";
+    var fs=80;ctx.font="bold "+fs+"px Arial";
     while(ctx.measureText(name).width>W-100&&fs>40){fs-=4;ctx.font="bold "+fs+"px Arial";}
-    ctx.fillStyle="#ffffff";
-    ctx.fillText(name, W/2, 200+W+50);
-
-    // modelo moto
-    ctx.fillStyle="rgba(255,255,255,0.6)";
-    ctx.font="50px Arial";
-    ctx.fillText(entry.moto||"", W/2, 200+W+50+fs+30);
-
-    // ciudad
-    ctx.font="46px Arial";
-    ctx.fillText("📍 "+(entry.location||""), W/2, 200+W+50+fs+30+80);
-
-    // instagram
-    if(entry.instagram){
-      ctx.fillStyle="#E31B23";
-      ctx.font="bold 54px Arial";
-      ctx.fillText("@"+entry.instagram, W/2, 200+W+50+fs+30+80+80);
-    }
-
-    // barra roja inferior
-    ctx.fillStyle="#E31B23";
-    ctx.fillRect(0,H-10,W,10);
-
-    // export
+    ctx.fillStyle="#ffffff";ctx.fillText(name,W/2,200+W+50);
+    ctx.fillStyle="rgba(255,255,255,0.6)";ctx.font="50px Arial";
+    ctx.fillText(entry.moto||"",W/2,200+W+50+fs+30);
+    ctx.font="46px Arial";ctx.fillText("📍 "+(entry.location||""),W/2,200+W+50+fs+30+80);
+    if(entry.instagram){ctx.fillStyle="#E31B23";ctx.font="bold 54px Arial";ctx.fillText("@"+entry.instagram,W/2,200+W+50+fs+30+80+80);}
+    ctx.fillStyle="#E31B23";ctx.fillRect(0,H-10,W,10);
     canvas.toBlob(async function(blob){
       if(!blob){showStoryFallback(entry);return;}
       var file=new File([blob],"moto-del-mes.png",{type:"image/png"});
@@ -173,28 +120,17 @@ window.doStory=async function(entry){
         try{await navigator.share({files:[file],title:"Moto del Mes RS Pro Parts",text:"Vota por "+entry.username+"!"});}
         catch(e){if(e.name!=="AbortError")showStoryFallback(entry);}
       }else{
-        var a=document.createElement("a");
-        a.href=URL.createObjectURL(blob);
-        a.download="moto-del-mes-rspro.png";
-        a.click();
+        var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="moto-del-mes-rspro.png";a.click();
         showStoryFallback(entry);
       }
     },"image/png");
-  }catch(e){
-    console.error(e);showStoryFallback(entry);
-  }finally{
-    if(btn){btn.textContent="📸 Story";btn.disabled=false;}
-  }
+  }catch(e){console.error(e);showStoryFallback(entry);}
+  finally{if(btn){btn.textContent="📸 Story";btn.disabled=false;}}
 };
-
 function showStoryFallback(entry){
   var pop=document.createElement("div");
   pop.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9998;display:flex;align-items:flex-end;justify-content:center;";
-  pop.innerHTML='<div style="width:100%;max-width:430px;background:#131313;border-radius:16px 16px 0 0;padding:24px;text-align:center;border-top:2px solid #E31B23;">'
-    +'<p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 8px;">Imagen descargada ✓</p>'
-    +'<p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 16px;line-height:1.6;">Abrí Instagram → Stories → Galería<br>y seleccioná la imagen descargada.</p>'
-    +'<button onclick="this.parentElement.parentElement.remove()" style="width:100%;padding:12px;background:#E31B23;border:none;color:white;font-weight:900;font-size:14px;cursor:pointer;border-radius:4px;">Entendido</button>'
-    +'</div>';
+  pop.innerHTML='<div style="width:100%;max-width:430px;background:#131313;border-radius:16px 16px 0 0;padding:24px;text-align:center;border-top:2px solid #E31B23;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 8px;">Imagen descargada ✓</p><p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 16px;line-height:1.6;">Abrí Instagram → Stories → Galería<br>y seleccioná la imagen descargada.</p><button onclick="this.parentElement.parentElement.remove()" style="width:100%;padding:12px;background:#E31B23;border:none;color:white;font-weight:900;font-size:14px;cursor:pointer;border-radius:4px;">Entendido</button></div>';
   document.body.appendChild(pop);
   pop.addEventListener("click",function(e){if(e.target===pop)pop.remove();});
 }
@@ -226,7 +162,7 @@ function rHdr(){
 }
 
 function loadE(){
-  userCount=1034; // 1034 base + nuevos registros se suman solos
+  userCount=1034;
   onSnapshot(query(collection(db,"entries"),orderBy("votes","desc")),function(snap){
     entries=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(["feed","ranking","profile"].includes(tab))rScr();
@@ -238,17 +174,14 @@ function rScr(){
   el.className="screen fade-in";
   var map={feed:sFeed,ranking:sRank,upload:sUpload,profile:sProfile,auth:sAuth};
   el.innerHTML=(map[tab]||sFeed)();
-  // Render reCAPTCHA if on register screen
   if(tab==="auth"&&amode==="register"){
     setTimeout(function(){
-      var container=document.getElementById("recaptcha-container");
-      if(container&&window.grecaptcha&&!container.dataset.rendered){
-        try{
-          grecaptcha.render("recaptcha-container",{sitekey:"6LfEwcEsAAAAALIV11PZtoYmztB6YZQ8DZ6dS1Ng",theme:"dark"});
-          container.dataset.rendered="1";
-        }catch(ex){console.log("captcha render:",ex);}
+      var wrap=document.getElementById("captcha-wrap");
+      if(wrap&&!wrap.dataset.r&&window.grecaptcha&&window.grecaptcha.render){
+        try{window.grecaptcha.render("captcha-wrap",{sitekey:"6LfEwcEsAAAAALIV11PZtoYmztB6YZQ8DZ6dS1Ng",theme:"dark"});wrap.dataset.r="1";}
+        catch(ex){}
       }
-    },200);
+    },400);
   }
 }
 
@@ -274,23 +207,17 @@ function sFeed(){
   html+='<div style="background:#E31B23;padding:8px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">⚡</span><p style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Como ganar descuentos</p></div>';
   html+='<div style="padding:12px;display:flex;flex-direction:column;gap:8px;">';
   html+='<p style="font-size:11px;color:rgba(255,255,255,0.5);margin:0 0 4px;">Subi tu moto y recibí votos. Cada voto vale <strong style="color:white;">10 Puntos RS</strong>.</p>';
-  html+='<div style="display:flex;gap:8px;">';
-  html+='<div style="flex:1;background:#131313;border-radius:2px;padding:10px;border-left:3px solid #E31B23;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">100 PRS</p><p style="font-size:9px;color:rgba(255,255,255,0.5);margin:2px 0 0;text-transform:uppercase;font-weight:700;">= 5% descuento</p></div>';
-  html+='<div style="flex:1;background:#131313;border-radius:2px;padding:10px;border-left:3px solid #E31B23;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">200 PRS</p><p style="font-size:9px;color:rgba(255,255,255,0.5);margin:2px 0 0;text-transform:uppercase;font-weight:700;">= 10% descuento</p></div>';
-  html+='</div>';
+  html+='<div style="display:flex;gap:8px;"><div style="flex:1;background:#131313;border-radius:2px;padding:10px;border-left:3px solid #E31B23;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">100 PRS</p><p style="font-size:9px;color:rgba(255,255,255,0.5);margin:2px 0 0;text-transform:uppercase;font-weight:700;">= 5% descuento</p></div>';
+  html+='<div style="flex:1;background:#131313;border-radius:2px;padding:10px;border-left:3px solid #E31B23;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">200 PRS</p><p style="font-size:9px;color:rgba(255,255,255,0.5);margin:2px 0 0;text-transform:uppercase;font-weight:700;">= 10% descuento</p></div></div>';
   html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:0;">&#128247; Subi tu moto → recibis votos → acumulas Puntos RS → canjeas descuentos en la tienda.</p>';
   html+='</div></div>';
-
   entries.forEach(function(e,i){
     var voted=user&&e.voters&&e.voters.includes(user.uid);
     var pct=Math.round((e.votes||0)/max*100);
     var parts=e.parts?e.parts.filter(Boolean):[];
     var partsHtml="";
     if(parts.length>0){
-      partsHtml+='<div style="border-top:1px solid rgba(255,255,255,0.06);">';
-      partsHtml+='<button onclick="togMods(\''+e.id+'\')" style="width:100%;padding:10px 12px;background:transparent;border:none;color:rgba(255,255,255,0.5);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">';
-      partsHtml+='<span>&#9881; '+parts.length+' MODIFICACIONES</span><span id="modsarr-'+e.id+'">&#9660;</span>';
-      partsHtml+='</button>';
+      partsHtml+='<div style="border-top:1px solid rgba(255,255,255,0.06);"><button onclick="togMods(\''+e.id+'\')" style="width:100%;padding:10px 12px;background:transparent;border:none;color:rgba(255,255,255,0.5);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;display:flex;align-items:center;justify-content:space-between;"><span>&#9881; '+parts.length+' MODIFICACIONES</span><span id="modsarr-'+e.id+'">&#9660;</span></button>';
       partsHtml+='<div id="mods-'+e.id+'" style="display:none;padding:0 12px 12px 12px;border-left:3px solid #E31B23;margin:0 12px 0 12px;">';
       parts.forEach(function(p){partsHtml+='<p style="font-size:11px;color:rgba(255,255,255,0.65);margin:0 0 5px;">&#9881; '+p+'</p>';});
       partsHtml+='</div></div>';
@@ -301,9 +228,8 @@ function sFeed(){
     }else{
       voteHtml='<button onclick="go(\'profile\')" style="flex:1;padding:12px;font-weight:900;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;background:#E31B23;color:white;">👤 REGISTRATE PARA VOTAR</button>';
     }
-
     var storyBtn='<button id="storybtn-'+e.id+'" onclick="doStoryById(\''+e.id+'\')" style="padding:10px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-weight:700;font-size:10px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.borderColor=\'#E31B23\';this.style.color=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\';this.style.color=\'rgba(255,255,255,0.5)\'">📸 Story</button>';
-
+    var profileBtn='<a href="moto.html?id='+e.id+'" style="padding:10px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-weight:700;font-size:10px;cursor:pointer;white-space:nowrap;text-decoration:none;display:flex;align-items:center;" onmouseover="this.style.borderColor=\'#E31B23\';this.style.color=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\';this.style.color=\'rgba(255,255,255,0.5)\'">🔗</a>';
     html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid '+(i===0?'rgba(227,27,35,0.4)':'rgba(255,255,255,0.05)')+';">';
     html+='<div style="position:relative;overflow:hidden;">';
     html+='<img src="'+e.imageUrl+'" onclick="openLB(\''+e.imageUrl+'\')" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block;cursor:zoom-in;" />';
@@ -316,12 +242,9 @@ function sFeed(){
     html+='<p style="font-size:11px;color:rgba(255,255,255,0.5);margin:0 0 3px;">📍 '+(e.location||'')+' · '+(e.moto||'')+'</p>';
     html+=(e.instagram?'<p style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.7);margin:0;"><span style="color:#E31B23;">@</span>'+e.instagram+'</p>':'');
     html+='</div></div>';
-    html+='<div style="padding:10px 12px 0;">';
-    html+='<div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.3);margin-bottom:3px;"><span>VOTOS ESTE MES</span><span>'+pct+'% del lider</span></div>';
-    html+='<div style="background:rgba(255,255,255,0.1);height:3px;border-radius:99px;overflow:hidden;"><div style="background:#E31B23;height:100%;border-radius:99px;width:'+pct+'%;"></div></div>';
-    html+='</div>';
+    html+='<div style="padding:10px 12px 0;"><div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.3);margin-bottom:3px;"><span>VOTOS ESTE MES</span><span>'+pct+'% del lider</span></div>';
+    html+='<div style="background:rgba(255,255,255,0.1);height:3px;border-radius:99px;overflow:hidden;"><div style="background:#E31B23;height:100%;border-radius:99px;width:'+pct+'%;"></div></div></div>';
     html+=partsHtml;
-    var profileBtn='<a href="moto.html?id='+e.id+'" style="padding:10px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-weight:700;font-size:10px;cursor:pointer;white-space:nowrap;text-decoration:none;display:flex;align-items:center;" onmouseover="this.style.borderColor=\'#E31B23\';this.style.color=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\';this.style.color=\'rgba(255,255,255,0.5)\'">🔗</a>';
     html+='<div style="display:flex;gap:0;border-top:1px solid rgba(255,255,255,0.05);">'+voteHtml+storyBtn+profileBtn+'</div>';
     html+='</div>';
   });
@@ -368,7 +291,6 @@ function sRank(){
 
 function sUpload(){
   if(!user)return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:48px;">📸</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;">Registrate primero</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0;">Necesitas una cuenta para participar.</p><button onclick="go(\'auth\')" style="background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Crear cuenta</button></div>';
-  if(!user.emailVerified)return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:56px;">✉️</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:18px;">Verificá tu email</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:8px 0;line-height:1.6;">Para participar necesitás confirmar<br>tu dirección de email.</p><p style="color:rgba(255,255,255,0.3);font-size:12px;margin:0;">Revisá tu casilla y hacé click en el link.</p><button onclick="window.doResendVerification()" style="margin-top:16px;background:transparent;border:1px solid rgba(227,27,35,0.4);color:#E31B23;padding:10px 24px;font-weight:700;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Reenviar email</button></div>';
   var html='<div style="padding:16px;display:flex;flex-direction:column;gap:14px;">';
   html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Participar</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">Subi tu Moto</h2></div>';
   html+='<div id="pzone" onclick="document.getElementById(\'finput\').click()" style="border:2px dashed rgba(255,255,255,0.15);border-radius:2px;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;" onmouseover="this.style.borderColor=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.15)\'"><span style="font-size:36px;">📸</span><p style="font-weight:900;text-transform:uppercase;font-size:13px;margin:0;">Elegi una foto</p><p style="color:rgba(255,255,255,0.3);font-size:11px;margin:0;">JPG o PNG · Max 10MB</p></div>';
@@ -481,12 +403,7 @@ function sAuth(){
   html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Email</label><input id="aemail" type="email" placeholder="tu@email.com" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
   html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Contrasena</label><input id="apass" type="password" placeholder="..." style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
   html+='<div id="aerr" style="color:#E31B23;font-size:12px;text-align:center;display:none;"></div>';
-  if(isReg){
-    html+='<div id="recaptcha-container" style="display:flex;justify-content:center;margin:4px 0;min-height:78px;"></div>';
-  }
-  if(isReg){
-    html+='<div id="g-recaptcha-wrap" style="display:flex;justify-content:center;margin:4px 0;min-height:78px;"></div>';
-  }
+  if(isReg){html+='<div id="captcha-wrap" style="display:flex;justify-content:center;min-height:78px;"></div>';}
   html+='<button id="abtn" onclick="doAuth()" style="width:100%;padding:14px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;margin-top:4px;">'+(isReg?"Crear cuenta":"Entrar")+'</button>';
   html+='<button onclick="toggleAM()" style="background:transparent;border:none;color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;padding:4px;">'+(isReg?"Ya tenes cuenta? Ingresa":"No tenes cuenta? Registrate")+'</button>';
   html+='</div></div>';
@@ -503,22 +420,18 @@ window.doAuth=async function(){
   if(amode==="register"){
     // Verificar captcha
     var capResp=window.grecaptcha?window.grecaptcha.getResponse():"";
-    if(!capResp){err.textContent="Completá el captcha.";err.style.display="block";btn.textContent="Crear cuenta";btn.disabled=false;return;}
+    if(!capResp){err.textContent="Completá el captcha primero.";err.style.display="block";return;}
+    // Bloquear dominios truchos
     var emailLow=email.toLowerCase();
-    // Bloquear dominios de emails desechables y truchos
-    var domBloqueados=["latam","tempmail","mailinator","guerrillamail","yopmail","throwam","dispostable","trashmail","fakeinbox","spamgourmet","sharklasers","getairmail","maildrop","discard.email","spambox","nada.email","throwam","mintemail","meltmail","filzmail","sogetthis","haltospam","spam4.me","tempr.email","mytrashmail","trashdevil","mailnull","spamgob","notmailinator"];
+    var domBloqueados=["latam","tempmail","mailinator","guerrillamail","yopmail","throwam","dispostable","trashmail","fakeinbox","spamgourmet","sharklasers","getairmail","maildrop","spambox","nada.email","mintemail","meltmail","filzmail","haltospam","tempr.email","mytrashmail","trashdevil","mailnull"];
     if(domBloqueados.some(function(d){return emailLow.includes(d);})){
-      err.textContent="Este dominio de email no está permitido.";err.style.display="block";btn.textContent="Crear cuenta";btn.disabled=false;return;
+      err.textContent="Este dominio de email no está permitido.";err.style.display="block";return;
     }
-    // Bloquear patron trucho: 8 o mas numeros seguidos en el email
+    // Bloquear patron trucho: 8+ numeros seguidos
     var localPart=emailLow.split("@")[0];
     if(/\d{8,}/.test(localPart)){
-      err.textContent="Este email no es válido para registrarse.";err.style.display="block";btn.textContent="Crear cuenta";btn.disabled=false;return;
+      err.textContent="Este email no es válido para registrarse.";err.style.display="block";return;
     }
-  }
-  if(amode==="register"){
-    var captchaResp=window.grecaptcha?window.grecaptcha.getResponse():"";
-    if(!captchaResp){err.textContent="Completá el captcha para continuar.";err.style.display="block";return;}
   }
   err.style.display="none";btn.textContent="...";btn.disabled=true;
   try{
@@ -527,7 +440,9 @@ window.doAuth=async function(){
       await updateProfile(c.user,{displayName:uname});
       userCount++;
       try{await setDoc(doc(db,"users",c.user.uid),{username:uname,createdAt:new Date().toISOString()});}catch(ex){}
-    } else{await signInWithEmailAndPassword(auth,email,pass);}
+    }else{
+      await signInWithEmailAndPassword(auth,email,pass);
+    }
     amode="login";tab="feed";rNav();rScr();
   }catch(e){
     var msgs={"auth/email-already-in-use":"Ese email ya esta registrado","auth/weak-password":"La contrasena debe tener al menos 6 caracteres","auth/invalid-credential":"Email o contrasena incorrectos","auth/invalid-email":"Email invalido"};
@@ -535,7 +450,6 @@ window.doAuth=async function(){
     err.style.display="block";
     btn.textContent=amode==="login"?"Entrar":"Crear cuenta";
     btn.disabled=false;
-    if(amode==="register"&&window.grecaptcha){try{window.grecaptcha.reset();}catch(ex){}}
     if(amode==="register"&&window.grecaptcha){try{window.grecaptcha.reset();}catch(ex){}}
   }
 };
