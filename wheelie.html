@@ -7,216 +7,301 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;700;900&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:#0a0a0a;overflow:hidden;height:100dvh;font-family:'Barlow Condensed',sans-serif;color:white;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
-canvas{position:fixed;top:0;left:0;}
-.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;z-index:30;gap:0;}
+body{background:#0a0a0a;overflow:hidden;height:100dvh;font-family:'Barlow Condensed',sans-serif;color:white;-webkit-user-select:none;user-select:none;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;}
+
+/* SCREENS */
+.screen{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#0a0a0a;z-index:100;
+}
 .screen.off{display:none;}
-.logo{height:50px;object-fit:contain;margin-bottom:16px;}
-.gtitle{font-family:'Bebas Neue';font-size:80px;line-height:.9;letter-spacing:3px;}
-.red{color:#E31B23;}
-.gsub{font-size:14px;color:rgba(255,255,255,.35);letter-spacing:.25em;text-transform:uppercase;margin-top:8px;}
-.bigbtn{margin-top:24px;background:#E31B23;color:white;font-family:'Bebas Neue';font-size:30px;letter-spacing:3px;padding:14px 52px;border:none;cursor:pointer;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);}
-.bigbtn:active{opacity:.8;}
-.hint{margin-top:16px;font-size:12px;color:rgba(255,255,255,.25);letter-spacing:.15em;text-transform:uppercase;text-align:center;line-height:2.2;}
+
+.logo{height:50px;margin-bottom:16px;object-fit:contain;}
+.gtitle{font-family:'Bebas Neue';font-size:76px;line-height:.9;letter-spacing:3px;text-align:center;}
+.gtitle em{color:#E31B23;font-style:normal;}
+.gsub{font-size:13px;color:rgba(255,255,255,.35);letter-spacing:.25em;text-transform:uppercase;margin-top:8px;text-align:center;}
+
+.btn{
+  margin-top:28px;
+  background:#E31B23;color:white;
+  font-family:'Bebas Neue';font-size:28px;letter-spacing:3px;
+  padding:14px 52px;border:none;cursor:pointer;
+  clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);
+  display:block;text-align:center;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.btn:active{background:#c0151c;}
+.btn-sec{
+  margin-top:12px;
+  background:transparent;color:rgba(255,255,255,.4);
+  font-family:'Barlow Condensed';font-size:14px;letter-spacing:.15em;text-transform:uppercase;
+  padding:10px 28px;border:1px solid rgba(255,255,255,.15);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.hint{margin-top:18px;font-size:12px;color:rgba(255,255,255,.25);letter-spacing:.15em;text-transform:uppercase;text-align:center;line-height:2.2;}
+
+/* HUD */
 #hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:10px 16px;z-index:50;pointer-events:none;}
-.hval{font-family:'Bebas Neue';font-size:40px;line-height:1;}
-.hlbl{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.15em;text-transform:uppercase;}
-#wbwrap{position:fixed;right:10px;top:50%;transform:translateY(-50%);width:8px;height:150px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;z-index:50;}
-#wbar{position:absolute;bottom:0;width:100%;height:0%;background:#E31B23;border-radius:99px;}
-/* Touch zones — high z-index, cover bottom half */
-#zl{position:fixed;left:0;bottom:0;width:50%;height:45%;z-index:100;background:transparent;-webkit-tap-highlight-color:transparent;}
-#zr{position:fixed;right:0;bottom:0;width:50%;height:45%;z-index:100;background:transparent;-webkit-tap-highlight-color:transparent;}
-.zlbl{position:fixed;bottom:16px;font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;z-index:101;pointer-events:none;}
-#zlbl-l{left:0;width:50%;text-align:center;color:rgba(255,255,255,.25);}
-#zlbl-r{right:0;width:50%;text-align:center;color:rgba(227,27,35,.5);}
+.hv{font-family:'Bebas Neue';font-size:40px;line-height:1;}
+.hv.r{color:#E31B23;}
+.hl{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.15em;text-transform:uppercase;}
+
+/* Wheelie bar */
+#wb-wrap{position:fixed;right:10px;top:50%;transform:translateY(-50%);width:8px;height:150px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;z-index:50;}
+#wb{position:absolute;bottom:0;width:100%;height:0%;border-radius:99px;background:#E31B23;}
+#wb-lbl{position:fixed;right:25px;top:50%;transform:translateY(-50%) rotate(-90deg);font-size:9px;color:rgba(255,255,255,.2);letter-spacing:.15em;text-transform:uppercase;white-space:nowrap;pointer-events:none;z-index:50;}
+
+/* Touch zones */
+#tz-l,#tz-r{
+  position:fixed;bottom:0;width:50%;height:50%;z-index:60;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:none;
+}
+#tz-l{left:0;}
+#tz-r{right:0;}
+.tz-lbl{position:fixed;bottom:18px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;z-index:61;pointer-events:none;}
+#tl-lbl{left:0;width:50%;text-align:center;color:rgba(227,27,35,.5);}
+#tr-lbl{right:0;width:50%;text-align:center;color:rgba(255,255,255,.2);}
+
+/* Flash */
 #flash{position:fixed;inset:0;background:#E31B23;opacity:0;pointer-events:none;z-index:200;}
+
+/* Score */
+.bignum{font-family:'Bebas Neue';font-size:88px;color:#E31B23;line-height:1;text-align:center;}
 .srow{display:flex;gap:28px;margin:8px 0 20px;}
-.sitem .n{font-family:'Bebas Neue';font-size:40px;}
-.sitem .l{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.15em;text-transform:uppercase;}
-#dbg{position:fixed;top:60px;left:10px;font-size:11px;color:rgba(255,255,255,.3);z-index:999;pointer-events:none;}
+.sitem .n{font-family:'Bebas Neue';font-size:38px;text-align:center;}
+.sitem .l{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.15em;text-transform:uppercase;text-align:center;}
 </style>
 </head>
 <body>
 
-<canvas id="c"></canvas>
-
 <!-- START -->
-<div id="start-screen" class="screen">
+<div id="scr-start" class="screen">
   <img class="logo" src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776258543/Logo_rama_1_uuvrq1.png"/>
-  <div class="gtitle">WHEE<span class="red">LIE</span></div>
+  <div class="gtitle">WHEE<em>LIE</em></div>
   <div class="gsub">RS Pro Parts · Arcade</div>
-  <button class="bigbtn" id="btn-jugar">JUGAR</button>
-  <div class="hint">← FRENO &nbsp;|&nbsp; ACELERADOR →<br/>Teclado: ← A &nbsp;|&nbsp; → D</div>
+  <button class="btn" id="btn-start">JUGAR</button>
+  <div class="hint">
+    A = Wheelie ↑ &nbsp;|&nbsp; D = Bajar ↓<br/>
+    Celular: Izquierda sube · Derecha baja
+  </div>
 </div>
 
 <!-- GAME OVER -->
-<div id="score-screen" class="screen off">
-  <div class="gtitle">GAME <span class="red">OVER</span></div>
+<div id="scr-over" class="screen off">
+  <div class="gtitle">GAME <em>OVER</em></div>
   <div style="margin-top:16px;font-size:12px;color:rgba(255,255,255,.3);letter-spacing:.2em;text-transform:uppercase;">Puntaje</div>
-  <div style="font-family:'Bebas Neue';font-size:90px;color:#E31B23;line-height:1;" id="fs-score">0</div>
+  <div class="bignum" id="fs-score">0</div>
   <div class="srow">
     <div class="sitem"><div class="n" id="fs-dist">0m</div><div class="l">Distancia</div></div>
     <div class="sitem"><div class="n" id="fs-best">0</div><div class="l">Mejor</div></div>
     <div class="sitem"><div class="n" id="fs-wc">0</div><div class="l">Wheelies</div></div>
   </div>
-  <button class="bigbtn" id="btn-denovo">DE NUEVO</button>
-  <button id="btn-menu" style="margin-top:12px;background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);font-family:'Barlow Condensed';font-size:14px;letter-spacing:.15em;text-transform:uppercase;padding:10px 28px;cursor:pointer;">MENÚ</button>
+  <button class="btn" id="btn-retry">DE NUEVO</button>
+  <button class="btn-sec" id="btn-menu">MENÚ</button>
 </div>
 
 <!-- HUD -->
 <div id="hud">
-  <div><div class="hlbl">Score</div><div class="hval red" id="h-score">0</div></div>
-  <div style="text-align:center"><div class="hlbl">Wheelie</div><div class="hval" id="h-wt">0s</div></div>
-  <div style="text-align:right"><div class="hlbl">Mejor</div><div class="hval" id="h-best">0</div></div>
+  <div><div class="hl">Score</div><div class="hv r" id="h-score">0</div></div>
+  <div style="text-align:center"><div class="hl">Wheelie</div><div class="hv" id="h-wt">0s</div></div>
+  <div style="text-align:right"><div class="hl">Mejor</div><div class="hv" id="h-best">0</div></div>
 </div>
-<div id="wbwrap"><div id="wbar"></div></div>
+<div id="wb-wrap"><div id="wb"></div></div>
+<div id="wb-lbl">BALANCE</div>
 
-<!-- TOUCH ZONES -->
-<div id="zl"></div>
-<div id="zr"></div>
-<div class="zlbl" id="zlbl-l">⬇ FRENO</div>
-<div class="zlbl" id="zlbl-r">ACELERADOR ⬆</div>
+<!-- Touch zones -->
+<div id="tz-l"></div>
+<div id="tz-r"></div>
+<div class="tz-lbl" id="tl-lbl">⬆ WHEELIE (A)</div>
+<div class="tz-lbl" id="tr-lbl">BAJAR (D) ⬇</div>
 
+<!-- Flash -->
 <div id="flash"></div>
-<div id="dbg"></div>
+
+<!-- Canvas -->
+<canvas id="cv"></canvas>
 
 <script>
-// ── GLOBALS ──
-var CV = document.getElementById('c');
+// ─────────────────────────────────────────────
+// GLOBALS
+// ─────────────────────────────────────────────
+var CV = document.getElementById('cv');
 var CX = CV.getContext('2d');
+var RED = '#E31B23';
 var W, H, GY;
 var raf, gameOn = false;
-var accel = false, brake = false;
+var liftKey = false;   // A / left zone  → lift front wheel
+var lowerKey = false;  // D / right zone → lower front wheel
 var bestScore = 0;
-var M = {}, camX = 0, scoreF = 0, score = 0;
+
+// Moto
+var angle = 0, angVel = 0, speed = 0;
+var camX = 0, scoreF = 0, score = 0;
 var wCount = 0, wOn = false, wTime = 0;
 var parts = [], marks = [], obs = [], spT = 0;
-var RED = '#E31B23';
-var WB = 76; // wheelbase
 
+var LIFT  = 0.045;   // lift power
+var LOWER = 0.055;   // lower power
+var GRAV  = 0.020;   // gravity (nose falls)
+var DAMP  = 0.88;    // angular damping
+var CRASH = 1.05;    // crash angle
+var WB    = 76;      // wheelbase px
+
+// ─────────────────────────────────────────────
+// RESIZE
+// ─────────────────────────────────────────────
 function resize() {
-  W = CV.width = window.innerWidth;
+  W = CV.width  = window.innerWidth;
   H = CV.height = window.innerHeight;
   GY = Math.floor(H * 0.70);
 }
 
-// ── BUTTONS (inline onclick — guaranteed to work) ──
-document.getElementById('btn-jugar').onclick = function() { startGame(); };
-document.getElementById('btn-denovo').onclick = function() { startGame(); };
-document.getElementById('btn-menu').onclick = function() { showStart(); };
+// ─────────────────────────────────────────────
+// INPUT — attached on DOMContentLoaded
+// ─────────────────────────────────────────────
+function setupInput() {
+  var tzl = document.getElementById('tz-l');
+  var tzr = document.getElementById('tz-r');
 
-// ── TOUCH ZONES ──
-var zl = document.getElementById('zl');
-var zr = document.getElementById('zr');
+  // Touch left = lift
+  tzl.addEventListener('touchstart', function(e) { e.preventDefault(); liftKey = true; }, { passive: false });
+  tzl.addEventListener('touchend',   function(e) { e.preventDefault(); liftKey = false; }, { passive: false });
+  tzl.addEventListener('touchcancel',function(e) { e.preventDefault(); liftKey = false; }, { passive: false });
 
-zl.ontouchstart = function(e) { e.preventDefault(); brake = true; document.getElementById('dbg').textContent = 'BRAKE ON'; };
-zl.ontouchend   = function(e) { e.preventDefault(); brake = false; document.getElementById('dbg').textContent = 'BRAKE OFF'; };
-zl.ontouchcancel= function(e) { e.preventDefault(); brake = false; };
-zr.ontouchstart = function(e) { e.preventDefault(); accel = true; document.getElementById('dbg').textContent = 'ACCEL ON'; };
-zr.ontouchend   = function(e) { e.preventDefault(); accel = false; document.getElementById('dbg').textContent = 'ACCEL OFF'; };
-zr.ontouchcancel= function(e) { e.preventDefault(); accel = false; };
+  // Touch right = lower
+  tzr.addEventListener('touchstart', function(e) { e.preventDefault(); lowerKey = true; }, { passive: false });
+  tzr.addEventListener('touchend',   function(e) { e.preventDefault(); lowerKey = false; }, { passive: false });
+  tzr.addEventListener('touchcancel',function(e) { e.preventDefault(); lowerKey = false; }, { passive: false });
 
-// Mouse fallback
-zl.onmousedown  = function() { brake = true; };
-zl.onmouseup    = function() { brake = false; };
-zl.onmouseleave = function() { brake = false; };
-zr.onmousedown  = function() { accel = true; };
-zr.onmouseup    = function() { accel = false; };
-zr.onmouseleave = function() { accel = false; };
+  // Mouse left
+  tzl.addEventListener('mousedown',  function() { liftKey = true; });
+  tzl.addEventListener('mouseup',    function() { liftKey = false; });
+  tzl.addEventListener('mouseleave', function() { liftKey = false; });
 
-// Keyboard
-document.onkeydown = function(e) {
-  if (e.key === 'ArrowLeft'  || e.key === 'a' || e.key === 'A') { e.preventDefault(); brake = true; }
-  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { e.preventDefault(); accel = true; }
-};
-document.onkeyup = function(e) {
-  if (e.key === 'ArrowLeft'  || e.key === 'a' || e.key === 'A') brake = false;
-  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') accel = false;
-};
+  // Mouse right
+  tzr.addEventListener('mousedown',  function() { lowerKey = true; });
+  tzr.addEventListener('mouseup',    function() { lowerKey = false; });
+  tzr.addEventListener('mouseleave', function() { lowerKey = false; });
 
+  // Keyboard
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft')  { e.preventDefault(); liftKey = true; }
+    if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') { e.preventDefault(); lowerKey = true; }
+  });
+  document.addEventListener('keyup', function(e) {
+    if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft')  liftKey = false;
+    if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') lowerKey = false;
+  });
+
+  // Buttons
+  document.getElementById('btn-start').addEventListener('click', startGame);
+  document.getElementById('btn-retry').addEventListener('click', startGame);
+  document.getElementById('btn-menu').addEventListener('click', showStart);
+
+  // Also touchend for mobile buttons
+  document.getElementById('btn-start').addEventListener('touchend', function(e) { e.preventDefault(); startGame(); });
+  document.getElementById('btn-retry').addEventListener('touchend', function(e) { e.preventDefault(); startGame(); });
+  document.getElementById('btn-menu').addEventListener('touchend',  function(e) { e.preventDefault(); showStart(); });
+}
+
+// ─────────────────────────────────────────────
+// SCREENS
+// ─────────────────────────────────────────────
 function showStart() {
-  document.getElementById('start-screen').classList.remove('off');
-  document.getElementById('score-screen').classList.add('off');
+  document.getElementById('scr-start').classList.remove('off');
+  document.getElementById('scr-over').classList.add('off');
   gameOn = false;
   if (raf) cancelAnimationFrame(raf);
 }
 
 function startGame() {
-  document.getElementById('start-screen').classList.add('off');
-  document.getElementById('score-screen').classList.add('off');
+  document.getElementById('scr-start').classList.add('off');
+  document.getElementById('scr-over').classList.add('off');
   resize();
-  M = { angle: 0, angVel: 0, speed: 2.5 };
+
+  angle = 0; angVel = 0; speed = 2.5;
   camX = 0; scoreF = 0; score = 0;
   wCount = 0; wOn = false; wTime = 0;
   parts = []; obs = []; spT = 0;
-  accel = false; brake = false;
+  liftKey = false; lowerKey = false;
+
   marks = [];
   for (var i = 0; i < 80; i++) marks.push(i * 110);
+
   gameOn = true;
   if (raf) cancelAnimationFrame(raf);
   loop();
 }
 
+// ─────────────────────────────────────────────
+// LOOP
+// ─────────────────────────────────────────────
 function loop() {
   raf = requestAnimationFrame(loop);
   update();
   render();
 }
 
-// ── PHYSICS ──
-var G_ANG  = 0.016;
-var AC_POW = 0.044;
-var BR_POW = 0.052;
-var DAMP   = 0.87;
-var CRASH  = 1.05;
-var STABLE = 0.06;
-
+// ─────────────────────────────────────────────
+// UPDATE
+// ─────────────────────────────────────────────
 function update() {
   if (!gameOn) return;
-  M.speed = Math.min(M.speed + 0.006, 7);
-  camX += M.speed;
 
-  if (accel) M.angVel -= AC_POW;
-  if (brake) M.angVel += BR_POW;
+  // Speed
+  speed = Math.min(speed + 0.006, 7);
+  camX += speed;
 
-  if (M.angle < -STABLE) {
-    M.angVel += G_ANG; // gravity brings nose down
-  } else if (M.angle > STABLE) {
-    M.angVel -= G_ANG * 0.8;
-  } else {
-    if (!accel && !brake) {
-      M.angVel *= 0.55;
-      if (Math.abs(M.angle) < 0.015) { M.angle = 0; M.angVel = 0; }
-    }
+  // Angular physics
+  if (liftKey)  angVel -= LIFT;   // lift front wheel
+  if (lowerKey) angVel += LOWER;  // push front wheel down
+
+  // Natural gravity: only when nose is up
+  if (angle < -0.06) {
+    angVel += GRAV; // gravity pulls nose back down
+  } else if (!liftKey && !lowerKey) {
+    // Snap to flat when not pressing
+    angVel *= 0.6;
+    if (Math.abs(angle) < 0.02) { angle = 0; angVel = 0; }
   }
 
-  M.angVel *= DAMP;
-  M.angle  += M.angVel;
+  angVel *= DAMP;
+  angle  += angVel;
 
-  // Ground hard limit: can't go past flat on brake side
-  if (M.angle > 0) { M.angle = 0; M.angVel = Math.min(0, M.angVel); }
-  M.angle = Math.max(-(CRASH + 0.05), M.angle);
+  // Floor: can't go below 0 (front wheel on ground)
+  if (angle > 0) { angle = 0; angVel = Math.min(0, angVel); }
+  // Crash limit
+  if (angle < -(CRASH)) { crash(); return; }
 
-  // Wheelie
-  var inW = M.angle < -0.30;
-  if (inW) { wTime += 1/60; scoreF += M.speed * 0.6; wOn = true; }
-  else { if (wOn && wTime > 0.4) wCount++; wOn = false; wTime = Math.max(0, wTime - 0.01); }
+  // Wheelie detection
+  var inW = angle < -0.28;
+  if (inW) {
+    wTime += 1/60;
+    scoreF += speed * 0.6;
+    wOn = true;
+  } else {
+    if (wOn && wTime > 0.4) wCount++;
+    wOn = false;
+    wTime = Math.max(0, wTime - 0.01);
+  }
 
-  // Bar
-  var bp = Math.max(0, Math.min(100, (-M.angle / CRASH) * 100));
-  var wb = document.getElementById('wbar');
+  // Wheelie bar
+  var bp = Math.max(0, Math.min(100, (-angle / CRASH) * 100));
+  var wb = document.getElementById('wb');
   wb.style.height = bp + '%';
   wb.style.background = bp > 80 ? '#ff3333' : bp > 55 ? '#ff8800' : RED;
 
-  // Crash
-  if (Math.abs(M.angle) > CRASH) { crash(); return; }
-
-  scoreF += M.speed * 0.04;
+  // Score
+  scoreF += speed * 0.04;
   score = Math.floor(scoreF);
   if (score > bestScore) bestScore = score;
   document.getElementById('h-score').textContent = score;
-  document.getElementById('h-wt').textContent = wTime.toFixed(1) + 's';
-  document.getElementById('h-best').textContent = bestScore;
+  document.getElementById('h-wt').textContent    = wTime.toFixed(1) + 's';
+  document.getElementById('h-best').textContent  = bestScore;
 
   // Obstacles
   spT++;
@@ -227,54 +312,70 @@ function update() {
   obs = obs.filter(function(o) { return o.x > camX - 100; });
   var mx = W * 0.28;
   obs.forEach(function(o) {
-    var sx = mx + (o.x - camX);
-    if (!o.hit && sx > mx - 20 && sx < mx + 35) {
-      if (o.type === 'cone' && M.angle > -0.4) { crash(); }
+    var ox = mx + (o.x - camX);
+    if (!o.hit && ox > mx - 20 && ox < mx + 40) {
+      if (o.type === 'cone' && angle > -0.4) { crash(); }
       else if (o.type === 'bump') { scoreF += 30; }
       o.hit = true;
     }
   });
 
-  // Particles
+  // Tire smoke particles
   if (inW && Math.random() < 0.5) {
-    parts.push({ x: W * 0.28 - 30, y: GY, vx: -Math.random() * 2 - 0.5, vy: -Math.random() * 2, life: 1, r: 2 + Math.random() * 3 });
+    parts.push({ x: W*0.28 - 30, y: GY, vx: -Math.random()*2-0.5, vy: -Math.random()*2, life: 1, r: 2+Math.random()*3 });
   }
-  parts.forEach(function(p) { p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life -= 0.04; });
+  parts.forEach(function(p) { p.x+=p.vx; p.y+=p.vy; p.vy+=0.12; p.life-=0.04; });
   parts = parts.filter(function(p) { return p.life > 0; });
 
-  marks.forEach(function(m, i) { if (m - camX < -60) marks[i] += 80 * 110; });
+  // Recycle road marks
+  marks.forEach(function(m, i) { if (m - camX < -60) marks[i] += 80*110; });
 }
 
+// ─────────────────────────────────────────────
+// CRASH
+// ─────────────────────────────────────────────
 function crash() {
   if (!gameOn) return;
-  gameOn = false; accel = false; brake = false;
+  gameOn = false;
+  liftKey = false; lowerKey = false;
+
   var fl = document.getElementById('flash');
-  fl.style.transition = 'none'; fl.style.opacity = '0.7';
-  setTimeout(function() { fl.style.transition = 'opacity .3s'; fl.style.opacity = '0'; }, 80);
+  fl.style.transition = 'none';
+  fl.style.opacity = '0.7';
+  setTimeout(function() {
+    fl.style.transition = 'opacity 0.3s';
+    fl.style.opacity = '0';
+  }, 80);
+
   if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
   setTimeout(function() {
     document.getElementById('fs-score').textContent = score;
     document.getElementById('fs-dist').textContent  = Math.floor(camX / 40) + 'm';
     document.getElementById('fs-best').textContent  = bestScore;
     document.getElementById('fs-wc').textContent    = wCount;
-    document.getElementById('score-screen').classList.remove('off');
+    document.getElementById('scr-over').classList.remove('off');
   }, 700);
 }
 
-// ── RENDER ──
+// ─────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────
 function render() {
   CX.clearRect(0, 0, W, H);
   var t = Date.now();
 
   // Sky
   var sk = CX.createLinearGradient(0, 0, 0, GY);
-  sk.addColorStop(0, '#060606'); sk.addColorStop(1, '#140508');
-  CX.fillStyle = sk; CX.fillRect(0, 0, W, GY);
+  sk.addColorStop(0, '#060606');
+  sk.addColorStop(1, '#140508');
+  CX.fillStyle = sk;
+  CX.fillRect(0, 0, W, GY);
 
   // Buildings
-  var blds = [{x:0,w:55,h:85},{x:70,w:35,h:120},{x:130,w:70,h:65},{x:215,w:45,h:100},{x:275,w:60,h:80},{x:355,w:80,h:110},{x:455,w:50,h:70}];
-  var off = (camX * 0.12) % W;
   CX.fillStyle = '#0e0e0e';
+  var blds = [{x:0,w:55,h:85},{x:70,w:35,h:120},{x:120,w:70,h:65},{x:210,w:45,h:100},{x:270,w:60,h:80},{x:360,w:80,h:110},{x:460,w:50,h:70}];
+  var off = (camX * 0.12) % W;
   blds.forEach(function(b) {
     for (var r = -1; r <= 1; r++) {
       var bx = (b.x - off + r * W + W * 2) % (W * 2) - 80;
@@ -283,16 +384,20 @@ function render() {
   });
 
   // Ground
-  CX.fillStyle = '#181818'; CX.fillRect(0, GY, W, H - GY);
+  CX.fillStyle = '#181818';
+  CX.fillRect(0, GY, W, H - GY);
   CX.strokeStyle = RED; CX.lineWidth = 2;
   CX.beginPath(); CX.moveTo(0, GY); CX.lineTo(W, GY); CX.stroke();
   var gg = CX.createLinearGradient(0, GY, 0, GY + 20);
-  gg.addColorStop(0, 'rgba(227,27,35,.1)'); gg.addColorStop(1, 'rgba(0,0,0,0)');
+  gg.addColorStop(0, 'rgba(227,27,35,0.1)'); gg.addColorStop(1, 'rgba(0,0,0,0)');
   CX.fillStyle = gg; CX.fillRect(0, GY, W, 20);
 
   // Road marks
-  CX.fillStyle = 'rgba(255,255,255,.07)';
-  marks.forEach(function(m) { var sx = m - camX; if (sx > -50 && sx < W + 10) CX.fillRect(sx, GY + 14, 36, 5); });
+  CX.fillStyle = 'rgba(255,255,255,0.07)';
+  marks.forEach(function(m) {
+    var sx = m - camX;
+    if (sx > -50 && sx < W + 10) CX.fillRect(sx, GY + 14, 36, 5);
+  });
 
   // Obstacles
   var mx = W * 0.28;
@@ -301,168 +406,183 @@ function render() {
     if (ox < -60 || ox > W + 60) return;
     CX.save(); CX.translate(ox, GY);
     if (o.type === 'cone') {
-      CX.fillStyle = RED; CX.beginPath(); CX.moveTo(0, 0); CX.lineTo(-10, -30); CX.lineTo(10, -30); CX.closePath(); CX.fill();
-      CX.fillStyle = 'white'; CX.fillRect(-8, -17, 16, 4);
+      CX.fillStyle = RED;
+      CX.beginPath(); CX.moveTo(0,0); CX.lineTo(-10,-30); CX.lineTo(10,-30); CX.closePath(); CX.fill();
+      CX.fillStyle = 'white'; CX.fillRect(-8,-17,16,4);
     } else {
-      CX.fillStyle = '#2a2a2a'; CX.beginPath(); CX.ellipse(0, -3, 18, 7, 0, 0, Math.PI * 2); CX.fill();
+      CX.fillStyle = '#2a2a2a';
+      CX.beginPath(); CX.ellipse(0,-3,18,7,0,0,Math.PI*2); CX.fill();
     }
     CX.restore();
   });
 
   // Particles
   parts.forEach(function(p) {
-    CX.save(); CX.globalAlpha = p.life * 0.5; CX.fillStyle = '#aaa';
-    CX.beginPath(); CX.arc(p.x, p.y, p.r, 0, Math.PI * 2); CX.fill(); CX.restore();
+    CX.save(); CX.globalAlpha = p.life * 0.5;
+    CX.fillStyle = '#aaa';
+    CX.beginPath(); CX.arc(p.x, p.y, p.r, 0, Math.PI*2); CX.fill();
+    CX.restore();
   });
 
   // Speed lines
-  if (M.speed > 5) {
-    CX.save(); CX.globalAlpha = (M.speed - 5) / 7 * 0.1; CX.strokeStyle = 'white'; CX.lineWidth = 1;
+  if (speed > 5) {
+    CX.save(); CX.globalAlpha = (speed-5)/7*0.1;
+    CX.strokeStyle = 'white'; CX.lineWidth = 1;
     for (var i = 0; i < 8; i++) {
-      var y = (i / 8) * GY; var l = 50 + Math.random() * 80;
-      CX.beginPath(); CX.moveTo(W * 0.6, y); CX.lineTo(W * 0.6 + l, y); CX.stroke();
+      var y = (i / 8) * GY;
+      var l = 50 + Math.random() * 80;
+      CX.beginPath(); CX.moveTo(W*0.6, y); CX.lineTo(W*0.6+l, y); CX.stroke();
     }
     CX.restore();
   }
 
-  // MOTO — origin at rear axle on ground
+  // MOTO — origin = rear axle at ground level
   CX.save();
   CX.translate(mx, GY);
-  CX.rotate(M.angle);
-  drawMoto(t);
+  CX.rotate(angle);
+  drawMoto(CX, t);
   CX.restore();
 }
 
-function drawMoto(t) {
-  // ── WHEELS ──
-  wheel(0, 0, 22, t);     // rear
-  wheel(WB, 0, 21, t);    // front
+// ─────────────────────────────────────────────
+// MOTO — enduro XR style, rear axle at (0,0)
+// ─────────────────────────────────────────────
+function drawMoto(c, t) {
+  // Rear wheel at 0,0 — front at WB,0
+  drawWheel(c, 0, 0, 22, t);
+  drawWheel(c, WB, 0, 21, t);
 
   // Swingarm
-  CX.strokeStyle='#777'; CX.lineWidth=5;
-  CX.beginPath(); CX.moveTo(0,-4); CX.lineTo(18,-26); CX.stroke();
+  c.strokeStyle='#777'; c.lineWidth=5;
+  c.beginPath(); c.moveTo(0,-4); c.lineTo(18,-26); c.stroke();
 
   // Frame
-  CX.strokeStyle='#888'; CX.lineWidth=4;
-  CX.beginPath(); CX.moveTo(18,-26); CX.lineTo(38,-20); CX.stroke();
-  CX.beginPath(); CX.moveTo(18,-26); CX.lineTo(60,-46); CX.stroke();
-  CX.beginPath(); CX.moveTo(38,-20); CX.lineTo(60,-46); CX.stroke();
-  CX.strokeStyle='#666'; CX.lineWidth=3;
-  CX.beginPath(); CX.moveTo(18,-26); CX.lineTo(-2,-40); CX.lineTo(-12,-30); CX.stroke();
+  c.strokeStyle='#888'; c.lineWidth=4;
+  c.beginPath(); c.moveTo(18,-26); c.lineTo(38,-20); c.stroke();
+  c.beginPath(); c.moveTo(18,-26); c.lineTo(60,-46); c.stroke();
+  c.beginPath(); c.moveTo(38,-20); c.lineTo(60,-46); c.stroke();
+
+  // Subframe
+  c.strokeStyle='#666'; c.lineWidth=3;
+  c.beginPath(); c.moveTo(18,-26); c.lineTo(-2,-40); c.lineTo(-12,-30); c.stroke();
 
   // Forks
-  CX.strokeStyle='#bbb'; CX.lineWidth=5;
-  CX.beginPath(); CX.moveTo(56,-44); CX.lineTo(WB-2,-4); CX.stroke();
-  CX.beginPath(); CX.moveTo(60,-44); CX.lineTo(WB+2,-4); CX.stroke();
-  CX.strokeStyle='#999'; CX.lineWidth=3;
-  CX.beginPath(); CX.moveTo(57,-22); CX.lineTo(WB+1,-22); CX.stroke();
+  c.strokeStyle='#bbb'; c.lineWidth=5;
+  c.beginPath(); c.moveTo(56,-44); c.lineTo(WB-2,-4); c.stroke();
+  c.beginPath(); c.moveTo(60,-44); c.lineTo(WB+2,-4); c.stroke();
+  c.strokeStyle='#999'; c.lineWidth=3;
+  c.beginPath(); c.moveTo(57,-22); c.lineTo(WB+1,-22); c.stroke();
 
   // Engine
-  CX.fillStyle='#252525';
-  CX.beginPath(); CX.moveTo(22,-20); CX.lineTo(20,-36); CX.lineTo(42,-38); CX.lineTo(48,-20); CX.closePath(); CX.fill();
-  CX.strokeStyle='#3a3a3a'; CX.lineWidth=1.5;
-  for (var i=0;i<4;i++) { CX.beginPath(); CX.moveTo(23,-22-i*3.5); CX.lineTo(46,-22-i*3.5); CX.stroke(); }
+  c.fillStyle='#252525';
+  c.beginPath(); c.moveTo(22,-20); c.lineTo(20,-36); c.lineTo(42,-38); c.lineTo(48,-20); c.closePath(); c.fill();
+  c.strokeStyle='#3a3a3a'; c.lineWidth=1.5;
+  for(var i=0;i<4;i++){c.beginPath();c.moveTo(23,-22-i*3.5);c.lineTo(46,-22-i*3.5);c.stroke();}
 
   // Exhaust
-  CX.strokeStyle='#777'; CX.lineWidth=5;
-  CX.beginPath(); CX.moveTo(44,-18); CX.bezierCurveTo(56,-14,68,-8,72,-2); CX.stroke();
-  CX.fillStyle='#555'; CX.beginPath(); CX.roundRect(66,-5,22,9,3); CX.fill();
+  c.strokeStyle='#777'; c.lineWidth=5;
+  c.beginPath(); c.moveTo(44,-18); c.bezierCurveTo(56,-14,68,-8,72,-2); c.stroke();
+  c.fillStyle='#555'; c.beginPath(); c.roundRect(66,-5,22,9,3); c.fill();
 
-  // Red panels
-  CX.fillStyle=RED;
-  CX.beginPath(); CX.moveTo(18,-36); CX.lineTo(46,-40); CX.lineTo(53,-26); CX.lineTo(50,-16); CX.lineTo(22,-14); CX.closePath(); CX.fill();
+  // Red side panel
+  c.fillStyle='#E31B23';
+  c.beginPath(); c.moveTo(18,-36); c.lineTo(46,-40); c.lineTo(53,-26); c.lineTo(50,-16); c.lineTo(22,-14); c.closePath(); c.fill();
 
   // White lower
-  CX.fillStyle='#ddd';
-  CX.beginPath(); CX.moveTo(22,-14); CX.lineTo(50,-16); CX.lineTo(52,-10); CX.lineTo(24,-8); CX.closePath(); CX.fill();
+  c.fillStyle='#ddd';
+  c.beginPath(); c.moveTo(22,-14); c.lineTo(50,-16); c.lineTo(52,-10); c.lineTo(24,-8); c.closePath(); c.fill();
 
-  // Tank
-  CX.fillStyle=RED;
-  CX.beginPath(); CX.moveTo(16,-36); CX.lineTo(46,-42); CX.lineTo(60,-40); CX.lineTo(58,-28); CX.lineTo(18,-28); CX.closePath(); CX.fill();
-  CX.fillStyle='rgba(255,255,255,.1)';
-  CX.beginPath(); CX.moveTo(24,-38); CX.lineTo(46,-42); CX.lineTo(56,-36); CX.lineTo(26,-32); CX.closePath(); CX.fill();
+  // Tank red
+  c.fillStyle='#E31B23';
+  c.beginPath(); c.moveTo(16,-36); c.lineTo(46,-42); c.lineTo(60,-40); c.lineTo(58,-28); c.lineTo(18,-28); c.closePath(); c.fill();
+  c.fillStyle='rgba(255,255,255,.1)';
+  c.beginPath(); c.moveTo(24,-38); c.lineTo(46,-42); c.lineTo(56,-36); c.lineTo(26,-32); c.closePath(); c.fill();
 
   // Seat
-  CX.fillStyle='#1a1a1a';
-  CX.beginPath(); CX.moveTo(-14,-30); CX.lineTo(18,-44); CX.lineTo(18,-34); CX.lineTo(-12,-28); CX.closePath(); CX.fill();
+  c.fillStyle='#1a1a1a';
+  c.beginPath(); c.moveTo(-14,-30); c.lineTo(18,-44); c.lineTo(18,-34); c.lineTo(-12,-28); c.closePath(); c.fill();
 
   // Rear fender
-  CX.fillStyle=RED;
-  CX.beginPath(); CX.moveTo(-12,-28); CX.lineTo(-4,-44); CX.lineTo(0,-44); CX.lineTo(-6,-26); CX.closePath(); CX.fill();
+  c.fillStyle='#E31B23';
+  c.beginPath(); c.moveTo(-12,-28); c.lineTo(-4,-44); c.lineTo(0,-44); c.lineTo(-6,-26); c.closePath(); c.fill();
 
   // Headlight shroud
-  CX.fillStyle=RED;
-  CX.beginPath(); CX.moveTo(54,-30); CX.lineTo(72,-32); CX.lineTo(76,-22); CX.lineTo(70,-16); CX.lineTo(56,-18); CX.closePath(); CX.fill();
-  CX.fillStyle='#222'; CX.beginPath(); CX.arc(65,-24,7,0,Math.PI*2); CX.fill();
-  CX.fillStyle='rgba(255,220,120,.9)'; CX.beginPath(); CX.arc(65,-24,5,0,Math.PI*2); CX.fill();
+  c.fillStyle='#E31B23';
+  c.beginPath(); c.moveTo(54,-30); c.lineTo(72,-32); c.lineTo(76,-22); c.lineTo(70,-16); c.lineTo(56,-18); c.closePath(); c.fill();
+  c.fillStyle='#222'; c.beginPath(); c.arc(65,-24,7,0,Math.PI*2); c.fill();
+  c.fillStyle='rgba(255,220,120,.9)'; c.beginPath(); c.arc(65,-24,5,0,Math.PI*2); c.fill();
 
   // Front fender
-  CX.fillStyle=RED;
-  CX.save(); CX.translate(WB,-20);
-  CX.beginPath(); CX.moveTo(-8,2); CX.lineTo(-6,-14); CX.lineTo(6,-14); CX.lineTo(8,2); CX.closePath(); CX.fill();
-  CX.restore();
+  c.fillStyle='#E31B23'; c.save(); c.translate(WB,-20);
+  c.beginPath(); c.moveTo(-8,2); c.lineTo(-6,-14); c.lineTo(6,-14); c.lineTo(8,2); c.closePath(); c.fill();
+  c.restore();
 
   // Handlebar
-  CX.strokeStyle='#999'; CX.lineWidth=4;
-  CX.beginPath(); CX.moveTo(58,-46); CX.lineTo(56,-58); CX.stroke();
-  CX.lineWidth=5; CX.beginPath(); CX.moveTo(42,-58); CX.lineTo(70,-58); CX.stroke();
-  CX.strokeStyle='#222'; CX.lineWidth=7;
-  CX.beginPath(); CX.moveTo(42,-58); CX.lineTo(46,-58); CX.stroke();
-  CX.beginPath(); CX.moveTo(66,-58); CX.lineTo(70,-58); CX.stroke();
+  c.strokeStyle='#999'; c.lineWidth=4;
+  c.beginPath(); c.moveTo(58,-46); c.lineTo(56,-58); c.stroke();
+  c.lineWidth=5; c.beginPath(); c.moveTo(42,-58); c.lineTo(70,-58); c.stroke();
+  c.strokeStyle='#222'; c.lineWidth=7;
+  c.beginPath(); c.moveTo(42,-58); c.lineTo(46,-58); c.stroke();
+  c.beginPath(); c.moveTo(66,-58); c.lineTo(70,-58); c.stroke();
 
   // Smoke
-  if (M.angle < -0.35) {
-    var ii = Math.min((-M.angle - 0.35) / 0.5, 1);
-    for (var s=0;s<3;s++) {
-      CX.save(); CX.globalAlpha=ii*0.22*(1-s*.3); CX.fillStyle='#aaa';
-      CX.beginPath(); CX.arc(90+s*9+Math.sin(t*.008+s)*4,s*4,4+s*3,0,Math.PI*2); CX.fill(); CX.restore();
+  if (angle < -0.35) {
+    var ii = Math.min((-angle-0.35)/0.5, 1);
+    for(var s=0;s<3;s++){
+      c.save(); c.globalAlpha=ii*0.2*(1-s*0.3);
+      c.fillStyle='#aaa'; c.beginPath(); c.arc(90+s*9+Math.sin(t*.008+s)*4,s*4,4+s*3,0,Math.PI*2); c.fill();
+      c.restore();
     }
   }
 
-  rider(t);
+  drawRider(c, t);
 }
 
-function wheel(x, y, r, t) {
-  CX.save(); CX.translate(x, y);
-  CX.strokeStyle='#111'; CX.lineWidth=11;
-  CX.beginPath(); CX.arc(0,0,r,0,Math.PI*2); CX.stroke();
-  for (var i=0;i<14;i++) {
+function drawWheel(c, x, y, r, t) {
+  c.save(); c.translate(x, y);
+  c.strokeStyle='#111'; c.lineWidth=11;
+  c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke();
+  for(var i=0;i<14;i++){
     var a=(i/14)*Math.PI*2+t*.005;
-    CX.strokeStyle='#1e1e1e'; CX.lineWidth=4;
-    CX.beginPath(); CX.moveTo(Math.cos(a)*(r-4),Math.sin(a)*(r-4)); CX.lineTo(Math.cos(a)*(r+2),Math.sin(a)*(r+2)); CX.stroke();
+    c.strokeStyle='#1e1e1e'; c.lineWidth=4;
+    c.beginPath(); c.moveTo(Math.cos(a)*(r-4),Math.sin(a)*(r-4)); c.lineTo(Math.cos(a)*(r+2),Math.sin(a)*(r+2)); c.stroke();
   }
-  CX.strokeStyle='#2a2a2a'; CX.lineWidth=2; CX.beginPath(); CX.arc(0,0,r-5,0,Math.PI*2); CX.stroke();
-  CX.strokeStyle='#c0c0c0'; CX.lineWidth=2; CX.beginPath(); CX.arc(0,0,r-7,0,Math.PI*2); CX.stroke();
-  CX.strokeStyle='#aaa'; CX.lineWidth=.8;
-  for (var i=0;i<20;i++) {
+  c.strokeStyle='#2a2a2a'; c.lineWidth=2; c.beginPath(); c.arc(0,0,r-5,0,Math.PI*2); c.stroke();
+  c.strokeStyle='#c0c0c0'; c.lineWidth=2; c.beginPath(); c.arc(0,0,r-7,0,Math.PI*2); c.stroke();
+  c.strokeStyle='#aaa'; c.lineWidth=.8;
+  for(var i=0;i<20;i++){
     var a=(i/20)*Math.PI*2+t*.005;
-    CX.beginPath(); CX.moveTo(0,0); CX.lineTo(Math.cos(a)*(r-7),Math.sin(a)*(r-7)); CX.stroke();
+    c.beginPath(); c.moveTo(0,0); c.lineTo(Math.cos(a)*(r-7),Math.sin(a)*(r-7)); c.stroke();
   }
-  CX.fillStyle='#999'; CX.beginPath(); CX.arc(0,0,5,0,Math.PI*2); CX.fill();
-  CX.fillStyle='#333'; CX.beginPath(); CX.arc(0,0,2.5,0,Math.PI*2); CX.fill();
-  CX.restore();
+  c.fillStyle='#999'; c.beginPath(); c.arc(0,0,5,0,Math.PI*2); c.fill();
+  c.fillStyle='#333'; c.beginPath(); c.arc(0,0,2.5,0,Math.PI*2); c.fill();
+  c.restore();
 }
 
-function rider(t) {
-  CX.save(); CX.translate(4,-46);
-  CX.rotate(M.angle * 0.25);
-  CX.fillStyle='#1a1a1a'; CX.fillRect(-4,2,9,7); CX.fillRect(12,2,9,7);
-  CX.strokeStyle='#111'; CX.lineWidth=8;
-  CX.beginPath(); CX.moveTo(0,2); CX.lineTo(0,-12); CX.stroke();
-  CX.beginPath(); CX.moveTo(16,2); CX.lineTo(14,-12); CX.stroke();
-  CX.fillStyle='#111'; CX.beginPath(); CX.roundRect(-6,-28,20,18,3); CX.fill();
-  CX.strokeStyle='#111'; CX.lineWidth=7;
-  CX.beginPath(); CX.moveTo(10,-20); CX.lineTo(22,-16); CX.stroke();
-  CX.beginPath(); CX.moveTo(-2,-20); CX.lineTo(10,-16); CX.stroke();
-  CX.fillStyle=RED; CX.beginPath(); CX.arc(6,-34,11,0,Math.PI*2); CX.fill();
-  CX.fillStyle='rgba(0,0,0,.75)';
-  CX.beginPath(); CX.moveTo(-3,-28); CX.lineTo(15,-28); CX.lineTo(14,-34); CX.lineTo(-2,-34); CX.closePath(); CX.fill();
-  CX.restore();
+function drawRider(c, t) {
+  c.save(); c.translate(4,-46);
+  c.fillStyle='#1a1a1a'; c.fillRect(-4,2,9,7); c.fillRect(12,2,9,7);
+  c.strokeStyle='#111'; c.lineWidth=8;
+  c.beginPath(); c.moveTo(0,2); c.lineTo(0,-12); c.stroke();
+  c.beginPath(); c.moveTo(16,2); c.lineTo(14,-12); c.stroke();
+  c.fillStyle='#111'; c.beginPath(); c.roundRect(-6,-28,20,18,3); c.fill();
+  c.strokeStyle='#111'; c.lineWidth=7;
+  c.beginPath(); c.moveTo(10,-20); c.lineTo(22,-16); c.stroke();
+  c.beginPath(); c.moveTo(-2,-20); c.lineTo(10,-16); c.stroke();
+  c.fillStyle='#E31B23'; c.beginPath(); c.arc(6,-34,11,0,Math.PI*2); c.fill();
+  c.fillStyle='rgba(0,0,0,.75)';
+  c.beginPath(); c.moveTo(-3,-28); c.lineTo(15,-28); c.lineTo(14,-34); c.lineTo(-2,-34); c.closePath(); c.fill();
+  c.restore();
 }
 
+// ─────────────────────────────────────────────
 // INIT
-resize();
-window.onresize = resize;
+// ─────────────────────────────────────────────
+window.addEventListener('resize', resize);
+document.addEventListener('DOMContentLoaded', function() {
+  resize();
+  setupInput();
+});
 </script>
 </body>
 </html>
