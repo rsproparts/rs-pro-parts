@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <style>
 *{box-sizing:border-box;}
 body{margin:0;background:#131313;font-family:"Space Grotesk",sans-serif;color:white;}
@@ -483,6 +484,9 @@ function sAuth(){
   if(isReg){
     html+='<div id="recaptcha-container" style="display:flex;justify-content:center;margin:4px 0;min-height:78px;"></div>';
   }
+  if(isReg){
+    html+='<div id="g-recaptcha-wrap" style="display:flex;justify-content:center;margin:4px 0;min-height:78px;"></div>';
+  }
   html+='<button id="abtn" onclick="doAuth()" style="width:100%;padding:14px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;margin-top:4px;">'+(isReg?"Crear cuenta":"Entrar")+'</button>';
   html+='<button onclick="toggleAM()" style="background:transparent;border:none;color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;padding:4px;">'+(isReg?"Ya tenes cuenta? Ingresa":"No tenes cuenta? Registrate")+'</button>';
   html+='</div></div>';
@@ -497,6 +501,9 @@ window.doAuth=async function(){
   if(!email||!pass){err.textContent="Completa email y contrasena";err.style.display="block";return;}
   if(amode==="register"&&!uname){err.textContent="Elegi un nombre de piloto";err.style.display="block";return;}
   if(amode==="register"){
+    // Verificar captcha
+    var capResp=window.grecaptcha?window.grecaptcha.getResponse():"";
+    if(!capResp){err.textContent="Completá el captcha.";err.style.display="block";btn.textContent="Crear cuenta";btn.disabled=false;return;}
     var emailLow=email.toLowerCase();
     // Bloquear dominios de emails desechables y truchos
     var domBloqueados=["latam","tempmail","mailinator","guerrillamail","yopmail","throwam","dispostable","trashmail","fakeinbox","spamgourmet","sharklasers","getairmail","maildrop","discard.email","spambox","nada.email","throwam","mintemail","meltmail","filzmail","sogetthis","haltospam","spam4.me","tempr.email","mytrashmail","trashdevil","mailnull","spamgob","notmailinator"];
@@ -528,6 +535,7 @@ window.doAuth=async function(){
     err.style.display="block";
     btn.textContent=amode==="login"?"Entrar":"Crear cuenta";
     btn.disabled=false;
+    if(amode==="register"&&window.grecaptcha){try{window.grecaptcha.reset();}catch(ex){}}
     if(amode==="register"&&window.grecaptcha){try{window.grecaptcha.reset();}catch(ex){}}
   }
 };
