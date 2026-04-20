@@ -46,7 +46,7 @@ input,button{font-family:"Space Grotesk",sans-serif;}
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import{getFirestore,collection,addDoc,doc,setDoc,updateDoc,deleteDoc,increment,arrayUnion,onSnapshot,query,orderBy,getCountFromServer}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import{getFirestore,collection,addDoc,doc,setDoc,updateDoc,deleteDoc,increment,arrayUnion,getDocs,onSnapshot,query,orderBy}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const CC="ddozrdmok",CP="rs_pro_parts",ADMIN="rsmotoparts.mdp@gmail.com";
 const FC={apiKey:"AIzaSyDdetAoPKD2jw4-Ar0breOf3fKCxGG8bdM",authDomain:"rs-pro-parts.firebaseapp.com",projectId:"rs-pro-parts",storageBucket:"rs-pro-parts.firebasestorage.app",messagingSenderId:"10474406260",appId:"1:10474406260:web:937cdd1db33fdf2d406c21"};
@@ -219,9 +219,36 @@ function rHdr(){
 }
 
 function loadE(){
-  getCountFromServer(collection(db,"users")).then(function(snap){userCount=214+snap.data().count;if(["feed"].includes(tab))rScr();}).catch(function(){userCount=214;});
-  onSnapshot(query(collection(db,"entries"),orderBy("votes","desc")),function(snap){
+  userCount=1034; // base fija — nuevos se suman al registrarse
+
+  // Cache para reducir lecturas a Firebase (5 minutos)
+  var now=Date.now();
+  if(window._cacheEntries&&window._cacheEntries.length>0&&(now-window._cacheTime)<300000){
+    entries=window._cacheEntries.slice();
+    if(["feed","ranking","profile"].includes(tab))rScr();
+    if(!window._unsubVotes) startVoteListener();
+    return;
+  }
+
+  // Primera carga o cache expirado: leer una vez
+  getDocs(query(collection(db,"entries"),orderBy("votes","desc"))).then(function(snap){
     entries=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    window._cacheEntries=entries.slice();
+    window._cacheTime=Date.now();
+    if(["feed","ranking","profile"].includes(tab))rScr();
+    startVoteListener();
+  }).catch(function(){
+    // Si falla getDocs, intentar con onSnapshot como fallback
+    startVoteListener();
+  });
+}
+
+function startVoteListener(){
+  if(window._unsubVotes) window._unsubVotes();
+  window._unsubVotes=onSnapshot(query(collection(db,"entries"),orderBy("votes","desc")),function(snap){
+    entries=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    window._cacheEntries=entries.slice();
+    window._cacheTime=Date.now();
     if(["feed","ranking","profile"].includes(tab))rScr();
   });
 }
@@ -476,7 +503,7 @@ window.doAuth=async function(){
   if(amode==="register"&&!uname){err.textContent="Elegi un nombre de piloto";err.style.display="block";return;}
   err.style.display="none";btn.textContent="...";btn.disabled=true;
   try{
-    if(amode==="register"){var c=await createUserWithEmailAndPassword(auth,email,pass);await updateProfile(c.user,{displayName:uname});try{await setDoc(doc(db,"users",c.user.uid),{username:uname,createdAt:new Date().toISOString()});}catch(ex){}}
+    if(amode==="register"){var c=await createUserWithEmailAndPassword(auth,email,pass);await updateProfile(c.user,{displayName:uname});try{await setDoc(doc(db,"users",c.user.uid),{username:uname,createdAt:new Date().toISOString()});userCount++;}catch(ex){}}
     else{await signInWithEmailAndPassword(auth,email,pass);}
     amode="login";tab="feed";rNav();rScr();
   }catch(e){
