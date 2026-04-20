@@ -4,453 +4,465 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <title>Wheelie · RS Pro Parts</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;700;900&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:#0a0a0a;overflow:hidden;height:100dvh;font-family:'Barlow Condensed',sans-serif;color:white;user-select:none;-webkit-user-select:none;}
-canvas{display:block;}
-.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;z-index:30;}
+body{background:#0a0a0a;overflow:hidden;height:100dvh;font-family:'Barlow Condensed',sans-serif;color:white;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
+canvas{position:fixed;top:0;left:0;}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;z-index:30;gap:0;}
 .screen.off{display:none;}
 .logo{height:50px;object-fit:contain;margin-bottom:16px;}
 .gtitle{font-family:'Bebas Neue';font-size:80px;line-height:.9;letter-spacing:3px;}
-.gtitle b{color:#E31B23;}
+.red{color:#E31B23;}
 .gsub{font-size:14px;color:rgba(255,255,255,.35);letter-spacing:.25em;text-transform:uppercase;margin-top:8px;}
-.bigbtn{display:inline-block;margin-top:24px;background:#E31B23;color:white;font-family:'Bebas Neue';font-size:30px;letter-spacing:3px;padding:14px 52px;border:none;cursor:pointer;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);-webkit-tap-highlight-color:transparent;}
+.bigbtn{margin-top:24px;background:#E31B23;color:white;font-family:'Bebas Neue';font-size:30px;letter-spacing:3px;padding:14px 52px;border:none;cursor:pointer;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);}
 .bigbtn:active{opacity:.8;}
-.hint{margin-top:16px;font-size:12px;color:rgba(255,255,255,.25);letter-spacing:.2em;text-transform:uppercase;text-align:center;line-height:2.2;}
-#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:10px 16px;z-index:10;pointer-events:none;}
-.hval{font-family:'Bebas Neue';font-size:40px;line-height:1;color:white;}
-.hval.red{color:#E31B23;}
+.hint{margin-top:16px;font-size:12px;color:rgba(255,255,255,.25);letter-spacing:.15em;text-transform:uppercase;text-align:center;line-height:2.2;}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:10px 16px;z-index:50;pointer-events:none;}
+.hval{font-family:'Bebas Neue';font-size:40px;line-height:1;}
 .hlbl{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.15em;text-transform:uppercase;}
-#wbar-wrap{position:fixed;right:10px;top:50%;transform:translateY(-50%);width:8px;height:150px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;z-index:10;}
+#wbwrap{position:fixed;right:10px;top:50%;transform:translateY(-50%);width:8px;height:150px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;z-index:50;}
 #wbar{position:absolute;bottom:0;width:100%;height:0%;background:#E31B23;border-radius:99px;}
-#wlbl{position:fixed;right:24px;top:50%;transform:translateY(-50%) rotate(-90deg);font-size:9px;color:rgba(255,255,255,.25);letter-spacing:.15em;text-transform:uppercase;white-space:nowrap;pointer-events:none;}
-#zl,#zr{position:fixed;bottom:0;width:50%;height:44%;z-index:20;-webkit-tap-highlight-color:transparent;}
-#zl{left:0;}#zr{right:0;}
-.zlbl{position:fixed;bottom:16px;font-size:11px;color:rgba(255,255,255,.2);letter-spacing:.2em;text-transform:uppercase;z-index:21;pointer-events:none;}
-#zlbl-l{left:0;width:50%;text-align:center;}
+/* Touch zones — high z-index, cover bottom half */
+#zl{position:fixed;left:0;bottom:0;width:50%;height:45%;z-index:100;background:transparent;-webkit-tap-highlight-color:transparent;}
+#zr{position:fixed;right:0;bottom:0;width:50%;height:45%;z-index:100;background:transparent;-webkit-tap-highlight-color:transparent;}
+.zlbl{position:fixed;bottom:16px;font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;z-index:101;pointer-events:none;}
+#zlbl-l{left:0;width:50%;text-align:center;color:rgba(255,255,255,.25);}
 #zlbl-r{right:0;width:50%;text-align:center;color:rgba(227,27,35,.5);}
-#flash{position:fixed;inset:0;background:#E31B23;opacity:0;pointer-events:none;z-index:25;}
-#score-screen .bignum{font-family:'Bebas Neue';font-size:90px;color:#E31B23;line-height:1;}
-#score-screen .srow{display:flex;gap:28px;margin:8px 0 20px;}
-#score-screen .sitem .n{font-family:'Bebas Neue';font-size:40px;}
-#score-screen .sitem .l{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.15em;text-transform:uppercase;}
+#flash{position:fixed;inset:0;background:#E31B23;opacity:0;pointer-events:none;z-index:200;}
+.srow{display:flex;gap:28px;margin:8px 0 20px;}
+.sitem .n{font-family:'Bebas Neue';font-size:40px;}
+.sitem .l{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.15em;text-transform:uppercase;}
+#dbg{position:fixed;top:60px;left:10px;font-size:11px;color:rgba(255,255,255,.3);z-index:999;pointer-events:none;}
 </style>
 </head>
 <body>
 
+<canvas id="c"></canvas>
+
+<!-- START -->
 <div id="start-screen" class="screen">
   <img class="logo" src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776258543/Logo_rama_1_uuvrq1.png"/>
-  <div class="gtitle">WHEE<b>LIE</b></div>
+  <div class="gtitle">WHEE<span class="red">LIE</span></div>
   <div class="gsub">RS Pro Parts · Arcade</div>
-  <button class="bigbtn" onclick="startGame()">JUGAR</button>
-  <div class="hint">
-    ← FRENO &nbsp;|&nbsp; ACELERADOR →<br/>
-    Teclado: ← →&nbsp;&nbsp;|&nbsp;&nbsp;Celular: tocá cada mitad
-  </div>
+  <button class="bigbtn" id="btn-jugar">JUGAR</button>
+  <div class="hint">← FRENO &nbsp;|&nbsp; ACELERADOR →<br/>Teclado: ← A &nbsp;|&nbsp; → D</div>
 </div>
 
+<!-- GAME OVER -->
 <div id="score-screen" class="screen off">
-  <div class="gtitle">GAME <b>OVER</b></div>
+  <div class="gtitle">GAME <span class="red">OVER</span></div>
   <div style="margin-top:16px;font-size:12px;color:rgba(255,255,255,.3);letter-spacing:.2em;text-transform:uppercase;">Puntaje</div>
-  <div class="bignum" id="fs-score">0</div>
+  <div style="font-family:'Bebas Neue';font-size:90px;color:#E31B23;line-height:1;" id="fs-score">0</div>
   <div class="srow">
     <div class="sitem"><div class="n" id="fs-dist">0m</div><div class="l">Distancia</div></div>
     <div class="sitem"><div class="n" id="fs-best">0</div><div class="l">Mejor</div></div>
     <div class="sitem"><div class="n" id="fs-wc">0</div><div class="l">Wheelies</div></div>
   </div>
-  <button class="bigbtn" onclick="startGame()">DE NUEVO</button>
-  <button onclick="showStart()" style="margin-top:12px;background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);font-family:'Barlow Condensed';font-size:14px;letter-spacing:.15em;text-transform:uppercase;padding:10px 28px;cursor:pointer;">MENÚ</button>
+  <button class="bigbtn" id="btn-denovo">DE NUEVO</button>
+  <button id="btn-menu" style="margin-top:12px;background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);font-family:'Barlow Condensed';font-size:14px;letter-spacing:.15em;text-transform:uppercase;padding:10px 28px;cursor:pointer;">MENÚ</button>
 </div>
 
+<!-- HUD -->
 <div id="hud">
   <div><div class="hlbl">Score</div><div class="hval red" id="h-score">0</div></div>
   <div style="text-align:center"><div class="hlbl">Wheelie</div><div class="hval" id="h-wt">0s</div></div>
   <div style="text-align:right"><div class="hlbl">Mejor</div><div class="hval" id="h-best">0</div></div>
 </div>
-<div id="wbar-wrap"><div id="wbar"></div></div>
-<div id="wlbl">BALANCE</div>
-<div id="zl"></div><div id="zr"></div>
+<div id="wbwrap"><div id="wbar"></div></div>
+
+<!-- TOUCH ZONES -->
+<div id="zl"></div>
+<div id="zr"></div>
 <div class="zlbl" id="zlbl-l">⬇ FRENO</div>
 <div class="zlbl" id="zlbl-r">ACELERADOR ⬆</div>
+
 <div id="flash"></div>
-<canvas id="c"></canvas>
+<div id="dbg"></div>
 
 <script>
-const CV = document.getElementById('c');
-const CX = CV.getContext('2d');
-const RED = '#E31B23';
-let W,H,GY,raf,on=false;
-let accel=false,brake=false,bestScore=0;
-let M={},camX=0,scoreF=0,score=0;
-let wCount=0,wOn=false,wTime=0;
-let parts=[],marks=[],obs=[],spT=0;
+// ── GLOBALS ──
+var CV = document.getElementById('c');
+var CX = CV.getContext('2d');
+var W, H, GY;
+var raf, gameOn = false;
+var accel = false, brake = false;
+var bestScore = 0;
+var M = {}, camX = 0, scoreF = 0, score = 0;
+var wCount = 0, wOn = false, wTime = 0;
+var parts = [], marks = [], obs = [], spT = 0;
+var RED = '#E31B23';
+var WB = 76; // wheelbase
 
-function resize(){W=CV.width=innerWidth;H=CV.height=innerHeight;GY=Math.floor(H*.70);}
-
-// INPUT — setup after DOM ready
-function setupInput(){
-  function si(id,fn){
-    const el=document.getElementById(id);
-    if(!el){console.error('Missing element:',id);return;}
-    el.addEventListener('touchstart',e=>{e.preventDefault();fn(true);},{passive:false});
-    el.addEventListener('touchend',  e=>{e.preventDefault();fn(false);},{passive:false});
-    el.addEventListener('touchcancel',e=>{e.preventDefault();fn(false);},{passive:false});
-    el.addEventListener('mousedown',e=>{e.preventDefault();fn(true);});
-    el.addEventListener('mouseup',  e=>{e.preventDefault();fn(false);});
-    el.addEventListener('mouseleave',e=>{fn(false);});
-  }
-  si('zr',v=>{accel=v;});
-  si('zl',v=>{brake=v;});
-  document.addEventListener('keydown',e=>{
-    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){e.preventDefault();accel=true;}
-    if(e.key==='ArrowLeft' ||e.key==='a'||e.key==='A'){e.preventDefault();brake=true;}
-  });
-  document.addEventListener('keyup',e=>{
-    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') accel=false;
-    if(e.key==='ArrowLeft' ||e.key==='a'||e.key==='A') brake=false;
-  });
+function resize() {
+  W = CV.width = window.innerWidth;
+  H = CV.height = window.innerHeight;
+  GY = Math.floor(H * 0.70);
 }
 
-function showStart(){
+// ── BUTTONS (inline onclick — guaranteed to work) ──
+document.getElementById('btn-jugar').onclick = function() { startGame(); };
+document.getElementById('btn-denovo').onclick = function() { startGame(); };
+document.getElementById('btn-menu').onclick = function() { showStart(); };
+
+// ── TOUCH ZONES ──
+var zl = document.getElementById('zl');
+var zr = document.getElementById('zr');
+
+zl.ontouchstart = function(e) { e.preventDefault(); brake = true; document.getElementById('dbg').textContent = 'BRAKE ON'; };
+zl.ontouchend   = function(e) { e.preventDefault(); brake = false; document.getElementById('dbg').textContent = 'BRAKE OFF'; };
+zl.ontouchcancel= function(e) { e.preventDefault(); brake = false; };
+zr.ontouchstart = function(e) { e.preventDefault(); accel = true; document.getElementById('dbg').textContent = 'ACCEL ON'; };
+zr.ontouchend   = function(e) { e.preventDefault(); accel = false; document.getElementById('dbg').textContent = 'ACCEL OFF'; };
+zr.ontouchcancel= function(e) { e.preventDefault(); accel = false; };
+
+// Mouse fallback
+zl.onmousedown  = function() { brake = true; };
+zl.onmouseup    = function() { brake = false; };
+zl.onmouseleave = function() { brake = false; };
+zr.onmousedown  = function() { accel = true; };
+zr.onmouseup    = function() { accel = false; };
+zr.onmouseleave = function() { accel = false; };
+
+// Keyboard
+document.onkeydown = function(e) {
+  if (e.key === 'ArrowLeft'  || e.key === 'a' || e.key === 'A') { e.preventDefault(); brake = true; }
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { e.preventDefault(); accel = true; }
+};
+document.onkeyup = function(e) {
+  if (e.key === 'ArrowLeft'  || e.key === 'a' || e.key === 'A') brake = false;
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') accel = false;
+};
+
+function showStart() {
   document.getElementById('start-screen').classList.remove('off');
   document.getElementById('score-screen').classList.add('off');
-  on=false; if(raf)cancelAnimationFrame(raf);
+  gameOn = false;
+  if (raf) cancelAnimationFrame(raf);
 }
 
-function startGame(){
+function startGame() {
   document.getElementById('start-screen').classList.add('off');
   document.getElementById('score-screen').classList.add('off');
   resize();
-  // Moto origin = rear axle on ground
-  M={angle:0,angVel:0,speed:2.5};
-  camX=0;scoreF=0;score=0;wCount=0;wOn=false;wTime=0;
-  parts=[];obs=[];spT=0;accel=false;brake=false;
-  marks=[];for(let i=0;i<80;i++)marks.push(i*110);
-  on=true;if(raf)cancelAnimationFrame(raf);loop();
+  M = { angle: 0, angVel: 0, speed: 2.5 };
+  camX = 0; scoreF = 0; score = 0;
+  wCount = 0; wOn = false; wTime = 0;
+  parts = []; obs = []; spT = 0;
+  accel = false; brake = false;
+  marks = [];
+  for (var i = 0; i < 80; i++) marks.push(i * 110);
+  gameOn = true;
+  if (raf) cancelAnimationFrame(raf);
+  loop();
 }
 
-function loop(){raf=requestAnimationFrame(loop);update();render();}
+function loop() {
+  raf = requestAnimationFrame(loop);
+  update();
+  render();
+}
 
-// Physics constants
-const G_ANG   = 0.018;  // gravity pulls nose down (gentle)
-const AC_POW  = 0.045;  // accel lifts nose
-const BR_POW  = 0.055;  // brake pushes nose down
-const DAMP    = 0.88;   // angular damping (more aggressive = snappier return)
-const CRASH   = 1.05;   // crash angle
-const WB      = 76;     // wheelbase px
-const STABLE_ZONE = 0.08; // angle considered "on ground" - no gravity applied
+// ── PHYSICS ──
+var G_ANG  = 0.016;
+var AC_POW = 0.044;
+var BR_POW = 0.052;
+var DAMP   = 0.87;
+var CRASH  = 1.05;
+var STABLE = 0.06;
 
-function update(){
-  if(!on)return;
-  M.speed=Math.min(M.speed+.006,7);
-  camX+=M.speed;
+function update() {
+  if (!gameOn) return;
+  M.speed = Math.min(M.speed + 0.006, 7);
+  camX += M.speed;
 
-  if(accel) M.angVel -= AC_POW;
-  if(brake) M.angVel += BR_POW;
+  if (accel) M.angVel -= AC_POW;
+  if (brake) M.angVel += BR_POW;
 
-  // Gravity only applies when nose is actually up (wheelie)
-  // When on the ground (angle near 0), the ground holds the bike — no gravity
-  if(M.angle < -STABLE_ZONE) {
-    // nose is up — gravity pulls it back down
-    M.angVel += G_ANG;
-  } else if(M.angle > STABLE_ZONE) {
-    // nose tipped too far forward — push back up
+  if (M.angle < -STABLE) {
+    M.angVel += G_ANG; // gravity brings nose down
+  } else if (M.angle > STABLE) {
     M.angVel -= G_ANG * 0.8;
   } else {
-    // stable zone: clamp to 0 if not pressing anything
-    if(!accel && !brake) {
-      M.angVel *= 0.6; // snap to flat quickly
-      if(Math.abs(M.angle) < 0.02) { M.angle = 0; M.angVel = 0; }
+    if (!accel && !brake) {
+      M.angVel *= 0.55;
+      if (Math.abs(M.angle) < 0.015) { M.angle = 0; M.angVel = 0; }
     }
   }
 
   M.angVel *= DAMP;
   M.angle  += M.angVel;
-  // Hard floor: can't go below 0 (both wheels on ground)
-  if(M.angle > 0) { M.angle = 0; M.angVel = Math.min(0, M.angVel); }
-  M.angle = Math.max(-(CRASH+.05), M.angle);
+
+  // Ground hard limit: can't go past flat on brake side
+  if (M.angle > 0) { M.angle = 0; M.angVel = Math.min(0, M.angVel); }
+  M.angle = Math.max(-(CRASH + 0.05), M.angle);
 
   // Wheelie
-  const inW=M.angle<-.30;
-  if(inW){wTime+=1/60;scoreF+=M.speed*.6;wOn=true;}
-  else{if(wOn&&wTime>.4)wCount++;wOn=false;wTime=Math.max(0,wTime-.01);}
+  var inW = M.angle < -0.30;
+  if (inW) { wTime += 1/60; scoreF += M.speed * 0.6; wOn = true; }
+  else { if (wOn && wTime > 0.4) wCount++; wOn = false; wTime = Math.max(0, wTime - 0.01); }
 
   // Bar
-  const bp=Math.max(0,Math.min(100,(-M.angle/CRASH)*100));
-  const wb=document.getElementById('wbar');
-  wb.style.height=bp+'%';
-  wb.style.background=bp>80?'#ff3333':bp>55?'#ff8800':RED;
+  var bp = Math.max(0, Math.min(100, (-M.angle / CRASH) * 100));
+  var wb = document.getElementById('wbar');
+  wb.style.height = bp + '%';
+  wb.style.background = bp > 80 ? '#ff3333' : bp > 55 ? '#ff8800' : RED;
 
   // Crash
-  if(Math.abs(M.angle)>CRASH){crash();return;}
+  if (Math.abs(M.angle) > CRASH) { crash(); return; }
 
-  scoreF+=M.speed*.04;
-  score=Math.floor(scoreF);
-  if(score>bestScore)bestScore=score;
-  document.getElementById('h-score').textContent=score;
-  document.getElementById('h-wt').textContent=wTime.toFixed(1)+'s';
-  document.getElementById('h-best').textContent=bestScore;
+  scoreF += M.speed * 0.04;
+  score = Math.floor(scoreF);
+  if (score > bestScore) bestScore = score;
+  document.getElementById('h-score').textContent = score;
+  document.getElementById('h-wt').textContent = wTime.toFixed(1) + 's';
+  document.getElementById('h-best').textContent = bestScore;
 
   // Obstacles
   spT++;
-  if(spT>130+Math.random()*90){spT=0;obs.push({x:camX+W+60+Math.random()*120,type:Math.random()<.6?'cone':'bump',hit:false});}
-  obs=obs.filter(o=>o.x>camX-100);
-  const sx0=W*.28;
-  obs.forEach(o=>{
-    const sx=sx0+(o.x-camX);
-    if(!o.hit&&sx>sx0-20&&sx<sx0+35){
-      if(o.type==='cone'&&M.angle>-.4){crash();}
-      else if(o.type==='bump'&&M.angle>-.4){scoreF+=30;}
-      o.hit=true;
+  if (spT > 130 + Math.random() * 90) {
+    spT = 0;
+    obs.push({ x: camX + W + 60 + Math.random() * 120, type: Math.random() < 0.6 ? 'cone' : 'bump', hit: false });
+  }
+  obs = obs.filter(function(o) { return o.x > camX - 100; });
+  var mx = W * 0.28;
+  obs.forEach(function(o) {
+    var sx = mx + (o.x - camX);
+    if (!o.hit && sx > mx - 20 && sx < mx + 35) {
+      if (o.type === 'cone' && M.angle > -0.4) { crash(); }
+      else if (o.type === 'bump') { scoreF += 30; }
+      o.hit = true;
     }
   });
 
   // Particles
-  if(inW&&Math.random()<.5)parts.push({x:W*.28-30,y:GY,vx:-Math.random()*2-.5,vy:-Math.random()*2,life:1,r:2+Math.random()*3});
-  parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.12;p.life-=.04;});
-  parts=parts.filter(p=>p.life>0);
+  if (inW && Math.random() < 0.5) {
+    parts.push({ x: W * 0.28 - 30, y: GY, vx: -Math.random() * 2 - 0.5, vy: -Math.random() * 2, life: 1, r: 2 + Math.random() * 3 });
+  }
+  parts.forEach(function(p) { p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life -= 0.04; });
+  parts = parts.filter(function(p) { return p.life > 0; });
 
-  // Recycle marks
-  marks.forEach((m,i)=>{if(m-camX<-60)marks[i]+=80*110;});
+  marks.forEach(function(m, i) { if (m - camX < -60) marks[i] += 80 * 110; });
 }
 
-function crash(){
-  if(!on)return;on=false;accel=false;brake=false;
-  const fl=document.getElementById('flash');
-  fl.style.opacity='.7';fl.style.transition='opacity .05s';
-  setTimeout(()=>{fl.style.transition='opacity .25s';fl.style.opacity='0';},80);
-  if(navigator.vibrate)navigator.vibrate([100,50,100]);
-  setTimeout(()=>{
-    document.getElementById('fs-score').textContent=score;
-    document.getElementById('fs-dist').textContent=Math.floor(camX/40)+'m';
-    document.getElementById('fs-best').textContent=bestScore;
-    document.getElementById('fs-wc').textContent=wCount;
+function crash() {
+  if (!gameOn) return;
+  gameOn = false; accel = false; brake = false;
+  var fl = document.getElementById('flash');
+  fl.style.transition = 'none'; fl.style.opacity = '0.7';
+  setTimeout(function() { fl.style.transition = 'opacity .3s'; fl.style.opacity = '0'; }, 80);
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+  setTimeout(function() {
+    document.getElementById('fs-score').textContent = score;
+    document.getElementById('fs-dist').textContent  = Math.floor(camX / 40) + 'm';
+    document.getElementById('fs-best').textContent  = bestScore;
+    document.getElementById('fs-wc').textContent    = wCount;
     document.getElementById('score-screen').classList.remove('off');
-  },700);
+  }, 700);
 }
 
 // ── RENDER ──
-function render(){
-  CX.clearRect(0,0,W,H);
-  const t=Date.now();
+function render() {
+  CX.clearRect(0, 0, W, H);
+  var t = Date.now();
 
   // Sky
-  const sk=CX.createLinearGradient(0,0,0,GY);
-  sk.addColorStop(0,'#060606');sk.addColorStop(1,'#140508');
-  CX.fillStyle=sk;CX.fillRect(0,0,W,GY);
+  var sk = CX.createLinearGradient(0, 0, 0, GY);
+  sk.addColorStop(0, '#060606'); sk.addColorStop(1, '#140508');
+  CX.fillStyle = sk; CX.fillRect(0, 0, W, GY);
 
-  // Buildings bg
-  CX.fillStyle='#0e0e0e';
-  const blds=[{x:0,w:55,h:85},{x:70,w:35,h:120},{x:120,w:70,h:65},{x:210,w:45,h:100},{x:270,w:60,h:80},{x:350,w:80,h:110},{x:450,w:50,h:70}];
-  const off=(camX*.12)%W;
-  blds.forEach(b=>{for(let r=-1;r<=1;r++){const bx=(b.x-off+r*W+W*2)%(W*2)-80;CX.fillRect(bx,GY-b.h,b.w,b.h);}});
+  // Buildings
+  var blds = [{x:0,w:55,h:85},{x:70,w:35,h:120},{x:130,w:70,h:65},{x:215,w:45,h:100},{x:275,w:60,h:80},{x:355,w:80,h:110},{x:455,w:50,h:70}];
+  var off = (camX * 0.12) % W;
+  CX.fillStyle = '#0e0e0e';
+  blds.forEach(function(b) {
+    for (var r = -1; r <= 1; r++) {
+      var bx = (b.x - off + r * W + W * 2) % (W * 2) - 80;
+      CX.fillRect(bx, GY - b.h, b.w, b.h);
+    }
+  });
 
   // Ground
-  CX.fillStyle='#181818';CX.fillRect(0,GY,W,H-GY);
-  CX.strokeStyle=RED;CX.lineWidth=2;
-  CX.beginPath();CX.moveTo(0,GY);CX.lineTo(W,GY);CX.stroke();
-  const gg=CX.createLinearGradient(0,GY,0,GY+20);
-  gg.addColorStop(0,'rgba(227,27,35,.1)');gg.addColorStop(1,'rgba(0,0,0,0)');
-  CX.fillStyle=gg;CX.fillRect(0,GY,W,20);
+  CX.fillStyle = '#181818'; CX.fillRect(0, GY, W, H - GY);
+  CX.strokeStyle = RED; CX.lineWidth = 2;
+  CX.beginPath(); CX.moveTo(0, GY); CX.lineTo(W, GY); CX.stroke();
+  var gg = CX.createLinearGradient(0, GY, 0, GY + 20);
+  gg.addColorStop(0, 'rgba(227,27,35,.1)'); gg.addColorStop(1, 'rgba(0,0,0,0)');
+  CX.fillStyle = gg; CX.fillRect(0, GY, W, 20);
 
   // Road marks
-  CX.fillStyle='rgba(255,255,255,.07)';
-  marks.forEach(m=>{const sx=m-camX;if(sx>-50&&sx<W+10)CX.fillRect(sx,GY+14,36,5);});
+  CX.fillStyle = 'rgba(255,255,255,.07)';
+  marks.forEach(function(m) { var sx = m - camX; if (sx > -50 && sx < W + 10) CX.fillRect(sx, GY + 14, 36, 5); });
 
   // Obstacles
-  const mx=W*.28;
-  obs.forEach(o=>{
-    const ox=mx+(o.x-camX);
-    if(ox<-60||ox>W+60)return;
-    CX.save();CX.translate(ox,GY);
-    if(o.type==='cone'){
-      CX.fillStyle=RED;CX.beginPath();CX.moveTo(0,0);CX.lineTo(-10,-30);CX.lineTo(10,-30);CX.closePath();CX.fill();
-      CX.fillStyle='white';CX.fillRect(-8,-17,16,4);
-    }else{
-      CX.fillStyle='#2a2a2a';CX.beginPath();CX.ellipse(0,-3,18,7,0,0,Math.PI*2);CX.fill();
+  var mx = W * 0.28;
+  obs.forEach(function(o) {
+    var ox = mx + (o.x - camX);
+    if (ox < -60 || ox > W + 60) return;
+    CX.save(); CX.translate(ox, GY);
+    if (o.type === 'cone') {
+      CX.fillStyle = RED; CX.beginPath(); CX.moveTo(0, 0); CX.lineTo(-10, -30); CX.lineTo(10, -30); CX.closePath(); CX.fill();
+      CX.fillStyle = 'white'; CX.fillRect(-8, -17, 16, 4);
+    } else {
+      CX.fillStyle = '#2a2a2a'; CX.beginPath(); CX.ellipse(0, -3, 18, 7, 0, 0, Math.PI * 2); CX.fill();
     }
     CX.restore();
   });
 
   // Particles
-  parts.forEach(p=>{CX.save();CX.globalAlpha=p.life*.5;CX.fillStyle='#aaa';CX.beginPath();CX.arc(p.x,p.y,p.r,0,Math.PI*2);CX.fill();CX.restore();});
+  parts.forEach(function(p) {
+    CX.save(); CX.globalAlpha = p.life * 0.5; CX.fillStyle = '#aaa';
+    CX.beginPath(); CX.arc(p.x, p.y, p.r, 0, Math.PI * 2); CX.fill(); CX.restore();
+  });
 
   // Speed lines
-  if(M.speed>5){
-    CX.save();CX.globalAlpha=(M.speed-5)/7*.1;CX.strokeStyle='white';CX.lineWidth=1;
-    for(let i=0;i<8;i++){const y=(i/8)*GY;const l=50+Math.random()*80;CX.beginPath();CX.moveTo(W*.6,y);CX.lineTo(W*.6+l,y);CX.stroke();}
+  if (M.speed > 5) {
+    CX.save(); CX.globalAlpha = (M.speed - 5) / 7 * 0.1; CX.strokeStyle = 'white'; CX.lineWidth = 1;
+    for (var i = 0; i < 8; i++) {
+      var y = (i / 8) * GY; var l = 50 + Math.random() * 80;
+      CX.beginPath(); CX.moveTo(W * 0.6, y); CX.lineTo(W * 0.6 + l, y); CX.stroke();
+    }
     CX.restore();
   }
 
-  // MOTO
+  // MOTO — origin at rear axle on ground
   CX.save();
-  CX.translate(mx, GY); // rear axle at ground
+  CX.translate(mx, GY);
   CX.rotate(M.angle);
+  drawMoto(t);
+  CX.restore();
+}
 
-  // Both wheels on ground at 0 angle — rear at (0,0), front at (WB,0)
-  wheel(CX, 0,   0, 22, t); // rear
-  wheel(CX, WB,  0, 21, t); // front
+function drawMoto(t) {
+  // ── WHEELS ──
+  wheel(0, 0, 22, t);     // rear
+  wheel(WB, 0, 21, t);    // front
 
   // Swingarm
-  CX.strokeStyle='#777';CX.lineWidth=5;
-  CX.beginPath();CX.moveTo(0,-4);CX.lineTo(18,-26);CX.stroke();
+  CX.strokeStyle='#777'; CX.lineWidth=5;
+  CX.beginPath(); CX.moveTo(0,-4); CX.lineTo(18,-26); CX.stroke();
 
-  // Main frame
-  CX.strokeStyle='#888';CX.lineWidth=4;
-  CX.beginPath();CX.moveTo(18,-26);CX.lineTo(38,-20);CX.stroke(); // down tube
-  CX.beginPath();CX.moveTo(18,-26);CX.lineTo(60,-46);CX.stroke(); // top tube
-  CX.beginPath();CX.moveTo(38,-20);CX.lineTo(60,-46);CX.stroke(); // seat tube
+  // Frame
+  CX.strokeStyle='#888'; CX.lineWidth=4;
+  CX.beginPath(); CX.moveTo(18,-26); CX.lineTo(38,-20); CX.stroke();
+  CX.beginPath(); CX.moveTo(18,-26); CX.lineTo(60,-46); CX.stroke();
+  CX.beginPath(); CX.moveTo(38,-20); CX.lineTo(60,-46); CX.stroke();
+  CX.strokeStyle='#666'; CX.lineWidth=3;
+  CX.beginPath(); CX.moveTo(18,-26); CX.lineTo(-2,-40); CX.lineTo(-12,-30); CX.stroke();
 
-  // Subframe tail
-  CX.strokeStyle='#666';CX.lineWidth=3;
-  CX.beginPath();CX.moveTo(18,-26);CX.lineTo(-2,-40);CX.lineTo(-12,-30);CX.stroke();
-
-  // Forks (long travel)
-  CX.strokeStyle='#bbb';CX.lineWidth=5;
-  CX.beginPath();CX.moveTo(56,-44);CX.lineTo(WB-2,-4);CX.stroke();
-  CX.beginPath();CX.moveTo(60,-44);CX.lineTo(WB+2,-4);CX.stroke();
-  CX.strokeStyle='#999';CX.lineWidth=3;
-  CX.beginPath();CX.moveTo(57,-22);CX.lineTo(WB+1,-22);CX.stroke(); // brace
+  // Forks
+  CX.strokeStyle='#bbb'; CX.lineWidth=5;
+  CX.beginPath(); CX.moveTo(56,-44); CX.lineTo(WB-2,-4); CX.stroke();
+  CX.beginPath(); CX.moveTo(60,-44); CX.lineTo(WB+2,-4); CX.stroke();
+  CX.strokeStyle='#999'; CX.lineWidth=3;
+  CX.beginPath(); CX.moveTo(57,-22); CX.lineTo(WB+1,-22); CX.stroke();
 
   // Engine
   CX.fillStyle='#252525';
-  CX.beginPath();CX.moveTo(22,-20);CX.lineTo(20,-36);CX.lineTo(42,-38);CX.lineTo(48,-20);CX.closePath();CX.fill();
-  CX.strokeStyle='#3a3a3a';CX.lineWidth=1.5;
-  for(let i=0;i<4;i++){CX.beginPath();CX.moveTo(23,-22-i*3.5);CX.lineTo(46,-22-i*3.5);CX.stroke();}
+  CX.beginPath(); CX.moveTo(22,-20); CX.lineTo(20,-36); CX.lineTo(42,-38); CX.lineTo(48,-20); CX.closePath(); CX.fill();
+  CX.strokeStyle='#3a3a3a'; CX.lineWidth=1.5;
+  for (var i=0;i<4;i++) { CX.beginPath(); CX.moveTo(23,-22-i*3.5); CX.lineTo(46,-22-i*3.5); CX.stroke(); }
 
-  // Exhaust (high mount)
-  CX.strokeStyle='#777';CX.lineWidth=5;
-  CX.beginPath();CX.moveTo(44,-18);CX.bezierCurveTo(56,-14,68,-8,72,-2);CX.stroke();
-  CX.fillStyle='#555';CX.beginPath();CX.roundRect(66,-5,22,9,3);CX.fill();
+  // Exhaust
+  CX.strokeStyle='#777'; CX.lineWidth=5;
+  CX.beginPath(); CX.moveTo(44,-18); CX.bezierCurveTo(56,-14,68,-8,72,-2); CX.stroke();
+  CX.fillStyle='#555'; CX.beginPath(); CX.roundRect(66,-5,22,9,3); CX.fill();
 
-  // Red side panels
+  // Red panels
   CX.fillStyle=RED;
-  CX.beginPath();CX.moveTo(18,-36);CX.lineTo(46,-40);CX.lineTo(53,-26);CX.lineTo(50,-16);CX.lineTo(22,-14);CX.closePath();CX.fill();
+  CX.beginPath(); CX.moveTo(18,-36); CX.lineTo(46,-40); CX.lineTo(53,-26); CX.lineTo(50,-16); CX.lineTo(22,-14); CX.closePath(); CX.fill();
 
-  // White lower panel
+  // White lower
   CX.fillStyle='#ddd';
-  CX.beginPath();CX.moveTo(22,-14);CX.lineTo(50,-16);CX.lineTo(52,-10);CX.lineTo(24,-8);CX.closePath();CX.fill();
+  CX.beginPath(); CX.moveTo(22,-14); CX.lineTo(50,-16); CX.lineTo(52,-10); CX.lineTo(24,-8); CX.closePath(); CX.fill();
 
-  // Tank (red, prominent)
+  // Tank
   CX.fillStyle=RED;
-  CX.beginPath();CX.moveTo(16,-36);CX.lineTo(46,-42);CX.lineTo(60,-40);CX.lineTo(58,-28);CX.lineTo(18,-28);CX.closePath();CX.fill();
+  CX.beginPath(); CX.moveTo(16,-36); CX.lineTo(46,-42); CX.lineTo(60,-40); CX.lineTo(58,-28); CX.lineTo(18,-28); CX.closePath(); CX.fill();
   CX.fillStyle='rgba(255,255,255,.1)';
-  CX.beginPath();CX.moveTo(24,-38);CX.lineTo(46,-42);CX.lineTo(56,-36);CX.lineTo(26,-32);CX.closePath();CX.fill();
+  CX.beginPath(); CX.moveTo(24,-38); CX.lineTo(46,-42); CX.lineTo(56,-36); CX.lineTo(26,-32); CX.closePath(); CX.fill();
 
   // Seat
   CX.fillStyle='#1a1a1a';
-  CX.beginPath();CX.moveTo(-14,-30);CX.lineTo(18,-44);CX.lineTo(18,-34);CX.lineTo(-12,-28);CX.closePath();CX.fill();
+  CX.beginPath(); CX.moveTo(-14,-30); CX.lineTo(18,-44); CX.lineTo(18,-34); CX.lineTo(-12,-28); CX.closePath(); CX.fill();
 
   // Rear fender
   CX.fillStyle=RED;
-  CX.beginPath();CX.moveTo(-12,-28);CX.lineTo(-4,-44);CX.lineTo(0,-44);CX.lineTo(-6,-26);CX.closePath();CX.fill();
+  CX.beginPath(); CX.moveTo(-12,-28); CX.lineTo(-4,-44); CX.lineTo(0,-44); CX.lineTo(-6,-26); CX.closePath(); CX.fill();
 
   // Headlight shroud
   CX.fillStyle=RED;
-  CX.beginPath();CX.moveTo(54,-30);CX.lineTo(72,-32);CX.lineTo(76,-22);CX.lineTo(70,-16);CX.lineTo(56,-18);CX.closePath();CX.fill();
-  CX.fillStyle='#222';CX.beginPath();CX.arc(65,-24,7,0,Math.PI*2);CX.fill();
-  CX.fillStyle='rgba(255,220,120,.9)';CX.beginPath();CX.arc(65,-24,5,0,Math.PI*2);CX.fill();
-  // Glow
-  CX.save();CX.globalAlpha=.18;
-  const gl=CX.createRadialGradient(65,-24,0,65,-24,28);
-  gl.addColorStop(0,'rgba(255,210,80,1)');gl.addColorStop(1,'rgba(255,210,80,0)');
-  CX.fillStyle=gl;CX.beginPath();CX.arc(65,-24,28,0,Math.PI*2);CX.fill();CX.restore();
+  CX.beginPath(); CX.moveTo(54,-30); CX.lineTo(72,-32); CX.lineTo(76,-22); CX.lineTo(70,-16); CX.lineTo(56,-18); CX.closePath(); CX.fill();
+  CX.fillStyle='#222'; CX.beginPath(); CX.arc(65,-24,7,0,Math.PI*2); CX.fill();
+  CX.fillStyle='rgba(255,220,120,.9)'; CX.beginPath(); CX.arc(65,-24,5,0,Math.PI*2); CX.fill();
 
   // Front fender
   CX.fillStyle=RED;
-  CX.save();CX.translate(WB,-20);
-  CX.beginPath();CX.moveTo(-8,2);CX.lineTo(-6,-14);CX.lineTo(6,-14);CX.lineTo(8,2);CX.closePath();CX.fill();
+  CX.save(); CX.translate(WB,-20);
+  CX.beginPath(); CX.moveTo(-8,2); CX.lineTo(-6,-14); CX.lineTo(6,-14); CX.lineTo(8,2); CX.closePath(); CX.fill();
   CX.restore();
 
   // Handlebar
-  CX.strokeStyle='#999';CX.lineWidth=4;
-  CX.beginPath();CX.moveTo(58,-46);CX.lineTo(56,-58);CX.stroke();
-  CX.lineWidth=5;CX.beginPath();CX.moveTo(42,-58);CX.lineTo(70,-58);CX.stroke();
-  CX.strokeStyle='#222';CX.lineWidth=7;
-  CX.beginPath();CX.moveTo(42,-58);CX.lineTo(46,-58);CX.stroke();
-  CX.beginPath();CX.moveTo(66,-58);CX.lineTo(70,-58);CX.stroke();
+  CX.strokeStyle='#999'; CX.lineWidth=4;
+  CX.beginPath(); CX.moveTo(58,-46); CX.lineTo(56,-58); CX.stroke();
+  CX.lineWidth=5; CX.beginPath(); CX.moveTo(42,-58); CX.lineTo(70,-58); CX.stroke();
+  CX.strokeStyle='#222'; CX.lineWidth=7;
+  CX.beginPath(); CX.moveTo(42,-58); CX.lineTo(46,-58); CX.stroke();
+  CX.beginPath(); CX.moveTo(66,-58); CX.lineTo(70,-58); CX.stroke();
 
-  // Smoke when wheelie
-  if(M.angle<-.35){
-    const ii=Math.min((-M.angle-.35)/.5,1);
-    for(let s=0;s<3;s++){
-      CX.save();CX.globalAlpha=ii*.22*(1-s*.3);CX.fillStyle='#aaa';
-      CX.beginPath();CX.arc(90+s*9+Math.sin(t*.008+s)*4,s*4,4+s*3,0,Math.PI*2);CX.fill();
-      CX.restore();
+  // Smoke
+  if (M.angle < -0.35) {
+    var ii = Math.min((-M.angle - 0.35) / 0.5, 1);
+    for (var s=0;s<3;s++) {
+      CX.save(); CX.globalAlpha=ii*0.22*(1-s*.3); CX.fillStyle='#aaa';
+      CX.beginPath(); CX.arc(90+s*9+Math.sin(t*.008+s)*4,s*4,4+s*3,0,Math.PI*2); CX.fill(); CX.restore();
     }
   }
 
-  // Rider
-  rider(CX, M.angle, t);
+  rider(t);
+}
 
+function wheel(x, y, r, t) {
+  CX.save(); CX.translate(x, y);
+  CX.strokeStyle='#111'; CX.lineWidth=11;
+  CX.beginPath(); CX.arc(0,0,r,0,Math.PI*2); CX.stroke();
+  for (var i=0;i<14;i++) {
+    var a=(i/14)*Math.PI*2+t*.005;
+    CX.strokeStyle='#1e1e1e'; CX.lineWidth=4;
+    CX.beginPath(); CX.moveTo(Math.cos(a)*(r-4),Math.sin(a)*(r-4)); CX.lineTo(Math.cos(a)*(r+2),Math.sin(a)*(r+2)); CX.stroke();
+  }
+  CX.strokeStyle='#2a2a2a'; CX.lineWidth=2; CX.beginPath(); CX.arc(0,0,r-5,0,Math.PI*2); CX.stroke();
+  CX.strokeStyle='#c0c0c0'; CX.lineWidth=2; CX.beginPath(); CX.arc(0,0,r-7,0,Math.PI*2); CX.stroke();
+  CX.strokeStyle='#aaa'; CX.lineWidth=.8;
+  for (var i=0;i<20;i++) {
+    var a=(i/20)*Math.PI*2+t*.005;
+    CX.beginPath(); CX.moveTo(0,0); CX.lineTo(Math.cos(a)*(r-7),Math.sin(a)*(r-7)); CX.stroke();
+  }
+  CX.fillStyle='#999'; CX.beginPath(); CX.arc(0,0,5,0,Math.PI*2); CX.fill();
+  CX.fillStyle='#333'; CX.beginPath(); CX.arc(0,0,2.5,0,Math.PI*2); CX.fill();
   CX.restore();
 }
 
-function wheel(ctx,x,y,r,t){
-  ctx.save();ctx.translate(x,y);
-  // Thick knobby tire
-  ctx.strokeStyle='#111';ctx.lineWidth=11;
-  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
-  // Knobs
-  for(let i=0;i<14;i++){
-    const a=(i/14)*Math.PI*2+t*.005;
-    ctx.strokeStyle='#1e1e1e';ctx.lineWidth=4;
-    ctx.beginPath();
-    ctx.moveTo(Math.cos(a)*(r-4),Math.sin(a)*(r-4));
-    ctx.lineTo(Math.cos(a)*(r+2),Math.sin(a)*(r+2));
-    ctx.stroke();
-  }
-  ctx.strokeStyle='#2a2a2a';ctx.lineWidth=2;
-  ctx.beginPath();ctx.arc(0,0,r-5,0,Math.PI*2);ctx.stroke();
-  // Rim
-  ctx.strokeStyle='#c0c0c0';ctx.lineWidth=2;
-  ctx.beginPath();ctx.arc(0,0,r-7,0,Math.PI*2);ctx.stroke();
-  // Spokes
-  ctx.strokeStyle='#aaa';ctx.lineWidth=.8;
-  for(let i=0;i<20;i++){
-    const a=(i/20)*Math.PI*2+t*.005;
-    ctx.beginPath();ctx.moveTo(0,0);
-    ctx.lineTo(Math.cos(a)*(r-7),Math.sin(a)*(r-7));ctx.stroke();
-  }
-  ctx.fillStyle='#999';ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#333';ctx.beginPath();ctx.arc(0,0,2.5,0,Math.PI*2);ctx.fill();
-  ctx.restore();
+function rider(t) {
+  CX.save(); CX.translate(4,-46);
+  CX.rotate(M.angle * 0.25);
+  CX.fillStyle='#1a1a1a'; CX.fillRect(-4,2,9,7); CX.fillRect(12,2,9,7);
+  CX.strokeStyle='#111'; CX.lineWidth=8;
+  CX.beginPath(); CX.moveTo(0,2); CX.lineTo(0,-12); CX.stroke();
+  CX.beginPath(); CX.moveTo(16,2); CX.lineTo(14,-12); CX.stroke();
+  CX.fillStyle='#111'; CX.beginPath(); CX.roundRect(-6,-28,20,18,3); CX.fill();
+  CX.strokeStyle='#111'; CX.lineWidth=7;
+  CX.beginPath(); CX.moveTo(10,-20); CX.lineTo(22,-16); CX.stroke();
+  CX.beginPath(); CX.moveTo(-2,-20); CX.lineTo(10,-16); CX.stroke();
+  CX.fillStyle=RED; CX.beginPath(); CX.arc(6,-34,11,0,Math.PI*2); CX.fill();
+  CX.fillStyle='rgba(0,0,0,.75)';
+  CX.beginPath(); CX.moveTo(-3,-28); CX.lineTo(15,-28); CX.lineTo(14,-34); CX.lineTo(-2,-34); CX.closePath(); CX.fill();
+  CX.restore();
 }
 
-function rider(ctx,angle,t){
-  ctx.save();
-  ctx.translate(4,-46);
-  ctx.rotate(angle*.25);
-
-  // Boots
-  ctx.fillStyle='#1a1a1a';
-  ctx.fillRect(-4,2,9,7);ctx.fillRect(12,2,9,7);
-  // Legs
-  ctx.strokeStyle='#111';ctx.lineWidth=8;
-  ctx.beginPath();ctx.moveTo(0,2);ctx.lineTo(0,-12);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(16,2);ctx.lineTo(14,-12);ctx.stroke();
-  // Body
-  ctx.fillStyle='#111';
-  ctx.beginPath();ctx.roundRect(-6,-28,20,18,3);ctx.fill();
-  // Arms to bar
-  ctx.strokeStyle='#111';ctx.lineWidth=7;
-  ctx.beginPath();ctx.moveTo(10,-20);ctx.lineTo(22,-16);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(-2,-20);ctx.lineTo(10,-16);ctx.stroke();
-  // Helmet (red, full face)
-  ctx.fillStyle=RED;
-  ctx.beginPath();ctx.arc(6,-34,11,0,Math.PI*2);ctx.fill();
-  // Visor
-  ctx.fillStyle='rgba(0,0,0,.75)';
-  ctx.beginPath();ctx.moveTo(-3,-28);ctx.lineTo(15,-28);ctx.lineTo(14,-34);ctx.lineTo(-2,-34);ctx.closePath();ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.08)';
-  ctx.beginPath();ctx.moveTo(-1,-33);ctx.lineTo(7,-33);ctx.lineTo(7,-30);ctx.lineTo(-1,-30);ctx.closePath();ctx.fill();
-
-  ctx.restore();
-}
-
-window.addEventListener('resize',resize);
-window.addEventListener('load',()=>{resize();setupInput();});
+// INIT
+resize();
+window.onresize = resize;
 </script>
 </body>
 </html>
