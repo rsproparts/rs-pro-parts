@@ -445,133 +445,297 @@ function render() {
 }
 
 // ─────────────────────────────────────────────
-// MOTO — enduro XR style, rear axle at (0,0)
+// MOTO — Pixel Art Honda XR, rear axle at (0,0)
+// Scale: 1 unit ≈ 1px on reference grid (moto ~120px wide)
 // ─────────────────────────────────────────────
+var S = 1.15; // scale factor
+
+function px(c, color, x, y, w, h) {
+  c.fillStyle = color;
+  c.fillRect(x*S, y*S, w*S, h*S);
+}
+
 function drawMoto(c, t) {
-  // Rear wheel at 0,0 — front at WB,0
-  drawWheel(c, 0, 0, 22, t);
-  drawWheel(c, WB, 0, 21, t);
+  c.save();
+  c.scale(S, S); // already inside save/restore with translate+rotate
 
-  // Swingarm
-  c.strokeStyle='#777'; c.lineWidth=5;
-  c.beginPath(); c.moveTo(0,-4); c.lineTo(18,-26); c.stroke();
+  // ── WHEELS ──
+  drawWheel(c, -1,  0, 19, t); // rear
+  drawWheel(c, 75,  0, 18, t); // front
 
-  // Frame
+  // ── SWINGARM ──
   c.strokeStyle='#888'; c.lineWidth=4;
-  c.beginPath(); c.moveTo(18,-26); c.lineTo(38,-20); c.stroke();
-  c.beginPath(); c.moveTo(18,-26); c.lineTo(60,-46); c.stroke();
-  c.beginPath(); c.moveTo(38,-20); c.lineTo(60,-46); c.stroke();
+  c.beginPath(); c.moveTo(-1,-3); c.lineTo(16,-22); c.stroke();
 
-  // Subframe
-  c.strokeStyle='#666'; c.lineWidth=3;
-  c.beginPath(); c.moveTo(18,-26); c.lineTo(-2,-40); c.lineTo(-12,-30); c.stroke();
+  // ── MAIN FRAME ──
+  c.strokeStyle='#aaa'; c.lineWidth=3.5;
+  // Down tube
+  c.beginPath(); c.moveTo(16,-22); c.lineTo(36,-16); c.stroke();
+  // Top tube  
+  c.beginPath(); c.moveTo(16,-22); c.lineTo(56,-40); c.stroke();
+  // Seat tube
+  c.beginPath(); c.moveTo(36,-16); c.lineTo(56,-40); c.stroke();
+  // Subframe left
+  c.strokeStyle='#777'; c.lineWidth=2.5;
+  c.beginPath(); c.moveTo(16,-22); c.lineTo(0,-34); c.lineTo(-10,-24); c.stroke();
 
-  // Forks
-  c.strokeStyle='#bbb'; c.lineWidth=5;
-  c.beginPath(); c.moveTo(56,-44); c.lineTo(WB-2,-4); c.stroke();
-  c.beginPath(); c.moveTo(60,-44); c.lineTo(WB+2,-4); c.stroke();
+  // ── REAR SHOCK ──
   c.strokeStyle='#999'; c.lineWidth=3;
-  c.beginPath(); c.moveTo(57,-22); c.lineTo(WB+1,-22); c.stroke();
+  c.beginPath(); c.moveTo(6,-8); c.lineTo(20,-30); c.stroke();
+  c.strokeStyle='#E31B23'; c.lineWidth=2;
+  c.beginPath(); c.moveTo(8,-10); c.lineTo(16,-26); c.stroke();
 
-  // Engine
+  // ── FORKS (long travel) ──
+  c.strokeStyle='#ccc'; c.lineWidth=5;
+  c.beginPath(); c.moveTo(52,-38); c.lineTo(73,-3); c.stroke();
+  c.beginPath(); c.moveTo(56,-38); c.lineTo(77,-3); c.stroke();
+  // Fork guard (red)
+  c.fillStyle='#E31B23';
+  c.beginPath(); c.moveTo(52,-32); c.lineTo(58,-32); c.lineTo(76,-6); c.lineTo(70,-6); c.closePath(); c.fill();
+  // Fork brace
+  c.strokeStyle='#aaa'; c.lineWidth=2.5;
+  c.beginPath(); c.moveTo(53,-18); c.lineTo(76,-18); c.stroke();
+
+  // ── ENGINE (black) ──
+  c.fillStyle='#1e1e1e';
+  c.beginPath();
+  c.moveTo(20,-16); c.lineTo(18,-32); c.lineTo(38,-34); c.lineTo(44,-16);
+  c.closePath(); c.fill();
+  // Engine fins
+  c.strokeStyle='#2e2e2e'; c.lineWidth=1.5;
+  for(var i=0;i<5;i++){
+    c.beginPath(); c.moveTo(20,-18-i*3); c.lineTo(43,-18-i*3); c.stroke();
+  }
+  // Engine bottom (crankcase)
   c.fillStyle='#252525';
-  c.beginPath(); c.moveTo(22,-20); c.lineTo(20,-36); c.lineTo(42,-38); c.lineTo(48,-20); c.closePath(); c.fill();
-  c.strokeStyle='#3a3a3a'; c.lineWidth=1.5;
-  for(var i=0;i<4;i++){c.beginPath();c.moveTo(23,-22-i*3.5);c.lineTo(46,-22-i*3.5);c.stroke();}
+  c.beginPath(); c.roundRect(18,-16,28,10,2); c.fill();
 
-  // Exhaust
-  c.strokeStyle='#777'; c.lineWidth=5;
-  c.beginPath(); c.moveTo(44,-18); c.bezierCurveTo(56,-14,68,-8,72,-2); c.stroke();
-  c.fillStyle='#555'; c.beginPath(); c.roundRect(66,-5,22,9,3); c.fill();
+  // ── EXHAUST (right side, high mount) ──
+  c.strokeStyle='#888'; c.lineWidth=5;
+  c.beginPath(); c.moveTo(42,-14); c.bezierCurveTo(50,-10,58,-4,62,2); c.stroke();
+  c.strokeStyle='#999'; c.lineWidth=5;
+  c.beginPath(); c.moveTo(62,2); c.lineTo(76,4); c.stroke();
+  // Muffler (round, silver)
+  c.fillStyle='#777';
+  c.beginPath(); c.roundRect(70,-2,18,10,4); c.fill();
+  c.fillStyle='#555'; c.beginPath(); c.arc(88,3,4,0,Math.PI*2); c.fill();
+  // Heat shield
+  c.fillStyle='rgba(200,200,200,0.15)';
+  c.beginPath(); c.roundRect(68,-3,16,8,3); c.fill();
 
-  // Red side panel
+  // ── RED SIDE PANEL (big graphic) ──
+  c.fillStyle='#D41820';
+  c.beginPath();
+  c.moveTo(14,-32); c.lineTo(42,-36); c.lineTo(50,-24); c.lineTo(46,-14); c.lineTo(18,-12);
+  c.closePath(); c.fill();
+  // Graphic lightning stripe (white)
+  c.fillStyle='rgba(255,255,255,0.25)';
+  c.beginPath();
+  c.moveTo(28,-34); c.lineTo(36,-35); c.lineTo(42,-24); c.lineTo(34,-24);
+  c.closePath(); c.fill();
+
+  // ── WHITE LOWER PANEL ──
+  c.fillStyle='#e8e8e8';
+  c.beginPath();
+  c.moveTo(18,-12); c.lineTo(46,-14); c.lineTo(48,-8); c.lineTo(20,-6);
+  c.closePath(); c.fill();
+  // Honda text (simulated)
   c.fillStyle='#E31B23';
-  c.beginPath(); c.moveTo(18,-36); c.lineTo(46,-40); c.lineTo(53,-26); c.lineTo(50,-16); c.lineTo(22,-14); c.closePath(); c.fill();
+  c.font='bold 5px Arial';
+  c.textAlign='center';
+  c.fillText('HONDA',33,-9);
 
-  // White lower
-  c.fillStyle='#ddd';
-  c.beginPath(); c.moveTo(22,-14); c.lineTo(50,-16); c.lineTo(52,-10); c.lineTo(24,-8); c.closePath(); c.fill();
+  // ── TANK (red, prominent) ──
+  c.fillStyle='#D41820';
+  c.beginPath();
+  c.moveTo(14,-32); c.lineTo(42,-38); c.lineTo(56,-36); c.lineTo(54,-26); c.lineTo(16,-26);
+  c.closePath(); c.fill();
+  // Tank highlight
+  c.fillStyle='rgba(255,100,100,0.3)';
+  c.beginPath();
+  c.moveTo(20,-36); c.lineTo(40,-38); c.lineTo(50,-32); c.lineTo(22,-30);
+  c.closePath(); c.fill();
+  // Tank cap
+  c.fillStyle='#888';
+  c.beginPath(); c.arc(30,-35,3,0,Math.PI*2); c.fill();
 
-  // Tank red
-  c.fillStyle='#E31B23';
-  c.beginPath(); c.moveTo(16,-36); c.lineTo(46,-42); c.lineTo(60,-40); c.lineTo(58,-28); c.lineTo(18,-28); c.closePath(); c.fill();
-  c.fillStyle='rgba(255,255,255,.1)';
-  c.beginPath(); c.moveTo(24,-38); c.lineTo(46,-42); c.lineTo(56,-36); c.lineTo(26,-32); c.closePath(); c.fill();
+  // ── SEAT (black) ──
+  c.fillStyle='#111';
+  c.beginPath();
+  c.moveTo(-12,-24); c.lineTo(14,-38); c.lineTo(16,-30); c.lineTo(-10,-22);
+  c.closePath(); c.fill();
+  // Seat grip texture
+  c.fillStyle='rgba(255,255,255,0.05)';
+  for(var i=0;i<4;i++){
+    c.fillRect(-8+i*5,-30,3,6);
+  }
 
-  // Seat
+  // ── REAR FENDER (tall, red) ──
+  c.fillStyle='#D41820';
+  c.beginPath();
+  c.moveTo(-10,-22); c.lineTo(-2,-38); c.lineTo(4,-38); c.lineTo(-4,-20);
+  c.closePath(); c.fill();
+  // Rear fender tip
+  c.beginPath(); c.moveTo(-2,-38); c.lineTo(2,-42); c.lineTo(4,-38); c.closePath(); c.fill();
+
+  // ── HEADLIGHT AREA ──
+  // Shroud (red)
+  c.fillStyle='#D41820';
+  c.beginPath();
+  c.moveTo(50,-26); c.lineTo(68,-28); c.lineTo(72,-18); c.lineTo(66,-12); c.lineTo(52,-14);
+  c.closePath(); c.fill();
+  // Headlight (round)
   c.fillStyle='#1a1a1a';
-  c.beginPath(); c.moveTo(-14,-30); c.lineTo(18,-44); c.lineTo(18,-34); c.lineTo(-12,-28); c.closePath(); c.fill();
+  c.beginPath(); c.arc(60,-20,7,0,Math.PI*2); c.fill();
+  c.fillStyle='rgba(255,220,100,0.9)';
+  c.beginPath(); c.arc(60,-20,5,0,Math.PI*2); c.fill();
+  // Lens shine
+  c.fillStyle='rgba(255,255,255,0.4)';
+  c.beginPath(); c.arc(58,-22,2,0,Math.PI*2); c.fill();
 
-  // Rear fender
-  c.fillStyle='#E31B23';
-  c.beginPath(); c.moveTo(-12,-28); c.lineTo(-4,-44); c.lineTo(0,-44); c.lineTo(-6,-26); c.closePath(); c.fill();
-
-  // Headlight shroud
-  c.fillStyle='#E31B23';
-  c.beginPath(); c.moveTo(54,-30); c.lineTo(72,-32); c.lineTo(76,-22); c.lineTo(70,-16); c.lineTo(56,-18); c.closePath(); c.fill();
-  c.fillStyle='#222'; c.beginPath(); c.arc(65,-24,7,0,Math.PI*2); c.fill();
-  c.fillStyle='rgba(255,220,120,.9)'; c.beginPath(); c.arc(65,-24,5,0,Math.PI*2); c.fill();
-
-  // Front fender
-  c.fillStyle='#E31B23'; c.save(); c.translate(WB,-20);
-  c.beginPath(); c.moveTo(-8,2); c.lineTo(-6,-14); c.lineTo(6,-14); c.lineTo(8,2); c.closePath(); c.fill();
+  // ── FRONT FENDER (high, red) ──
+  c.fillStyle='#D41820';
+  c.save(); c.translate(73,-16);
+  c.beginPath(); c.moveTo(-6,4); c.lineTo(-4,-12); c.lineTo(4,-12); c.lineTo(6,4); c.closePath(); c.fill();
   c.restore();
 
-  // Handlebar
-  c.strokeStyle='#999'; c.lineWidth=4;
-  c.beginPath(); c.moveTo(58,-46); c.lineTo(56,-58); c.stroke();
-  c.lineWidth=5; c.beginPath(); c.moveTo(42,-58); c.lineTo(70,-58); c.stroke();
-  c.strokeStyle='#222'; c.lineWidth=7;
-  c.beginPath(); c.moveTo(42,-58); c.lineTo(46,-58); c.stroke();
-  c.beginPath(); c.moveTo(66,-58); c.lineTo(70,-58); c.stroke();
+  // ── HANDLEBAR (high, wide) ──
+  c.strokeStyle='#999'; c.lineWidth=3.5;
+  c.beginPath(); c.moveTo(54,-40); c.lineTo(52,-52); c.stroke();
+  c.strokeStyle='#888'; c.lineWidth=5;
+  c.beginPath(); c.moveTo(40,-52); c.lineTo(64,-52); c.stroke();
+  // Crossbar
+  c.strokeStyle='#777'; c.lineWidth=2;
+  c.beginPath(); c.moveTo(44,-52); c.lineTo(60,-52); c.stroke();
+  // Grips
+  c.strokeStyle='#111'; c.lineWidth=7;
+  c.beginPath(); c.moveTo(40,-52); c.lineTo(43,-52); c.stroke();
+  c.beginPath(); c.moveTo(61,-52); c.lineTo(64,-52); c.stroke();
+  // Brake/throttle
+  c.strokeStyle='#555'; c.lineWidth=2;
+  c.beginPath(); c.moveTo(42,-52); c.lineTo(50,-46); c.stroke();
 
-  // Smoke
+  // ── FOOTPEGS ──
+  c.strokeStyle='#666'; c.lineWidth=3;
+  c.beginPath(); c.moveTo(22,-6); c.lineTo(30,-6); c.stroke();
+  c.beginPath(); c.moveTo(44,-6); c.lineTo(52,-6); c.stroke();
+
+  // ── EXHAUST SMOKE when wheelie ──
   if (angle < -0.35) {
     var ii = Math.min((-angle-0.35)/0.5, 1);
     for(var s=0;s<3;s++){
       c.save(); c.globalAlpha=ii*0.2*(1-s*0.3);
-      c.fillStyle='#aaa'; c.beginPath(); c.arc(90+s*9+Math.sin(t*.008+s)*4,s*4,4+s*3,0,Math.PI*2); c.fill();
-      c.restore();
+      c.fillStyle='#ccc';
+      c.beginPath(); c.arc((90+s*10)/S+Math.sin(Date.now()*.008+s)*3, (s*4)/S, (4+s*3)/S, 0, Math.PI*2);
+      c.fill(); c.restore();
     }
   }
 
+  c.restore(); // undo scale
+
+  // ── RIDER ──
   drawRider(c, t);
 }
 
 function drawWheel(c, x, y, r, t) {
   c.save(); c.translate(x, y);
-  c.strokeStyle='#111'; c.lineWidth=11;
+  // Outer tire (thick knobby, very dark)
+  c.strokeStyle='#0d0d0d'; c.lineWidth=10;
   c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.stroke();
-  for(var i=0;i<14;i++){
-    var a=(i/14)*Math.PI*2+t*.005;
-    c.strokeStyle='#1e1e1e'; c.lineWidth=4;
-    c.beginPath(); c.moveTo(Math.cos(a)*(r-4),Math.sin(a)*(r-4)); c.lineTo(Math.cos(a)*(r+2),Math.sin(a)*(r+2)); c.stroke();
+  // Knob pattern
+  var nk = 16;
+  for(var i=0;i<nk;i++){
+    var a = (i/nk)*Math.PI*2 + t*0.004;
+    c.strokeStyle = (i%2===0)?'#181818':'#141414';
+    c.lineWidth=5;
+    c.beginPath();
+    c.moveTo(Math.cos(a)*(r-5), Math.sin(a)*(r-5));
+    c.lineTo(Math.cos(a)*(r+1), Math.sin(a)*(r+1));
+    c.stroke();
   }
-  c.strokeStyle='#2a2a2a'; c.lineWidth=2; c.beginPath(); c.arc(0,0,r-5,0,Math.PI*2); c.stroke();
-  c.strokeStyle='#c0c0c0'; c.lineWidth=2; c.beginPath(); c.arc(0,0,r-7,0,Math.PI*2); c.stroke();
-  c.strokeStyle='#aaa'; c.lineWidth=.8;
-  for(var i=0;i<20;i++){
-    var a=(i/20)*Math.PI*2+t*.005;
-    c.beginPath(); c.moveTo(0,0); c.lineTo(Math.cos(a)*(r-7),Math.sin(a)*(r-7)); c.stroke();
+  // Tire inner edge
+  c.strokeStyle='#222'; c.lineWidth=1.5;
+  c.beginPath(); c.arc(0,0,r-6,0,Math.PI*2); c.stroke();
+  // Rim (silver, narrow — enduro style)
+  c.strokeStyle='#c8c8c8'; c.lineWidth=2.5;
+  c.beginPath(); c.arc(0,0,r-8,0,Math.PI*2); c.stroke();
+  // Many thin spokes
+  var ns = 22;
+  for(var i=0;i<ns;i++){
+    var a = (i/ns)*Math.PI*2 + t*0.004;
+    // Alternate spoke color for cross-lace look
+    c.strokeStyle = (i%2===0) ? 'rgba(200,200,200,0.7)' : 'rgba(160,160,160,0.5)';
+    c.lineWidth=0.8;
+    c.beginPath(); c.moveTo(0,0);
+    c.lineTo(Math.cos(a)*(r-8), Math.sin(a)*(r-8));
+    c.stroke();
   }
-  c.fillStyle='#999'; c.beginPath(); c.arc(0,0,5,0,Math.PI*2); c.fill();
-  c.fillStyle='#333'; c.beginPath(); c.arc(0,0,2.5,0,Math.PI*2); c.fill();
+  // Hub plate (silver circle)
+  c.fillStyle='#b0b0b0'; c.beginPath(); c.arc(0,0,6,0,Math.PI*2); c.fill();
+  c.fillStyle='#666';    c.beginPath(); c.arc(0,0,3,0,Math.PI*2); c.fill();
+  // Disc brake (front wheel only, faint red tint)
+  if (x > 50) {
+    c.strokeStyle='rgba(200,50,50,0.3)'; c.lineWidth=4;
+    c.beginPath(); c.arc(0,0,r-12,0,Math.PI*2); c.stroke();
+  }
   c.restore();
 }
 
 function drawRider(c, t) {
-  c.save(); c.translate(4,-46);
-  c.fillStyle='#1a1a1a'; c.fillRect(-4,2,9,7); c.fillRect(12,2,9,7);
-  c.strokeStyle='#111'; c.lineWidth=8;
-  c.beginPath(); c.moveTo(0,2); c.lineTo(0,-12); c.stroke();
-  c.beginPath(); c.moveTo(16,2); c.lineTo(14,-12); c.stroke();
-  c.fillStyle='#111'; c.beginPath(); c.roundRect(-6,-28,20,18,3); c.fill();
+  // Rider scaled with moto
+  c.save();
+  c.scale(S, S);
+  c.translate(4, -40);
+
+  // Boots (MX style, tall)
+  c.fillStyle='#1a1a1a';
+  c.beginPath(); c.roundRect(-4,2,9,9,1); c.fill();
+  c.beginPath(); c.roundRect(14,2,9,9,1); c.fill();
+  // Boot strap highlight
+  c.fillStyle='rgba(255,255,255,0.1)';
+  c.fillRect(-3,4,7,2); c.fillRect(15,4,7,2);
+
+  // Legs (riding pants)
+  c.strokeStyle='#1a1a1a'; c.lineWidth=9;
+  c.beginPath(); c.moveTo(0,2); c.lineTo(2,-14); c.stroke();
+  c.beginPath(); c.moveTo(18,2); c.lineTo(16,-14); c.stroke();
+  // Knee guards
+  c.fillStyle='#333';
+  c.beginPath(); c.roundRect(-2,-10,8,6,2); c.fill();
+  c.beginPath(); c.roundRect(14,-10,8,6,2); c.fill();
+
+  // Body / jersey
+  c.fillStyle='#111';
+  c.beginPath(); c.roundRect(-7,-30,22,18,3); c.fill();
+  // Jersey number plate (white)
+  c.fillStyle='rgba(255,255,255,0.15)';
+  c.beginPath(); c.roundRect(-2,-26,12,10,2); c.fill();
+
+  // Arms to bar
   c.strokeStyle='#111'; c.lineWidth=7;
-  c.beginPath(); c.moveTo(10,-20); c.lineTo(22,-16); c.stroke();
-  c.beginPath(); c.moveTo(-2,-20); c.lineTo(10,-16); c.stroke();
-  c.fillStyle='#E31B23'; c.beginPath(); c.arc(6,-34,11,0,Math.PI*2); c.fill();
-  c.fillStyle='rgba(0,0,0,.75)';
-  c.beginPath(); c.moveTo(-3,-28); c.lineTo(15,-28); c.lineTo(14,-34); c.lineTo(-2,-34); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(12,-22); c.lineTo(24,-18); c.stroke();
+  c.beginPath(); c.moveTo(-3,-22); c.lineTo(8,-18); c.stroke();
+
+  // Neck brace (black collar)
+  c.fillStyle='#222';
+  c.beginPath(); c.roundRect(-4,-32,16,5,2); c.fill();
+
+  // Helmet (full face MX — red)
+  c.fillStyle='#D41820';
+  c.beginPath(); c.arc(5,-38,12,0,Math.PI*2); c.fill();
+  // Helmet peak
+  c.fillStyle='#B01018';
+  c.beginPath(); c.moveTo(-6,-42); c.lineTo(16,-42); c.lineTo(14,-46); c.lineTo(-4,-46); c.closePath(); c.fill();
+  // Visor
+  c.fillStyle='rgba(0,0,0,0.8)';
+  c.beginPath(); c.moveTo(-5,-32); c.lineTo(15,-32); c.lineTo(14,-38); c.lineTo(-4,-38); c.closePath(); c.fill();
+  // Goggle strap
+  c.strokeStyle='rgba(255,255,255,0.2)'; c.lineWidth=2;
+  c.beginPath(); c.moveTo(-7,-40); c.lineTo(17,-40); c.stroke();
+  // Visor tint shine
+  c.fillStyle='rgba(100,150,255,0.15)';
+  c.beginPath(); c.moveTo(-3,-37); c.lineTo(8,-37); c.lineTo(8,-34); c.lineTo(-3,-34); c.closePath(); c.fill();
+
   c.restore();
 }
 
