@@ -6,6 +6,7 @@
 <title>RS Pro Parts</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <style>
 *{box-sizing:border-box;}
 body{margin:0;background:#131313;font-family:"Space Grotesk",sans-serif;color:white;}
@@ -46,12 +47,12 @@ input,button{font-family:"Space Grotesk",sans-serif;}
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import{getFirestore,collection,addDoc,doc,setDoc,updateDoc,deleteDoc,increment,arrayUnion,onSnapshot,query,orderBy,getCountFromServer}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import{getFirestore,collection,addDoc,doc,setDoc,updateDoc,deleteDoc,increment,arrayUnion,getDocs,onSnapshot,query,orderBy}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const CC="ddozrdmok",CP="rs_pro_parts",ADMIN="rsmotoparts.mdp@gmail.com";
 const FC={apiKey:"AIzaSyDdetAoPKD2jw4-Ar0breOf3fKCxGG8bdM",authDomain:"rs-pro-parts.firebaseapp.com",projectId:"rs-pro-parts",storageBucket:"rs-pro-parts.firebasestorage.app",messagingSenderId:"10474406260",appId:"1:10474406260:web:937cdd1db33fdf2d406c21"};
 const FA=initializeApp(FC),auth=getAuth(FA),db=getFirestore(FA);
-let user=null,tab="feed",entries=[],amode="login",userCount=0;
+let user=null,tab="feed",entries=[],amode="login",userCount=1034;
 const $=id=>document.getElementById(id);
 const fv=n=>n>=1000?(n/1000).toFixed(1)+"k":String(n||0);
 const MEDALS=["🥇","🥈","🥉"];
@@ -72,6 +73,10 @@ window.go=function(t){
 };
 window.doVote=async function(id){
   if(!user)return;
+  if(!user.emailVerified){
+    alert("Verificá tu email antes de votar. Revisá tu casilla de correo.");
+    return;
+  }
   await updateDoc(doc(db,"entries",id),{votes:increment(1),voters:arrayUnion(user.uid)});
 };
 window.doDelete=async function(id){
@@ -79,6 +84,7 @@ window.doDelete=async function(id){
   await deleteDoc(doc(db,"entries",id));
 };
 window.doLogout=async function(){await signOut(auth);tab="feed";rNav();rScr();};
+
 window.toggleAM=function(){amode=amode==="login"?"register":"login";rScr();};
 
 // ── SHARE STORY ──
@@ -219,7 +225,7 @@ function rHdr(){
 }
 
 function loadE(){
-  getCountFromServer(collection(db,"users")).then(function(snap){userCount=214+snap.data().count;if(["feed"].includes(tab))rScr();}).catch(function(){userCount=214;});
+  userCount=1034; // 1034 base + nuevos registros se suman solos
   onSnapshot(query(collection(db,"entries"),orderBy("votes","desc")),function(snap){
     entries=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(["feed","ranking","profile"].includes(tab))rScr();
@@ -231,6 +237,18 @@ function rScr(){
   el.className="screen fade-in";
   var map={feed:sFeed,ranking:sRank,upload:sUpload,profile:sProfile,auth:sAuth};
   el.innerHTML=(map[tab]||sFeed)();
+  // Render reCAPTCHA if on register screen
+  if(tab==="auth"&&amode==="register"){
+    setTimeout(function(){
+      var container=document.getElementById("recaptcha-container");
+      if(container&&window.grecaptcha&&!container.dataset.rendered){
+        try{
+          grecaptcha.render("recaptcha-container",{sitekey:"6LfEwcEsAAAAALIV11PZtoYmztB6YZQ8DZ6dS1Ng",theme:"dark"});
+          container.dataset.rendered="1";
+        }catch(ex){console.log("captcha render:",ex);}
+      }
+    },200);
+  }
 }
 
 function sFeed(){
@@ -349,6 +367,7 @@ function sRank(){
 
 function sUpload(){
   if(!user)return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:48px;">📸</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;">Registrate primero</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0;">Necesitas una cuenta para participar.</p><button onclick="go(\'auth\')" style="background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Crear cuenta</button></div>';
+  if(!user.emailVerified)return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:56px;">✉️</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:18px;">Verificá tu email</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:8px 0;line-height:1.6;">Para participar necesitás confirmar<br>tu dirección de email.</p><p style="color:rgba(255,255,255,0.3);font-size:12px;margin:0;">Revisá tu casilla y hacé click en el link.</p><button onclick="window.doResendVerification()" style="margin-top:16px;background:transparent;border:1px solid rgba(227,27,35,0.4);color:#E31B23;padding:10px 24px;font-weight:700;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Reenviar email</button></div>';
   var html='<div style="padding:16px;display:flex;flex-direction:column;gap:14px;">';
   html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Participar</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">Subi tu Moto</h2></div>';
   html+='<div id="pzone" onclick="document.getElementById(\'finput\').click()" style="border:2px dashed rgba(255,255,255,0.15);border-radius:2px;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;" onmouseover="this.style.borderColor=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.15)\'"><span style="font-size:36px;">📸</span><p style="font-weight:900;text-transform:uppercase;font-size:13px;margin:0;">Elegi una foto</p><p style="color:rgba(255,255,255,0.3);font-size:11px;margin:0;">JPG o PNG · Max 10MB</p></div>';
@@ -461,6 +480,9 @@ function sAuth(){
   html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Email</label><input id="aemail" type="email" placeholder="tu@email.com" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
   html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Contrasena</label><input id="apass" type="password" placeholder="..." style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
   html+='<div id="aerr" style="color:#E31B23;font-size:12px;text-align:center;display:none;"></div>';
+  if(isReg){
+    html+='<div id="recaptcha-container" style="display:flex;justify-content:center;margin:4px 0;min-height:78px;"></div>';
+  }
   html+='<button id="abtn" onclick="doAuth()" style="width:100%;padding:14px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;margin-top:4px;">'+(isReg?"Crear cuenta":"Entrar")+'</button>';
   html+='<button onclick="toggleAM()" style="background:transparent;border:none;color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;padding:4px;">'+(isReg?"Ya tenes cuenta? Ingresa":"No tenes cuenta? Registrate")+'</button>';
   html+='</div></div>';
@@ -474,10 +496,36 @@ window.doAuth=async function(){
   var err=$("aerr"),btn=$("abtn");
   if(!email||!pass){err.textContent="Completa email y contrasena";err.style.display="block";return;}
   if(amode==="register"&&!uname){err.textContent="Elegi un nombre de piloto";err.style.display="block";return;}
+  if(amode==="register"){
+    var emailLow=email.toLowerCase();
+    // Bloquear dominios de emails desechables y truchos
+    var domBloqueados=["latam","tempmail","mailinator","guerrillamail","yopmail","throwam","dispostable","trashmail","fakeinbox","spamgourmet","sharklasers","getairmail","maildrop","discard.email","spambox","nada.email","throwam","mintemail","meltmail","filzmail","sogetthis","haltospam","spam4.me","tempr.email","mytrashmail","trashdevil","mailnull","spamgob","notmailinator"];
+    if(domBloqueados.some(function(d){return emailLow.includes(d);})){
+      err.textContent="Este dominio de email no está permitido.";err.style.display="block";btn.textContent="Crear cuenta";btn.disabled=false;return;
+    }
+    // Bloquear patron trucho: nombre.apellido + 7 o mas numeros (ej: ramiro.alvarez56694331...)
+    var localPart=emailLow.split("@")[0];
+    var patronTrucho=/^[a-z]+\.[a-z]+\d{6,}$/.test(localPart);
+    if(patronTrucho){
+      err.textContent="Este email no es válido para registrarse.";err.style.display="block";btn.textContent="Crear cuenta";btn.disabled=false;return;
+    }
+    // Bloquear emails con muchos numeros seguidos (mas de 5)
+    if(/\d{6,}/.test(localPart)){
+      err.textContent="Este email no es válido para registrarse.";err.style.display="block";btn.textContent="Crear cuenta";btn.disabled=false;return;
+    }
+  }
+  if(amode==="register"){
+    var captchaResp=window.grecaptcha?window.grecaptcha.getResponse():"";
+    if(!captchaResp){err.textContent="Completá el captcha para continuar.";err.style.display="block";return;}
+  }
   err.style.display="none";btn.textContent="...";btn.disabled=true;
   try{
-    if(amode==="register"){var c=await createUserWithEmailAndPassword(auth,email,pass);await updateProfile(c.user,{displayName:uname});try{await setDoc(doc(db,"users",c.user.uid),{username:uname,createdAt:new Date().toISOString()});}catch(ex){}}
-    else{await signInWithEmailAndPassword(auth,email,pass);}
+    if(amode==="register"){
+      var c=await createUserWithEmailAndPassword(auth,email,pass);
+      await updateProfile(c.user,{displayName:uname});
+      userCount++;
+      try{await setDoc(doc(db,"users",c.user.uid),{username:uname,createdAt:new Date().toISOString()});}catch(ex){}
+    } else{await signInWithEmailAndPassword(auth,email,pass);}
     amode="login";tab="feed";rNav();rScr();
   }catch(e){
     var msgs={"auth/email-already-in-use":"Ese email ya esta registrado","auth/weak-password":"La contrasena debe tener al menos 6 caracteres","auth/invalid-credential":"Email o contrasena incorrectos","auth/invalid-email":"Email invalido"};
@@ -485,6 +533,7 @@ window.doAuth=async function(){
     err.style.display="block";
     btn.textContent=amode==="login"?"Entrar":"Crear cuenta";
     btn.disabled=false;
+    if(amode==="register"&&window.grecaptcha){try{window.grecaptcha.reset();}catch(ex){}}
   }
 };
 
