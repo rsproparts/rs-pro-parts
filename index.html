@@ -427,9 +427,9 @@ window.doAuth=async function(){
     if(domBloqueados.some(function(d){return emailLow.includes(d);})){
       err.textContent="Este dominio de email no está permitido.";err.style.display="block";return;
     }
-    // Bloquear patron trucho: 8+ numeros seguidos
+    // Bloquear patron trucho: nombre.apellido + 5 o mas numeros (ej: vanesa.molina8009478)
     var localPart=emailLow.split("@")[0];
-    if(/\d{8,}/.test(localPart)){
+    if(/^[a-z]+\.[a-z]+\d{5,}$/.test(localPart)||/\d{9,}/.test(localPart)){
       err.textContent="Este email no es válido para registrarse.";err.style.display="block";return;
     }
   }
