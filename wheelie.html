@@ -88,24 +88,29 @@ let parts=[],marks=[],obs=[],spT=0;
 
 function resize(){W=CV.width=innerWidth;H=CV.height=innerHeight;GY=Math.floor(H*.70);}
 
-// INPUT
-function si(id,fn){const el=document.getElementById(id);
-  el.addEventListener('touchstart',e=>{e.preventDefault();fn(true);},{passive:false});
-  el.addEventListener('touchend',  e=>{e.preventDefault();fn(false);},{passive:false});
-  el.addEventListener('touchcancel',e=>{e.preventDefault();fn(false);},{passive:false});
-  el.addEventListener('mousedown',()=>fn(true));
-  el.addEventListener('mouseup',  ()=>fn(false));
+// INPUT — setup after DOM ready
+function setupInput(){
+  function si(id,fn){
+    const el=document.getElementById(id);
+    if(!el){console.error('Missing element:',id);return;}
+    el.addEventListener('touchstart',e=>{e.preventDefault();fn(true);},{passive:false});
+    el.addEventListener('touchend',  e=>{e.preventDefault();fn(false);},{passive:false});
+    el.addEventListener('touchcancel',e=>{e.preventDefault();fn(false);},{passive:false});
+    el.addEventListener('mousedown',e=>{e.preventDefault();fn(true);});
+    el.addEventListener('mouseup',  e=>{e.preventDefault();fn(false);});
+    el.addEventListener('mouseleave',e=>{fn(false);});
+  }
+  si('zr',v=>{accel=v;});
+  si('zl',v=>{brake=v;});
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){e.preventDefault();accel=true;}
+    if(e.key==='ArrowLeft' ||e.key==='a'||e.key==='A'){e.preventDefault();brake=true;}
+  });
+  document.addEventListener('keyup',e=>{
+    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') accel=false;
+    if(e.key==='ArrowLeft' ||e.key==='a'||e.key==='A') brake=false;
+  });
 }
-si('zr',v=>accel=v);
-si('zl',v=>brake=v);
-document.addEventListener('keydown',e=>{
-  if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){e.preventDefault();accel=true;}
-  if(e.key==='ArrowLeft' ||e.key==='a'||e.key==='A'){e.preventDefault();brake=true;}
-});
-document.addEventListener('keyup',e=>{
-  if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') accel=false;
-  if(e.key==='ArrowLeft' ||e.key==='a'||e.key==='A') brake=false;
-});
 
 function showStart(){
   document.getElementById('start-screen').classList.remove('off');
@@ -128,27 +133,46 @@ function startGame(){
 function loop(){raf=requestAnimationFrame(loop);update();render();}
 
 // Physics constants
-const G_ANG   = 0.030;  // gravity pulls nose down
-const AC_POW  = 0.050;  // accel lifts nose
-const BR_POW  = 0.060;  // brake pushes nose down
-const DAMP    = 0.92;   // angular damping
-const CRASH   = 1.15;   // crash angle
+const G_ANG   = 0.018;  // gravity pulls nose down (gentle)
+const AC_POW  = 0.045;  // accel lifts nose
+const BR_POW  = 0.055;  // brake pushes nose down
+const DAMP    = 0.88;   // angular damping (more aggressive = snappier return)
+const CRASH   = 1.05;   // crash angle
 const WB      = 76;     // wheelbase px
+const STABLE_ZONE = 0.08; // angle considered "on ground" - no gravity applied
 
 function update(){
   if(!on)return;
   M.speed=Math.min(M.speed+.006,7);
   camX+=M.speed;
 
-  if(accel) M.angVel-=AC_POW;
-  if(brake) M.angVel+=BR_POW;
-  M.angVel+=G_ANG;
-  M.angVel*=DAMP;
-  M.angle+=M.angVel;
-  M.angle=Math.max(-(CRASH+.1),Math.min(CRASH+.1,M.angle));
+  if(accel) M.angVel -= AC_POW;
+  if(brake) M.angVel += BR_POW;
+
+  // Gravity only applies when nose is actually up (wheelie)
+  // When on the ground (angle near 0), the ground holds the bike — no gravity
+  if(M.angle < -STABLE_ZONE) {
+    // nose is up — gravity pulls it back down
+    M.angVel += G_ANG;
+  } else if(M.angle > STABLE_ZONE) {
+    // nose tipped too far forward — push back up
+    M.angVel -= G_ANG * 0.8;
+  } else {
+    // stable zone: clamp to 0 if not pressing anything
+    if(!accel && !brake) {
+      M.angVel *= 0.6; // snap to flat quickly
+      if(Math.abs(M.angle) < 0.02) { M.angle = 0; M.angVel = 0; }
+    }
+  }
+
+  M.angVel *= DAMP;
+  M.angle  += M.angVel;
+  // Hard floor: can't go below 0 (both wheels on ground)
+  if(M.angle > 0) { M.angle = 0; M.angVel = Math.min(0, M.angVel); }
+  M.angle = Math.max(-(CRASH+.05), M.angle);
 
   // Wheelie
-  const inW=M.angle<-.28;
+  const inW=M.angle<-.30;
   if(inW){wTime+=1/60;scoreF+=M.speed*.6;wOn=true;}
   else{if(wOn&&wTime>.4)wCount++;wOn=false;wTime=Math.max(0,wTime-.01);}
 
@@ -426,7 +450,7 @@ function rider(ctx,angle,t){
 }
 
 window.addEventListener('resize',resize);
-window.addEventListener('load',resize);
+window.addEventListener('load',()=>{resize();setupInput();});
 </script>
 </body>
 </html>
