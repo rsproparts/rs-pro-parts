@@ -93,83 +93,70 @@ window.doStory=async function(entry){
   try{
     var canvas=$("story-canvas");
     var ctx=canvas.getContext("2d");
-    var W=1080,H=1920;
+    var W=1080, H=1920;
     canvas.width=W; canvas.height=H;
-    ctx.clearRect(0,0,W,H);
 
-    // background
+    // ── ZONA 1: HEADER negro con logo (0 a 200)
     ctx.fillStyle="#0f0f0f";
-    ctx.fillRect(0,0,W,H);
+    ctx.fillRect(0,0,W,200);
+    var logo=new Image();
+    logo.crossOrigin="anonymous";
+    await new Promise(function(res){logo.onload=res;logo.onerror=res;logo.src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776258543/Logo_rama_1_uuvrq1.png";});
+    var lH=120, lW=lH*(logo.width/logo.height);
+    ctx.drawImage(logo, W/2-lW/2, 40, lW, lH);
 
-    // load moto image - square crop, full width
+    // ── ZONA 2: FOTO cuadrada (200 a 1280 = 1080px)
     var img=new Image();
     img.crossOrigin="anonymous";
     await new Promise(function(res){img.onload=res;img.onerror=res;img.src=entry.imageUrl;});
     var iS=Math.min(img.width,img.height);
     var iX=(img.width-iS)/2;
     var iY=(img.height-iS)/2;
-    // draw square image from y=0 to y=1080
     ctx.save();
-    ctx.rect(0,0,W,W);
+    ctx.beginPath();
+    ctx.rect(0,200,W,W);
     ctx.clip();
-    ctx.drawImage(img,iX,iY,iS,iS,0,0,W,W);
+    ctx.drawImage(img,iX,iY,iS,iS,0,200,W,W);
     ctx.restore();
 
-    // gradient from middle of image to bottom
-    var grd=ctx.createLinearGradient(0,W*0.4,0,W);
-    grd.addColorStop(0,"rgba(15,15,15,0)");
-    grd.addColorStop(1,"rgba(15,15,15,1)");
-    ctx.fillStyle=grd;
-    ctx.fillRect(0,0,W,W);
+    // ── ZONA 3: TEXTO negro debajo (1280 a 1920)
+    ctx.fillStyle="#0f0f0f";
+    ctx.fillRect(0,200+W,W,H-(200+W));
 
-    // red top bar
+    // separador rojo
     ctx.fillStyle="#E31B23";
-    ctx.fillRect(0,0,W,14);
+    ctx.fillRect(0,200+W,W,6);
 
-    // RS logo
-    var logo=new Image();
-    logo.crossOrigin="anonymous";
-    await new Promise(function(res){logo.onload=res;logo.onerror=res;logo.src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776258543/Logo_rama_1_uuvrq1.png";});
-    var logoH=100, logoW=logoH*(logo.width/logo.height);
-    ctx.drawImage(logo,W/2-logoW/2,30,logoW,logoH);
-
-    // text area starts at W (below image)
-    var TY = W + 60;
-
-    // pilot name
-    ctx.fillStyle="white";
-    ctx.font="bold 72px Arial";
     ctx.textAlign="center";
     ctx.textBaseline="top";
-    // measure and reduce if needed
-    var nameText=(entry.username||"PILOTO").toUpperCase();
-    var fs=72;
+
+    // nombre - auto tamaño
+    var name=(entry.username||"PILOTO").toUpperCase();
+    var fs=80;
     ctx.font="bold "+fs+"px Arial";
-    while(ctx.measureText(nameText).width > W-80 && fs > 36){
-      fs-=4;
-      ctx.font="bold "+fs+"px Arial";
-    }
-    ctx.fillText(nameText, W/2, TY);
+    while(ctx.measureText(name).width>W-100&&fs>40){fs-=4;ctx.font="bold "+fs+"px Arial";}
+    ctx.fillStyle="#ffffff";
+    ctx.fillText(name, W/2, 200+W+50);
 
-    // moto model
+    // modelo moto
     ctx.fillStyle="rgba(255,255,255,0.6)";
-    ctx.font="48px Arial";
-    ctx.fillText(entry.moto||"", W/2, TY+fs+30);
+    ctx.font="50px Arial";
+    ctx.fillText(entry.moto||"", W/2, 200+W+50+fs+30);
 
-    // location
-    ctx.font="44px Arial";
-    ctx.fillText("📍 "+(entry.location||""), W/2, TY+fs+110);
+    // ciudad
+    ctx.font="46px Arial";
+    ctx.fillText("📍 "+(entry.location||""), W/2, 200+W+50+fs+30+80);
 
     // instagram
     if(entry.instagram){
       ctx.fillStyle="#E31B23";
-      ctx.font="bold 52px Arial";
-      ctx.fillText("@"+entry.instagram, W/2, TY+fs+200);
+      ctx.font="bold 54px Arial";
+      ctx.fillText("@"+entry.instagram, W/2, 200+W+50+fs+30+80+80);
     }
 
-    // red bottom bar
+    // barra roja inferior
     ctx.fillStyle="#E31B23";
-    ctx.fillRect(0,H-14,W,14);
+    ctx.fillRect(0,H-10,W,10);
 
     // export
     canvas.toBlob(async function(blob){
@@ -187,8 +174,7 @@ window.doStory=async function(entry){
       }
     },"image/png");
   }catch(e){
-    console.error(e);
-    showStoryFallback(entry);
+    console.error(e);showStoryFallback(entry);
   }finally{
     if(btn){btn.textContent="📸 Story";btn.disabled=false;}
   }
