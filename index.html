@@ -503,14 +503,9 @@ window.doAuth=async function(){
     if(domBloqueados.some(function(d){return emailLow.includes(d);})){
       err.textContent="Este dominio de email no está permitido.";err.style.display="block";btn.textContent="Crear cuenta";btn.disabled=false;return;
     }
-    // Bloquear patron trucho: nombre.apellido + 7 o mas numeros (ej: ramiro.alvarez56694331...)
+    // Bloquear patron trucho: 8 o mas numeros seguidos en el email
     var localPart=emailLow.split("@")[0];
-    var patronTrucho=/^[a-z]+\.[a-z]+\d{6,}$/.test(localPart);
-    if(patronTrucho){
-      err.textContent="Este email no es válido para registrarse.";err.style.display="block";btn.textContent="Crear cuenta";btn.disabled=false;return;
-    }
-    // Bloquear emails con muchos numeros seguidos (mas de 5)
-    if(/\d{6,}/.test(localPart)){
+    if(/\d{8,}/.test(localPart)){
       err.textContent="Este email no es válido para registrarse.";err.style.display="block";btn.textContent="Crear cuenta";btn.disabled=false;return;
     }
   }
