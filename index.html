@@ -396,7 +396,10 @@ function sProfile(){
       entries.forEach(function(e){
         html+='<div style="background:#131313;border-radius:2px;overflow:hidden;"><img src="'+e.imageUrl+'" onclick="openLB(\''+e.imageUrl+'\')" style="width:100%;height:160px;object-fit:cover;display:block;cursor:zoom-in;" /><div style="padding:10px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><p style="font-weight:900;text-transform:uppercase;font-size:13px;margin:0;">'+(e.username||'ANONIMO')+'</p><span style="font-size:11px;color:#E31B23;font-weight:700;">'+fv(e.votes)+' votos</span></div><p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0 0 8px;">📍 '+(e.location||'')+' · '+(e.moto||'')+'</p>';
         if(e.parts&&e.parts.filter(Boolean).length){html+='<p style="color:rgba(255,255,255,0.3);font-size:10px;margin:0 0 8px;">⚙ '+e.parts.filter(Boolean).join(' · ')+'</p>';}
-        html+='<button onclick="doDelete(\''+e.id+'\')" style="width:100%;padding:8px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.4);color:#ff5050;font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🗑️ Eliminar entrada</button></div></div>';
+        html+='<button onclick="doDelete(\''+e.id+'\')" style="width:100%;padding:8px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.4);color:#ff5050;font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🗑️ Eliminar entrada</button>'
+        +'<button onclick="window.showVoters(\''+e.id+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(100,100,255,0.1);border:1px solid rgba(100,100,255,0.3);color:rgba(150,150,255,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">👥 Ver voters ('+((e.voters&&e.voters.length)||0)+')</button>'
+        +'<button onclick="window.resetVotes(\''+e.id+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(255,140,0,0.1);border:1px solid rgba(255,140,0,0.3);color:rgba(255,140,0,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🔄 Resetear votos a 0</button>'
+        +'</div></div>';
       });
     }
     html+='</div></div>';
@@ -494,6 +497,43 @@ function loadWinners(){
     wlist.innerHTML=whtml;
   });
 }
+
+window.showVoters=async function(entryId){
+  var entry=entries.find(function(e){return e.id===entryId;});
+  if(!entry){alert("No encontré la entrada.");return;}
+  var voters=entry.voters||[];
+  if(!voters.length){alert("Esta moto no tiene votos.");return;}
+  // Match voters to usernames from entries
+  var lines=voters.map(function(uid){
+    // Find if this uid has an entry (they might be participants too)
+    var found=entries.find(function(e){return e.uid===uid;});
+    return uid+(found?" → "+found.username:"");
+  });
+  var pop=document.createElement("div");
+  pop.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:flex-end;justify-content:center;";
+  var listHtml=lines.map(function(l){
+    var isTrucho=/TEST_/i.test(l)||/\d{9,}/.test(l);
+    return '<div style="font-size:10px;font-family:monospace;padding:4px 0;color:'+(isTrucho?'#ff5050':'rgba(255,255,255,0.6)')+';border-bottom:1px solid rgba(255,255,255,0.05);">'+(isTrucho?'🚨 ':'')+l+'</div>';
+  }).join('');
+  pop.innerHTML='<div style="width:100%;max-width:430px;background:#131313;border-radius:16px 16px 0 0;padding:20px;border-top:2px solid #E31B23;max-height:80vh;overflow-y:auto;">'
+    +'<p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 4px;">Voters ('+voters.length+')</p>'
+    +'<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:0 0 12px;">🚨 = patron trucho detectado</p>'
+    +listHtml
+    +'<button onclick="this.parentElement.parentElement.remove()" style="width:100%;margin-top:16px;padding:12px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;cursor:pointer;border-radius:4px;">Cerrar</button>'
+    +'</div>';
+  document.body.appendChild(pop);
+  pop.addEventListener("click",function(e){if(e.target===pop)pop.remove();});
+};
+
+window.resetVotes=async function(entryId){
+  if(!confirm("Resetear los votos de esta moto a 0? Se eliminarán TODOS los votos."))return;
+  try{
+    await updateDoc(doc(db,"entries",entryId),{votes:0,voters:[]});
+    alert("Votos reseteados a 0.");
+  }catch(e){
+    alert("Error: "+e.message);
+  }
+};
 
 window.doSorteo=async function(){
   if(!entries.length){alert("No hay participantes.");return;}
