@@ -57,6 +57,14 @@ const fv=n=>n>=1000?(n/1000).toFixed(1)+"k":String(n||0);
 const MEDALS=["🥇","🥈","🥉"];
 const rk=i=>MEDALS[i]||("#"+(i+1));
 const mo=()=>new Date().toLocaleString("es-AR",{month:"long",year:"numeric"}).toUpperCase();
+// Cuentas creadas desde esta fecha necesitan verificación de email
+const VERIF_CUTOFF=new Date("2026-04-20T00:00:00Z").getTime();
+
+function needsVerif(u){
+  if(!u)return false;
+  var created=u.metadata&&u.metadata.creationTime?new Date(u.metadata.creationTime).getTime():0;
+  return created>=VERIF_CUTOFF&&!u.emailVerified;
+}
 
 window.openLB=function(url){if(!url)return;$("lb-img").src=url;$("lb").classList.add("open");};
 window.closeLB=function(){$("lb").classList.remove("open");};
@@ -72,8 +80,8 @@ window.go=function(t){
 };
 window.doVote=async function(id){
   if(!user)return;
-  if(!user.emailVerified){
-    alert("Tenés que verificar tu email antes de votar. Revisá tu casilla de correo.");
+  if(needsVerif(user)){
+    alert("Verificá tu email para poder votar. Revisá tu casilla de correo.");
     return;
   }
   await updateDoc(doc(db,"entries",id),{votes:increment(1),voters:arrayUnion(user.uid)});
@@ -83,20 +91,16 @@ window.doDelete=async function(id){
   await deleteDoc(doc(db,"entries",id));
 };
 window.doLogout=async function(){await signOut(auth);tab="feed";rNav();rScr();};
+window.toggleAM=function(){amode=amode==="login"?"register":"login";rScr();};
 window.doResendVerif=async function(){
   if(!user)return;
-  try{
-    await sendEmailVerification(user);
-    alert("Email reenviado. Revisá tu casilla.");
-  }catch(e){
-    alert("Esperá unos minutos antes de reenviar.");
-  }
+  try{await sendEmailVerification(user);alert("Email reenviado. Revisá tu casilla.");}
+  catch(e){alert("Esperá unos minutos antes de reenviar.");}
 };
-window.toggleAM=function(){amode=amode==="login"?"register":"login";rScr();};
 
 window.doStoryById=function(id){
   var entry=entries.find(function(e){return e.id===id;});
-  if(entry) window.doStory(entry);
+  if(entry)window.doStory(entry);
 };
 window.doStory=async function(entry){
   var btn=$("storybtn-"+entry.id);
@@ -236,10 +240,10 @@ function sFeed(){
       partsHtml+='</div></div>';
     }
     var voteHtml="";
-    if(user&&user.emailVerified){
+    if(user&&!needsVerif(user)){
       voteHtml='<button onclick="doVote(\''+e.id+'\')" '+(voted?'disabled':'')+' style="flex:1;padding:12px;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;border:none;cursor:'+(voted?'not-allowed':'pointer')+';background:'+(voted?'rgba(255,255,255,0.05)':'#E31B23')+';color:'+(voted?'rgba(255,255,255,0.3)':'white')+';">'+(voted?'&#10003; VOTASTE':'&#128293; VOTAR')+'</button>';
-    }else if(user&&!user.emailVerified){
-      voteHtml='<button onclick="alert(\'Verificá tu email para poder votar. Revisá tu casilla.\')" style="flex:1;padding:12px;font-weight:900;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;border:none;cursor:pointer;background:rgba(255,180,0,0.12);color:rgba(255,180,0,0.8);">⚠️ VERIFICÁ TU EMAIL</button>';
+    }else if(user&&needsVerif(user)){
+      voteHtml='<button onclick="window.doResendVerif()" style="flex:1;padding:12px;font-weight:900;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;border:none;cursor:pointer;background:rgba(255,180,0,0.12);color:rgba(255,180,0,0.9);">⚠️ VERIFICÁ TU EMAIL</button>';
     }else{
       voteHtml='<button onclick="go(\'profile\')" style="flex:1;padding:12px;font-weight:900;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;background:#E31B23;color:white;">👤 REGISTRATE PARA VOTAR</button>';
     }
@@ -306,7 +310,7 @@ function sRank(){
 
 function sUpload(){
   if(!user)return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:48px;">📸</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;">Registrate primero</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0;">Necesitas una cuenta para participar.</p><button onclick="go(\'auth\')" style="background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Crear cuenta</button></div>';
-  if(!user.emailVerified)return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:56px;">✉️</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:18px;">Verificá tu email</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:8px 0;line-height:1.6;">Para subir tu moto necesitás confirmar<br>tu dirección de email.</p><p style="color:rgba(255,255,255,0.3);font-size:12px;margin:0;">Revisá tu casilla y hacé click en el link.</p><button onclick="window.doResendVerif()" style="margin-top:16px;background:transparent;border:1px solid rgba(227,27,35,0.5);color:#E31B23;padding:10px 24px;font-weight:700;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Reenviar email</button></div>';
+  if(needsVerif(user))return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:56px;">✉️</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:18px;">Verificá tu email</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:8px 0;line-height:1.6;">Para subir tu moto necesitás confirmar<br>tu dirección de email.</p><p style="color:rgba(255,255,255,0.3);font-size:12px;margin:0;">Revisá tu casilla y hacé click en el link.</p><button onclick="window.doResendVerif()" style="margin-top:16px;background:transparent;border:1px solid rgba(227,27,35,0.5);color:#E31B23;padding:10px 24px;font-weight:700;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Reenviar email</button></div>';
   var html='<div style="padding:16px;display:flex;flex-direction:column;gap:14px;">';
   html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Participar</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">Subi tu Moto</h2></div>';
   html+='<div id="pzone" onclick="document.getElementById(\'finput\').click()" style="border:2px dashed rgba(255,255,255,0.15);border-radius:2px;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;" onmouseover="this.style.borderColor=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.15)\'"><span style="font-size:36px;">📸</span><p style="font-weight:900;text-transform:uppercase;font-size:13px;margin:0;">Elegi una foto</p><p style="color:rgba(255,255,255,0.3);font-size:11px;margin:0;">JPG o PNG · Max 10MB</p></div>';
@@ -372,11 +376,14 @@ function sProfile(){
   var mr=entries.findIndex(function(e){return e.uid===user.uid;});
   var isAdmin=user.email===ADMIN;
   var html='<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">';
-  html+='<div style="display:flex;align-items:center;gap:16px;background:#1c1b1b;padding:16px;border-radius:2px;"><div style="width:56px;height:56px;background:#E31B23;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;flex-shrink:0;">'+l+'</div><div><p style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:18px;margin:0;">'+(user.displayName||user.email.split("@")[0].toUpperCase())+'</p><p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+user.email+'</p></div></div>';
+  html+='<div style="display:flex;align-items:center;gap:16px;background:#1c1b1b;padding:16px;border-radius:2px;"><div style="width:56px;height:56px;background:#E31B23;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;flex-shrink:0;">'+l+'</div><div><p style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:18px;margin:0;">'+(user.displayName||user.email.split("@")[0].toUpperCase())+'</p><p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+user.email+'</p>'+(needsVerif(user)?'<p style="font-size:10px;color:rgba(255,180,0,0.8);margin:4px 0 0;">⚠️ Email pendiente de verificación</p>':'')+'</div></div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
   var stats=[{l:"Motos cargadas",v:mine.length},{l:"Votos recibidos",v:tv},{l:"Puntos RS",v:String(tv*10),u:"PRS"},{l:"Ranking",v:mr>=0?"#"+(mr+1):"---"}];
   stats.forEach(function(s){html+='<div style="background:#1c1b1b;padding:16px;border-radius:2px;border-bottom:2px solid transparent;" onmouseover="this.style.borderColor=\'#E31B23\'" onmouseout="this.style.borderColor=\'transparent\'"><p style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;">'+s.l+'</p><div style="display:flex;align-items:baseline;gap:4px;"><span style="font-size:26px;font-weight:900;">'+s.v+'</span>'+(s.u?'<span style="color:#E31B23;font-size:11px;font-weight:700;font-style:italic;">'+s.u+'</span>':'')+'</div></div>';});
   html+='</div>';
+  if(needsVerif(user)){
+    html+='<div style="background:rgba(255,180,0,0.08);border:1px solid rgba(255,180,0,0.3);border-radius:2px;padding:14px;text-align:center;"><p style="font-size:13px;font-weight:700;color:rgba(255,180,0,0.9);margin:0 0 8px;">✉️ Verificá tu email para participar</p><p style="font-size:11px;color:rgba(255,255,255,0.4);margin:0 0 12px;">Revisá tu casilla y hacé click en el link que te enviamos.</p><button onclick="window.doResendVerif()" style="background:transparent;border:1px solid rgba(255,180,0,0.5);color:rgba(255,180,0,0.9);padding:8px 20px;font-weight:700;font-size:11px;text-transform:uppercase;cursor:pointer;border-radius:2px;">Reenviar email</button></div>';
+  }
   if(isAdmin){
     html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.4);">';
     var totalV=entries.reduce(function(s,e){return s+(e.votes||0);},0);
@@ -434,18 +441,22 @@ window.doAuth=async function(){
   if(!email||!pass){err.textContent="Completa email y contrasena";err.style.display="block";return;}
   if(amode==="register"&&!uname){err.textContent="Elegi un nombre de piloto";err.style.display="block";return;}
   if(amode==="register"){
-    // Verificar captcha
+    // Captcha
     var capResp=window.grecaptcha?window.grecaptcha.getResponse():"";
     if(!capResp){err.textContent="Completá el captcha primero.";err.style.display="block";return;}
+    // Bloquear nombre trucho: TEST_ al inicio o 9+ numeros
+    if(/^test_/i.test(uname)||/\d{9,}/.test(uname)){
+      err.textContent="Nombre de piloto no válido.";err.style.display="block";return;
+    }
     // Bloquear dominios truchos
     var emailLow=email.toLowerCase();
     var domBloqueados=["latam","tempmail","mailinator","guerrillamail","yopmail","throwam","dispostable","trashmail","fakeinbox","spamgourmet","sharklasers","getairmail","maildrop","spambox","nada.email","mintemail","meltmail","filzmail","haltospam","tempr.email","mytrashmail","trashdevil","mailnull"];
     if(domBloqueados.some(function(d){return emailLow.includes(d);})){
       err.textContent="Este dominio de email no está permitido.";err.style.display="block";return;
     }
-    // Bloquear patron trucho: nombre.apellido + 5 o mas numeros (ej: vanesa.molina8009478)
+    // Bloquear patron trucho: 9+ numeros seguidos en email
     var localPart=emailLow.split("@")[0];
-    if(/^[a-z]+\.[a-z]+\d{5,}$/.test(localPart)||/\d{9,}/.test(localPart)){
+    if(/\d{9,}/.test(localPart)){
       err.textContent="Este email no es válido para registrarse.";err.style.display="block";return;
     }
   }
