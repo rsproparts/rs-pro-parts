@@ -399,7 +399,7 @@ function sProfile(){
         html+='<button onclick="doDelete(\''+e.id+'\')" style="width:100%;padding:8px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.4);color:#ff5050;font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🗑️ Eliminar entrada</button>'
         +'<button onclick="window.showVoters(\''+e.id+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(100,100,255,0.1);border:1px solid rgba(100,100,255,0.3);color:rgba(150,150,255,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">👥 Ver voters ('+((e.voters&&e.voters.length)||0)+')</button>'
         +'<button onclick="window.resetVotes(\''+e.id+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(255,140,0,0.1);border:1px solid rgba(255,140,0,0.3);color:rgba(255,140,0,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🔄 Resetear votos a 0</button>'
-        +'<button onclick="window.setVotos(\''+e.id+'\',\''+(e.username||'ANONIMO')+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3);color:rgba(0,220,110,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">✏️ Setear votos manualmente</button>'
+        +'<button onclick="window.setVotos(''+e.id+'')" style="width:100%;margin-top:5px;padding:8px;background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3);color:rgba(0,220,110,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">✏️ Setear votos manualmente</button>'
         +'</div></div>';
       });
     }
@@ -569,8 +569,11 @@ window.resetVotes=async function(entryId){
   }
 };
 
-window.setVotos=async function(entryId,username){
-  var n=prompt("Cuántos votos para "+username+"? (se reemplaza el total)");
+window.setVotos=async function(entryId){
+  var entry=entries.find(function(e){return e.id===entryId;});
+  var username=entry?entry.username:"esta moto";
+  var n=prompt("Cuántos votos para "+username+"?
+(reemplaza el total actual)");
   if(n===null||n==="")return;
   var num=parseInt(n);
   if(isNaN(num)||num<0){alert("Número inválido");return;}
