@@ -399,7 +399,7 @@ function sProfile(){
         html+='<button onclick="doDelete(\''+e.id+'\')" style="width:100%;padding:8px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.4);color:#ff5050;font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🗑️ Eliminar entrada</button>'
         +'<button onclick="window.showVoters(\''+e.id+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(100,100,255,0.1);border:1px solid rgba(100,100,255,0.3);color:rgba(150,150,255,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">👥 Ver voters ('+((e.voters&&e.voters.length)||0)+')</button>'
         +'<button onclick="window.resetVotes(\''+e.id+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(255,140,0,0.1);border:1px solid rgba(255,140,0,0.3);color:rgba(255,140,0,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🔄 Resetear votos a 0</button>'
-        +'<button onclick="window.setVotos(''+e.id+'')" style="width:100%;margin-top:5px;padding:8px;background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3);color:rgba(0,220,110,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">✏️ Setear votos manualmente</button>'
+        +'<button onclick="window.setVotos(&quot;'+e.id+'&quot;)" style="width:100%;margin-top:5px;padding:8px;background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3);color:rgba(0,220,110,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">✏️ Setear votos manualmente</button>'
         +'</div></div>';
       });
     }
@@ -537,8 +537,8 @@ window.showVoters=async function(entryId){
     +'<p style="font-size:11px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 2px;">Voters ('+voters.length+')</p>'
     +'<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:0 0 8px;">'+sinNombre.length+' sin perfil · '+conNombre.length+' reales</p>'
     +'<div style="overflow-y:auto;flex:1;">'+listHtml+'</div>'
-    +(sinNombre.length?'<button onclick="window.limpiarTruchos(''+entryId+'',this.closest('div[style*=fixed]'))" style="width:100%;margin-top:12px;padding:12px;background:rgba(255,50,50,0.2);border:1px solid rgba(255,50,50,0.5);color:#ff5050;font-weight:900;font-size:12px;cursor:pointer;border-radius:4px;text-transform:uppercase;letter-spacing:0.1em;">🗑️ Eliminar '+sinNombre.length+' votos sin perfil</button>':'')
-    +'<button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;margin-top:8px;padding:12px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;cursor:pointer;border-radius:4px;">Cerrar</button>'
+    +(sinNombre.length?'<button onclick="window.limpiarTruchos(&quot;'+entryId+'&quot;,this.closest(&quot;div[style*=fixed]&quot;))" style="width:100%;margin-top:12px;padding:12px;background:rgba(255,50,50,0.2);border:1px solid rgba(255,50,50,0.5);color:#ff5050;font-weight:900;font-size:12px;cursor:pointer;border-radius:4px;text-transform:uppercase;letter-spacing:0.1em;">🗑️ Eliminar '+sinNombre.length+' votos sin perfil</button>':'')
+    +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="width:100%;margin-top:8px;padding:12px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;cursor:pointer;border-radius:4px;">Cerrar</button>'
     +'</div>';
   document.body.appendChild(pop);
   pop.addEventListener("click",function(e){if(e.target===pop)pop.remove();});
@@ -572,8 +572,7 @@ window.resetVotes=async function(entryId){
 window.setVotos=async function(entryId){
   var entry=entries.find(function(e){return e.id===entryId;});
   var username=entry?entry.username:"esta moto";
-  var n=prompt("Cuántos votos para "+username+"?
-(reemplaza el total actual)");
+  var n=prompt("Cuantos votos para "+username+"? (reemplaza el total actual)");
   if(n===null||n==="")return;
   var num=parseInt(n);
   if(isNaN(num)||num<0){alert("Número inválido");return;}
