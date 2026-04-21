@@ -6,7 +6,6 @@
 <title>RS Pro Parts</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <style>
 *{box-sizing:border-box;}
 body{margin:0;background:#131313;font-family:"Space Grotesk",sans-serif;color:white;}
@@ -45,7 +44,7 @@ input,button{font-family:"Space Grotesk",sans-serif;}
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile,sendEmailVerification}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import{getFirestore,collection,addDoc,doc,setDoc,updateDoc,deleteDoc,increment,arrayUnion,onSnapshot,query,orderBy}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const CC="ddozrdmok",CP="rs_pro_parts",ADMIN="rsmotoparts.mdp@gmail.com";
@@ -80,10 +79,6 @@ window.go=function(t){
 };
 window.doVote=async function(id){
   if(!user)return;
-  if(needsVerif(user)){
-    alert("Verificá tu email para poder votar. Revisá tu casilla de correo.");
-    return;
-  }
   await updateDoc(doc(db,"entries",id),{votes:increment(1),voters:arrayUnion(user.uid)});
 };
 window.doDelete=async function(id){
@@ -91,7 +86,6 @@ window.doDelete=async function(id){
   await deleteDoc(doc(db,"entries",id));
 };
 window.doLogout=async function(){await signOut(auth);tab="feed";rNav();rScr();};
-window.toggleAM=function(){amode=amode==="login"?"register":"login";rScr();};
 window.doResendVerif=async function(){
   if(!user)return;
   try{await sendEmailVerification(user);alert("Email reenviado. Revisá tu casilla.");}
@@ -191,15 +185,7 @@ function rScr(){
   el.className="screen fade-in";
   var map={feed:sFeed,ranking:sRank,upload:sUpload,profile:sProfile,auth:sAuth};
   el.innerHTML=(map[tab]||sFeed)();
-  if(tab==="auth"&&amode==="register"){
-    setTimeout(function(){
-      var wrap=document.getElementById("captcha-wrap");
-      if(wrap&&!wrap.dataset.r&&window.grecaptcha&&window.grecaptcha.render){
-        try{window.grecaptcha.render("captcha-wrap",{sitekey:"6LfEwcEsAAAAALIV11PZtoYmztB6YZQ8DZ6dS1Ng",theme:"dark"});wrap.dataset.r="1";}
-        catch(ex){}
-      }
-    },400);
-  }
+
 }
 
 function sFeed(){
@@ -240,10 +226,8 @@ function sFeed(){
       partsHtml+='</div></div>';
     }
     var voteHtml="";
-    if(user&&!needsVerif(user)){
+    if(user){
       voteHtml='<button onclick="doVote(\''+e.id+'\')" '+(voted?'disabled':'')+' style="flex:1;padding:12px;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;border:none;cursor:'+(voted?'not-allowed':'pointer')+';background:'+(voted?'rgba(255,255,255,0.05)':'#E31B23')+';color:'+(voted?'rgba(255,255,255,0.3)':'white')+';">'+(voted?'&#10003; VOTASTE':'&#128293; VOTAR')+'</button>';
-    }else if(user&&needsVerif(user)){
-      voteHtml='<button onclick="window.doResendVerif()" style="flex:1;padding:12px;font-weight:900;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;border:none;cursor:pointer;background:rgba(255,180,0,0.12);color:rgba(255,180,0,0.9);">⚠️ VERIFICÁ TU EMAIL</button>';
     }else{
       voteHtml='<button onclick="go(\'profile\')" style="flex:1;padding:12px;font-weight:900;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;background:#E31B23;color:white;">👤 REGISTRATE PARA VOTAR</button>';
     }
@@ -310,7 +294,7 @@ function sRank(){
 
 function sUpload(){
   if(!user)return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:48px;">📸</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;">Registrate primero</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0;">Necesitas una cuenta para participar.</p><button onclick="go(\'auth\')" style="background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Crear cuenta</button></div>';
-  if(needsVerif(user))return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:56px;">✉️</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:18px;">Verificá tu email</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:8px 0;line-height:1.6;">Para subir tu moto necesitás confirmar<br>tu dirección de email.</p><p style="color:rgba(255,255,255,0.3);font-size:12px;margin:0;">Revisá tu casilla y hacé click en el link.</p><button onclick="window.doResendVerif()" style="margin-top:16px;background:transparent;border:1px solid rgba(227,27,35,0.5);color:#E31B23;padding:10px 24px;font-weight:700;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Reenviar email</button></div>';
+
   var html='<div style="padding:16px;display:flex;flex-direction:column;gap:14px;">';
   html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Participar</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">Subi tu Moto</h2></div>';
   html+='<div id="pzone" onclick="document.getElementById(\'finput\').click()" style="border:2px dashed rgba(255,255,255,0.15);border-radius:2px;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;" onmouseover="this.style.borderColor=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.15)\'"><span style="font-size:36px;">📸</span><p style="font-weight:900;text-transform:uppercase;font-size:13px;margin:0;">Elegi una foto</p><p style="color:rgba(255,255,255,0.3);font-size:11px;margin:0;">JPG o PNG · Max 10MB</p></div>';
@@ -399,7 +383,7 @@ function sProfile(){
         html+='<button onclick="doDelete(\''+e.id+'\')" style="width:100%;padding:8px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.4);color:#ff5050;font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🗑️ Eliminar entrada</button>'
         +'<button onclick="window.showVoters(\''+e.id+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(100,100,255,0.1);border:1px solid rgba(100,100,255,0.3);color:rgba(150,150,255,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">👥 Ver voters ('+((e.voters&&e.voters.length)||0)+')</button>'
         +'<button onclick="window.resetVotes(\''+e.id+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(255,140,0,0.1);border:1px solid rgba(255,140,0,0.3);color:rgba(255,140,0,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🔄 Resetear votos a 0</button>'
-        +'<button onclick="window.setVotos(\''+e.id+'\',\''+(e.username||'ANONIMO')+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3);color:rgba(0,220,110,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">✏️ Setear votos manualmente</button>'
+        +'<button onclick="window.setVotos(&quot;'+e.id+'&quot;)" style="width:100%;margin-top:5px;padding:8px;background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3);color:rgba(0,220,110,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">✏️ Setear votos manualmente</button>'
         +'</div></div>';
       });
     }
@@ -422,182 +406,24 @@ function sProfile(){
 }
 
 function sAuth(){
-  var isReg=amode==="register";
-  var html='<div style="display:flex;flex-direction:column;justify-content:center;height:100%;padding:24px;gap:20px;">';
-  html+='<div style="text-align:center;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 6px;">Concurso mensual</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:22px;">'+(isReg?"Sumate al concurso":"Bienvenido de vuelta")+'</h2><p style="color:rgba(255,255,255,0.3);font-size:12px;margin:6px 0 0;">'+(isReg?"Registrate para subir tu moto":"Ingresa para votar y participar")+'</p></div>';
-  html+='<div style="display:flex;flex-direction:column;gap:12px;">';
-  if(isReg){html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Nombre de piloto</label><input id="auser" type="text" placeholder="DARK_KNIGHT_88" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;text-transform:uppercase;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" oninput="this.value=this.value.toUpperCase()" /></div>';}
-  html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Email</label><input id="aemail" type="email" placeholder="tu@email.com" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
-  html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Contrasena</label><input id="apass" type="password" placeholder="..." style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
+  var html='<div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;padding:28px;gap:20px;text-align:center;">';
+  html+='<img src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776258543/Logo_rama_1_uuvrq1.png" style="height:48px;object-fit:contain;" />';
+  html+='<div><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 6px;">Concurso mensual</p>';
+  html+='<h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:22px;">MOTO DEL MES</h2>';
+  html+='<p style="color:rgba(255,255,255,0.35);font-size:12px;margin:8px 0 0;">Ingresa con Google para votar y participar</p></div>';
+  html+='<button onclick="doGoogleLogin()" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 24px;background:white;border:none;color:#1a1a1a;font-weight:700;font-size:14px;cursor:pointer;border-radius:4px;">';
+  html+='<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+  html+='Continuar con Google</button>';
+  // Email/password hidden - only visible when clicked
+  html+='<div id="email-login-wrap" style="width:100%;">';
+  html+='<button onclick="document.getElementById('email-login-form').style.display='flex';this.style.display='none'" style="background:transparent;border:none;color:rgba(255,255,255,0.2);font-size:11px;cursor:pointer;text-decoration:underline;">Ya tenia cuenta? Ingresar con email</button>';
+  html+='<div id="email-login-form" style="display:none;flex-direction:column;gap:10px;width:100%;margin-top:4px;">';
+  html+='<input id="aemail" type="email" placeholder="tu@email.com" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:11px 12px;font-size:13px;color:white;" onfocus="this.style.borderColor='#E31B23'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'" />';
+  html+='<input id="apass" type="password" placeholder="Contraseña" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:11px 12px;font-size:13px;color:white;" onfocus="this.style.borderColor='#E31B23'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'" />';
   html+='<div id="aerr" style="color:#E31B23;font-size:12px;text-align:center;display:none;"></div>';
-  if(isReg){html+='<div id="captcha-wrap" style="display:flex;justify-content:center;min-height:78px;"></div>';}
-  html+='<button id="abtn" onclick="doAuth()" style="width:100%;padding:14px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;margin-top:4px;">'+(isReg?"Crear cuenta":"Entrar")+'</button>';
-  html+='<button onclick="toggleAM()" style="background:transparent;border:none;color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;padding:4px;">'+(isReg?"Ya tenes cuenta? Ingresa":"No tenes cuenta? Registrate")+'</button>';
+  html+='<button onclick="doEmailLogin()" style="width:100%;padding:12px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Entrar</button>';
   html+='</div></div>';
+  html+='<p style="font-size:10px;color:rgba(255,255,255,0.15);margin:0;">Al continuar aceptas participar bajo los terminos del concurso.</p>';
+  html+='</div>';
   return html;
 }
-
-window.doAuth=async function(){
-  var email=$("aemail")&&$("aemail").value.trim();
-  var pass=$("apass")&&$("apass").value;
-  var uname=$("auser")&&$("auser").value.trim();
-  var err=$("aerr"),btn=$("abtn");
-  if(!email||!pass){err.textContent="Completa email y contrasena";err.style.display="block";return;}
-  if(amode==="register"&&!uname){err.textContent="Elegi un nombre de piloto";err.style.display="block";return;}
-  if(amode==="register"){
-    // Captcha
-    var capResp=window.grecaptcha?window.grecaptcha.getResponse():"";
-    if(!capResp){err.textContent="Completá el captcha primero.";err.style.display="block";return;}
-    // Bloquear nombre trucho: TEST_ al inicio o 9+ numeros
-    if(/^test_/i.test(uname)||/\d{9,}/.test(uname)){
-      err.textContent="Nombre de piloto no válido.";err.style.display="block";return;
-    }
-    // Bloquear dominios truchos
-    var emailLow=email.toLowerCase();
-    var domBloqueados=["latam","tempmail","mailinator","guerrillamail","yopmail","throwam","dispostable","trashmail","fakeinbox","spamgourmet","sharklasers","getairmail","maildrop","spambox","nada.email","mintemail","meltmail","filzmail","haltospam","tempr.email","mytrashmail","trashdevil","mailnull"];
-    if(domBloqueados.some(function(d){return emailLow.includes(d);})){
-      err.textContent="Este dominio de email no está permitido.";err.style.display="block";return;
-    }
-    // Bloquear patron trucho: 9+ numeros seguidos en email
-    var localPart=emailLow.split("@")[0];
-    if(/\d{9,}/.test(localPart)){
-      err.textContent="Este email no es válido para registrarse.";err.style.display="block";return;
-    }
-  }
-  err.style.display="none";btn.textContent="...";btn.disabled=true;
-  try{
-    if(amode==="register"){
-      var c=await createUserWithEmailAndPassword(auth,email,pass);
-      await updateProfile(c.user,{displayName:uname});
-      await sendEmailVerification(c.user);
-      userCount++;
-      try{await setDoc(doc(db,"users",c.user.uid),{username:uname,createdAt:new Date().toISOString()});}catch(ex){}
-    }else{
-      await signInWithEmailAndPassword(auth,email,pass);
-    }
-    amode="login";tab="feed";rNav();rScr();
-  }catch(e){
-    var msgs={"auth/email-already-in-use":"Ese email ya esta registrado","auth/weak-password":"La contrasena debe tener al menos 6 caracteres","auth/invalid-credential":"Email o contrasena incorrectos","auth/invalid-email":"Email invalido"};
-    err.textContent=msgs[e.code]||"Error. Intenta de nuevo.";
-    err.style.display="block";
-    btn.textContent=amode==="login"?"Entrar":"Crear cuenta";
-    btn.disabled=false;
-    if(amode==="register"&&window.grecaptcha){try{window.grecaptcha.reset();}catch(ex){}}
-  }
-};
-
-function loadWinners(){
-  var wlist=document.getElementById("winners-list");if(!wlist)return;
-  onSnapshot(query(collection(db,"winners"),orderBy("date","desc")),function(snap){
-    if(snap.empty){wlist.innerHTML='<p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin:8px 0;">Aun no hay ganadores registrados.</p>';return;}
-    var whtml="";
-    snap.docs.forEach(function(d){
-      var w=d.data();
-      whtml+='<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#131313;border-radius:2px;margin-bottom:6px;"><img src="'+w.imageUrl+'" style="width:52px;height:52px;object-fit:cover;border-radius:2px;flex-shrink:0;" /><div style="flex:1;min-width:0;"><p style="font-weight:900;font-size:13px;text-transform:uppercase;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+w.username+'</p><p style="color:rgba(255,255,255,0.4);font-size:10px;margin:2px 0;">'+w.month+' · '+w.votes+' votos</p>'+(w.instagram?'<p style="font-size:10px;font-weight:700;margin:0;"><span style="color:#E31B23;">@</span>'+w.instagram+'</p>':'')+'</div><span style="font-size:22px;">🏆</span></div>';
-    });
-    wlist.innerHTML=whtml;
-  });
-}
-
-window.showVoters=async function(entryId){
-  var entry=entries.find(function(e){return e.id===entryId;});
-  if(!entry){alert("No encontré la entrada.");return;}
-  var voters=entry.voters||[];
-  if(!voters.length){alert("Esta moto no tiene votos.");return;}
-
-  // Todos los UIDs que tienen una entrada (son participantes reales)
-  var knownUids={};
-  entries.forEach(function(e){if(e.uid)knownUids[e.uid]=e.username;});
-
-  var sinNombre=[];
-  var conNombre=[];
-  voters.forEach(function(uid){
-    if(knownUids[uid]) conNombre.push({uid:uid,name:knownUids[uid]});
-    else sinNombre.push(uid);
-  });
-
-  var pop=document.createElement("div");
-  pop.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:flex-end;justify-content:center;";
-
-  var listHtml='';
-  if(sinNombre.length){
-    listHtml+='<div style="font-size:10px;color:#ff5050;font-weight:700;text-transform:uppercase;margin:8px 0 4px;">🚨 Sin perfil — posibles truchos ('+sinNombre.length+')</div>';
-    sinNombre.forEach(function(uid){
-      listHtml+='<div style="font-size:10px;font-family:monospace;padding:3px 0;color:#ff8080;border-bottom:1px solid rgba(255,255,255,0.04);">'+uid+'</div>';
-    });
-  }
-  if(conNombre.length){
-    listHtml+='<div style="font-size:10px;color:rgba(100,255,100,0.7);font-weight:700;text-transform:uppercase;margin:12px 0 4px;">✅ Con perfil — votos reales ('+conNombre.length+')</div>';
-    conNombre.forEach(function(v){
-      listHtml+='<div style="font-size:10px;font-family:monospace;padding:3px 0;color:rgba(255,255,255,0.5);border-bottom:1px solid rgba(255,255,255,0.04);">'+v.name+'</div>';
-    });
-  }
-
-  pop.innerHTML='<div style="width:100%;max-width:430px;background:#131313;border-radius:16px 16px 0 0;padding:20px;border-top:2px solid #E31B23;max-height:80vh;display:flex;flex-direction:column;">'
-    +'<p style="font-size:11px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 2px;">Voters ('+voters.length+')</p>'
-    +'<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:0 0 8px;">'+sinNombre.length+' sin perfil · '+conNombre.length+' reales</p>'
-    +'<div style="overflow-y:auto;flex:1;">'+listHtml+'</div>'
-    +(sinNombre.length?'<button onclick="window.limpiarTruchos(''+entryId+'',this.closest('div[style*=fixed]'))" style="width:100%;margin-top:12px;padding:12px;background:rgba(255,50,50,0.2);border:1px solid rgba(255,50,50,0.5);color:#ff5050;font-weight:900;font-size:12px;cursor:pointer;border-radius:4px;text-transform:uppercase;letter-spacing:0.1em;">🗑️ Eliminar '+sinNombre.length+' votos sin perfil</button>':'')
-    +'<button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;margin-top:8px;padding:12px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;cursor:pointer;border-radius:4px;">Cerrar</button>'
-    +'</div>';
-  document.body.appendChild(pop);
-  pop.addEventListener("click",function(e){if(e.target===pop)pop.remove();});
-};
-
-window.limpiarTruchos=async function(entryId,popEl){
-  var entry=entries.find(function(e){return e.id===entryId;});
-  if(!entry)return;
-  var knownUids={};
-  entries.forEach(function(e){if(e.uid)knownUids[e.uid]=e.username;});
-  var votersReales=(entry.voters||[]).filter(function(uid){return !!knownUids[uid];});
-  var eliminados=(entry.voters||[]).length-votersReales.length;
-  if(!confirm("Eliminar "+eliminados+" votos sin perfil y dejar "+votersReales.length+" votos reales?"))return;
-  try{
-    await updateDoc(doc(db,"entries",entryId),{votes:votersReales.length,voters:votersReales});
-    alert("Listo. Se eliminaron "+eliminados+" votos truchos.");
-    if(popEl)popEl.remove();
-  }catch(e){alert("Error: "+e.message);}
-};
-
-window.resetVotes=async function(entryId){
-  if(!confirm("Resetear los votos de esta moto a 0? Se eliminarán TODOS los votos."))return;
-  try{
-    await updateDoc(doc(db,"entries",entryId),{votes:0,voters:[]});
-    alert("Votos reseteados a 0.");
-  }catch(e){
-    alert("Error: "+e.message);
-  }
-};
-
-window.setVotos=async function(entryId,username){
-  var n=prompt("Cuántos votos para "+username+"? (se reemplaza el total)");
-  if(n===null||n==="")return;
-  var num=parseInt(n);
-  if(isNaN(num)||num<0){alert("Número inválido");return;}
-  if(!confirm("Setear "+num+" votos para "+username+"?"))return;
-  try{
-    await updateDoc(doc(db,"entries",entryId),{votes:num,voters:[]});
-    alert("Listo. "+username+" ahora tiene "+num+" votos.");
-  }catch(e){alert("Error: "+e.message);}
-};
-
-window.doSorteo=async function(){
-  if(!entries.length){alert("No hay participantes.");return;}
-  var top=entries.slice(0,3);
-  var winner=top[Math.floor(Math.random()*top.length)];
-  var now3=new Date();
-  var monthName=now3.toLocaleString("es-AR",{month:"long",year:"numeric"}).toUpperCase();
-  if(!confirm("Ganador sorteado: "+winner.username+" con "+winner.votes+" votos. Confirmar y guardar en el historial?")){return;}
-  try{
-    await addDoc(collection(db,"winners"),{uid:winner.uid||"",username:winner.username||"ANONIMO",instagram:winner.instagram||"",moto:winner.moto||"",imageUrl:winner.imageUrl||"",votes:winner.votes||0,month:monthName,date:new Date().toISOString()});
-    alert("Ganador guardado! "+winner.username+" quedo en el historial.");
-    rScr();
-  }catch(err){alert("Error: "+err.message);}
-};
-
-$("mlabel").textContent=mo();
-onAuthStateChanged(auth,function(u){user=u;rHdr();rNav();rScr();});
-loadE();rNav();rScr();
-</script>
-</body>
-</html>
