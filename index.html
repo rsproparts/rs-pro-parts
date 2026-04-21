@@ -19,6 +19,7 @@ input,button{font-family:"Space Grotesk",sans-serif;}
 #lb.open{display:flex;}
 #lb img{max-width:95vw;max-height:90vh;object-fit:contain;}
 #lb-x{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:white;font-size:18px;width:40px;height:40px;border-radius:50%;cursor:pointer;}
+/* Story canvas hidden */
 #story-canvas{display:none;}
 </style>
 </head>
@@ -44,26 +45,18 @@ input,button{font-family:"Space Grotesk",sans-serif;}
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import{getFirestore,collection,addDoc,doc,setDoc,updateDoc,deleteDoc,increment,arrayUnion,onSnapshot,query,orderBy}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import{getFirestore,collection,addDoc,doc,setDoc,updateDoc,deleteDoc,increment,arrayUnion,getDocs,onSnapshot,query,orderBy}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const CC="ddozrdmok",CP="rs_pro_parts",ADMIN="rsmotoparts.mdp@gmail.com";
 const FC={apiKey:"AIzaSyDdetAoPKD2jw4-Ar0breOf3fKCxGG8bdM",authDomain:"rs-pro-parts.firebaseapp.com",projectId:"rs-pro-parts",storageBucket:"rs-pro-parts.firebasestorage.app",messagingSenderId:"10474406260",appId:"1:10474406260:web:937cdd1db33fdf2d406c21"};
 const FA=initializeApp(FC),auth=getAuth(FA),db=getFirestore(FA);
-let user=null,tab="feed",entries=[],amode="login",userCount=1034;
+let user=null,tab="feed",entries=[],amode="login",userCount=0;
 const $=id=>document.getElementById(id);
 const fv=n=>n>=1000?(n/1000).toFixed(1)+"k":String(n||0);
 const MEDALS=["🥇","🥈","🥉"];
 const rk=i=>MEDALS[i]||("#"+(i+1));
 const mo=()=>new Date().toLocaleString("es-AR",{month:"long",year:"numeric"}).toUpperCase();
-// Cuentas creadas desde esta fecha necesitan verificación de email
-const VERIF_CUTOFF=new Date("2026-04-20T00:00:00Z").getTime();
-
-function needsVerif(u){
-  if(!u)return false;
-  var created=u.metadata&&u.metadata.creationTime?new Date(u.metadata.creationTime).getTime():0;
-  return created>=VERIF_CUTOFF&&!u.emailVerified;
-}
 
 window.openLB=function(url){if(!url)return;$("lb-img").src=url;$("lb").classList.add("open");};
 window.closeLB=function(){$("lb").classList.remove("open");};
@@ -86,44 +79,86 @@ window.doDelete=async function(id){
   await deleteDoc(doc(db,"entries",id));
 };
 window.doLogout=async function(){await signOut(auth);tab="feed";rNav();rScr();};
-window.doResendVerif=async function(){
-  if(!user)return;
-  try{await sendEmailVerification(user);alert("Email reenviado. Revisá tu casilla.");}
-  catch(e){alert("Esperá unos minutos antes de reenviar.");}
-};
+window.toggleAM=function(){amode=amode==="login"?"register":"login";rScr();};
 
+// ── SHARE STORY ──
 window.doStoryById=function(id){
   var entry=entries.find(function(e){return e.id===id;});
-  if(entry)window.doStory(entry);
+  if(entry) window.doStory(entry);
 };
+
 window.doStory=async function(entry){
   var btn=$("storybtn-"+entry.id);
   if(btn){btn.textContent="⏳";btn.disabled=true;}
   try{
-    var canvas=$("story-canvas");var ctx=canvas.getContext("2d");
-    var W=1080,H=1920;canvas.width=W;canvas.height=H;
-    ctx.fillStyle="#0f0f0f";ctx.fillRect(0,0,W,200);
-    var logo=new Image();logo.crossOrigin="anonymous";
+    var canvas=$("story-canvas");
+    var ctx=canvas.getContext("2d");
+    var W=1080, H=1920;
+    canvas.width=W; canvas.height=H;
+
+    // ── ZONA 1: HEADER negro con logo (0 a 200)
+    ctx.fillStyle="#0f0f0f";
+    ctx.fillRect(0,0,W,200);
+    var logo=new Image();
+    logo.crossOrigin="anonymous";
     await new Promise(function(res){logo.onload=res;logo.onerror=res;logo.src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776258543/Logo_rama_1_uuvrq1.png";});
-    var lH=120,lW=lH*(logo.width/logo.height);
-    ctx.drawImage(logo,W/2-lW/2,40,lW,lH);
-    var img=new Image();img.crossOrigin="anonymous";
+    var lH=120, lW=lH*(logo.width/logo.height);
+    ctx.drawImage(logo, W/2-lW/2, 40, lW, lH);
+
+    // ── ZONA 2: FOTO cuadrada (200 a 1280 = 1080px)
+    var img=new Image();
+    img.crossOrigin="anonymous";
     await new Promise(function(res){img.onload=res;img.onerror=res;img.src=entry.imageUrl;});
-    var iS=Math.min(img.width,img.height),iX=(img.width-iS)/2,iY=(img.height-iS)/2;
-    ctx.save();ctx.beginPath();ctx.rect(0,200,W,W);ctx.clip();
-    ctx.drawImage(img,iX,iY,iS,iS,0,200,W,W);ctx.restore();
-    ctx.fillStyle="#0f0f0f";ctx.fillRect(0,200+W,W,H-(200+W));
-    ctx.fillStyle="#E31B23";ctx.fillRect(0,200+W,W,6);
-    ctx.textAlign="center";ctx.textBaseline="top";
+    var iS=Math.min(img.width,img.height);
+    var iX=(img.width-iS)/2;
+    var iY=(img.height-iS)/2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0,200,W,W);
+    ctx.clip();
+    ctx.drawImage(img,iX,iY,iS,iS,0,200,W,W);
+    ctx.restore();
+
+    // ── ZONA 3: TEXTO negro debajo (1280 a 1920)
+    ctx.fillStyle="#0f0f0f";
+    ctx.fillRect(0,200+W,W,H-(200+W));
+
+    // separador rojo
+    ctx.fillStyle="#E31B23";
+    ctx.fillRect(0,200+W,W,6);
+
+    ctx.textAlign="center";
+    ctx.textBaseline="top";
+
+    // nombre - auto tamaño
     var name=(entry.username||"PILOTO").toUpperCase();
-    var fs=80;ctx.font="bold "+fs+"px Arial";
+    var fs=80;
+    ctx.font="bold "+fs+"px Arial";
     while(ctx.measureText(name).width>W-100&&fs>40){fs-=4;ctx.font="bold "+fs+"px Arial";}
-    ctx.fillStyle="#ffffff";ctx.fillText(name,W/2,200+W+50);
-    ctx.fillStyle="rgba(255,255,255,0.6)";ctx.font="50px Arial";
-    ctx.fillText(entry.moto||"",W/2,200+W+50+fs+30);
-    ctx.font="46px Arial";ctx.fillText("📍 "+(entry.location||""),W/2,200+W+50+fs+30+80);
-    if(entry.instagram){ctx.fillStyle="#E31B23";ctx.font="bold 54px Arial";ctx.fillText("@"+entry.instagram,W/2,200+W+50+fs+30+80+80);}
-    ctx.fillStyle="#E31B23";ctx.fillRect(0,H-10,W,10);
+    ctx.fillStyle="#ffffff";
+    ctx.fillText(name, W/2, 200+W+50);
+
+    // modelo moto
+    ctx.fillStyle="rgba(255,255,255,0.6)";
+    ctx.font="50px Arial";
+    ctx.fillText(entry.moto||"", W/2, 200+W+50+fs+30);
+
+    // ciudad
+    ctx.font="46px Arial";
+    ctx.fillText("📍 "+(entry.location||""), W/2, 200+W+50+fs+30+80);
+
+    // instagram
+    if(entry.instagram){
+      ctx.fillStyle="#E31B23";
+      ctx.font="bold 54px Arial";
+      ctx.fillText("@"+entry.instagram, W/2, 200+W+50+fs+30+80+80);
+    }
+
+    // barra roja inferior
+    ctx.fillStyle="#E31B23";
+    ctx.fillRect(0,H-10,W,10);
+
+    // export
     canvas.toBlob(async function(blob){
       if(!blob){showStoryFallback(entry);return;}
       var file=new File([blob],"moto-del-mes.png",{type:"image/png"});
@@ -131,17 +166,28 @@ window.doStory=async function(entry){
         try{await navigator.share({files:[file],title:"Moto del Mes RS Pro Parts",text:"Vota por "+entry.username+"!"});}
         catch(e){if(e.name!=="AbortError")showStoryFallback(entry);}
       }else{
-        var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="moto-del-mes-rspro.png";a.click();
+        var a=document.createElement("a");
+        a.href=URL.createObjectURL(blob);
+        a.download="moto-del-mes-rspro.png";
+        a.click();
         showStoryFallback(entry);
       }
     },"image/png");
-  }catch(e){console.error(e);showStoryFallback(entry);}
-  finally{if(btn){btn.textContent="📸 Story";btn.disabled=false;}}
+  }catch(e){
+    console.error(e);showStoryFallback(entry);
+  }finally{
+    if(btn){btn.textContent="📸 Story";btn.disabled=false;}
+  }
 };
+
 function showStoryFallback(entry){
   var pop=document.createElement("div");
   pop.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9998;display:flex;align-items:flex-end;justify-content:center;";
-  pop.innerHTML='<div style="width:100%;max-width:430px;background:#131313;border-radius:16px 16px 0 0;padding:24px;text-align:center;border-top:2px solid #E31B23;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 8px;">Imagen descargada ✓</p><p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 16px;line-height:1.6;">Abrí Instagram → Stories → Galería<br>y seleccioná la imagen descargada.</p><button onclick="this.parentElement.parentElement.remove()" style="width:100%;padding:12px;background:#E31B23;border:none;color:white;font-weight:900;font-size:14px;cursor:pointer;border-radius:4px;">Entendido</button></div>';
+  pop.innerHTML='<div style="width:100%;max-width:430px;background:#131313;border-radius:16px 16px 0 0;padding:24px;text-align:center;border-top:2px solid #E31B23;">'
+    +'<p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 8px;">Imagen descargada ✓</p>'
+    +'<p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 16px;line-height:1.6;">Abrí Instagram → Stories → Galería<br>y seleccioná la imagen descargada.</p>'
+    +'<button onclick="this.parentElement.parentElement.remove()" style="width:100%;padding:12px;background:#E31B23;border:none;color:white;font-weight:900;font-size:14px;cursor:pointer;border-radius:4px;">Entendido</button>'
+    +'</div>';
   document.body.appendChild(pop);
   pop.addEventListener("click",function(e){if(e.target===pop)pop.remove();});
 }
@@ -173,9 +219,36 @@ function rHdr(){
 }
 
 function loadE(){
-  userCount=1034;
-  onSnapshot(query(collection(db,"entries"),orderBy("votes","desc")),function(snap){
+  userCount=1034; // base fija — nuevos se suman al registrarse
+
+  // Cache para reducir lecturas a Firebase (5 minutos)
+  var now=Date.now();
+  if(window._cacheEntries&&window._cacheEntries.length>0&&(now-window._cacheTime)<300000){
+    entries=window._cacheEntries.slice();
+    if(["feed","ranking","profile"].includes(tab))rScr();
+    if(!window._unsubVotes) startVoteListener();
+    return;
+  }
+
+  // Primera carga o cache expirado: leer una vez
+  getDocs(query(collection(db,"entries"),orderBy("votes","desc"))).then(function(snap){
     entries=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    window._cacheEntries=entries.slice();
+    window._cacheTime=Date.now();
+    if(["feed","ranking","profile"].includes(tab))rScr();
+    startVoteListener();
+  }).catch(function(){
+    // Si falla getDocs, intentar con onSnapshot como fallback
+    startVoteListener();
+  });
+}
+
+function startVoteListener(){
+  if(window._unsubVotes) window._unsubVotes();
+  window._unsubVotes=onSnapshot(query(collection(db,"entries"),orderBy("votes","desc")),function(snap){
+    entries=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    window._cacheEntries=entries.slice();
+    window._cacheTime=Date.now();
     if(["feed","ranking","profile"].includes(tab))rScr();
   });
 }
@@ -185,7 +258,6 @@ function rScr(){
   el.className="screen fade-in";
   var map={feed:sFeed,ranking:sRank,upload:sUpload,profile:sProfile,auth:sAuth};
   el.innerHTML=(map[tab]||sFeed)();
-
 }
 
 function sFeed(){
@@ -210,17 +282,23 @@ function sFeed(){
   html+='<div style="background:#E31B23;padding:8px 14px;display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">⚡</span><p style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Como ganar descuentos</p></div>';
   html+='<div style="padding:12px;display:flex;flex-direction:column;gap:8px;">';
   html+='<p style="font-size:11px;color:rgba(255,255,255,0.5);margin:0 0 4px;">Subi tu moto y recibí votos. Cada voto vale <strong style="color:white;">10 Puntos RS</strong>.</p>';
-  html+='<div style="display:flex;gap:8px;"><div style="flex:1;background:#131313;border-radius:2px;padding:10px;border-left:3px solid #E31B23;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">100 PRS</p><p style="font-size:9px;color:rgba(255,255,255,0.5);margin:2px 0 0;text-transform:uppercase;font-weight:700;">= 5% descuento</p></div>';
-  html+='<div style="flex:1;background:#131313;border-radius:2px;padding:10px;border-left:3px solid #E31B23;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">200 PRS</p><p style="font-size:9px;color:rgba(255,255,255,0.5);margin:2px 0 0;text-transform:uppercase;font-weight:700;">= 10% descuento</p></div></div>';
+  html+='<div style="display:flex;gap:8px;">';
+  html+='<div style="flex:1;background:#131313;border-radius:2px;padding:10px;border-left:3px solid #E31B23;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">100 PRS</p><p style="font-size:9px;color:rgba(255,255,255,0.5);margin:2px 0 0;text-transform:uppercase;font-weight:700;">= 5% descuento</p></div>';
+  html+='<div style="flex:1;background:#131313;border-radius:2px;padding:10px;border-left:3px solid #E31B23;text-align:center;"><p style="font-size:18px;font-weight:900;margin:0;color:#E31B23;">200 PRS</p><p style="font-size:9px;color:rgba(255,255,255,0.5);margin:2px 0 0;text-transform:uppercase;font-weight:700;">= 10% descuento</p></div>';
+  html+='</div>';
   html+='<p style="font-size:10px;color:rgba(255,255,255,0.3);margin:0;">&#128247; Subi tu moto → recibis votos → acumulas Puntos RS → canjeas descuentos en la tienda.</p>';
   html+='</div></div>';
+
   entries.forEach(function(e,i){
     var voted=user&&e.voters&&e.voters.includes(user.uid);
     var pct=Math.round((e.votes||0)/max*100);
     var parts=e.parts?e.parts.filter(Boolean):[];
     var partsHtml="";
     if(parts.length>0){
-      partsHtml+='<div style="border-top:1px solid rgba(255,255,255,0.06);"><button onclick="togMods(\''+e.id+'\')" style="width:100%;padding:10px 12px;background:transparent;border:none;color:rgba(255,255,255,0.5);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;display:flex;align-items:center;justify-content:space-between;"><span>&#9881; '+parts.length+' MODIFICACIONES</span><span id="modsarr-'+e.id+'">&#9660;</span></button>';
+      partsHtml+='<div style="border-top:1px solid rgba(255,255,255,0.06);">';
+      partsHtml+='<button onclick="togMods(\''+e.id+'\')" style="width:100%;padding:10px 12px;background:transparent;border:none;color:rgba(255,255,255,0.5);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">';
+      partsHtml+='<span>&#9881; '+parts.length+' MODIFICACIONES</span><span id="modsarr-'+e.id+'">&#9660;</span>';
+      partsHtml+='</button>';
       partsHtml+='<div id="mods-'+e.id+'" style="display:none;padding:0 12px 12px 12px;border-left:3px solid #E31B23;margin:0 12px 0 12px;">';
       parts.forEach(function(p){partsHtml+='<p style="font-size:11px;color:rgba(255,255,255,0.65);margin:0 0 5px;">&#9881; '+p+'</p>';});
       partsHtml+='</div></div>';
@@ -231,8 +309,9 @@ function sFeed(){
     }else{
       voteHtml='<button onclick="go(\'profile\')" style="flex:1;padding:12px;font-weight:900;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;background:#E31B23;color:white;">👤 REGISTRATE PARA VOTAR</button>';
     }
+
     var storyBtn='<button id="storybtn-'+e.id+'" onclick="doStoryById(\''+e.id+'\')" style="padding:10px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-weight:700;font-size:10px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.borderColor=\'#E31B23\';this.style.color=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\';this.style.color=\'rgba(255,255,255,0.5)\'">📸 Story</button>';
-    var profileBtn='<a href="moto.html?id='+e.id+'" style="padding:10px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-weight:700;font-size:10px;cursor:pointer;white-space:nowrap;text-decoration:none;display:flex;align-items:center;" onmouseover="this.style.borderColor=\'#E31B23\';this.style.color=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\';this.style.color=\'rgba(255,255,255,0.5)\'">🔗</a>';
+
     html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid '+(i===0?'rgba(227,27,35,0.4)':'rgba(255,255,255,0.05)')+';">';
     html+='<div style="position:relative;overflow:hidden;">';
     html+='<img src="'+e.imageUrl+'" onclick="openLB(\''+e.imageUrl+'\')" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block;cursor:zoom-in;" />';
@@ -245,9 +324,12 @@ function sFeed(){
     html+='<p style="font-size:11px;color:rgba(255,255,255,0.5);margin:0 0 3px;">📍 '+(e.location||'')+' · '+(e.moto||'')+'</p>';
     html+=(e.instagram?'<p style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.7);margin:0;"><span style="color:#E31B23;">@</span>'+e.instagram+'</p>':'');
     html+='</div></div>';
-    html+='<div style="padding:10px 12px 0;"><div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.3);margin-bottom:3px;"><span>VOTOS ESTE MES</span><span>'+pct+'% del lider</span></div>';
-    html+='<div style="background:rgba(255,255,255,0.1);height:3px;border-radius:99px;overflow:hidden;"><div style="background:#E31B23;height:100%;border-radius:99px;width:'+pct+'%;"></div></div></div>';
+    html+='<div style="padding:10px 12px 0;">';
+    html+='<div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.3);margin-bottom:3px;"><span>VOTOS ESTE MES</span><span>'+pct+'% del lider</span></div>';
+    html+='<div style="background:rgba(255,255,255,0.1);height:3px;border-radius:99px;overflow:hidden;"><div style="background:#E31B23;height:100%;border-radius:99px;width:'+pct+'%;"></div></div>';
+    html+='</div>';
     html+=partsHtml;
+    var profileBtn='<a href="moto.html?id='+e.id+'" style="padding:10px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-weight:700;font-size:10px;cursor:pointer;white-space:nowrap;text-decoration:none;display:flex;align-items:center;" onmouseover="this.style.borderColor=\'#E31B23\';this.style.color=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\';this.style.color=\'rgba(255,255,255,0.5)\'">🔗</a>';
     html+='<div style="display:flex;gap:0;border-top:1px solid rgba(255,255,255,0.05);">'+voteHtml+storyBtn+profileBtn+'</div>';
     html+='</div>';
   });
@@ -294,7 +376,6 @@ function sRank(){
 
 function sUpload(){
   if(!user)return'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;gap:16px;"><div style="font-size:48px;">📸</div><h3 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;">Registrate primero</h3><p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0;">Necesitas una cuenta para participar.</p><button onclick="go(\'auth\')" style="background:#E31B23;border:none;color:white;padding:12px 24px;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Crear cuenta</button></div>';
-
   var html='<div style="padding:16px;display:flex;flex-direction:column;gap:14px;">';
   html+='<div style="text-align:center;padding:8px 0;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 4px;">Participar</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:20px;">Subi tu Moto</h2></div>';
   html+='<div id="pzone" onclick="document.getElementById(\'finput\').click()" style="border:2px dashed rgba(255,255,255,0.15);border-radius:2px;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;" onmouseover="this.style.borderColor=\'#E31B23\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.15)\'"><span style="font-size:36px;">📸</span><p style="font-weight:900;text-transform:uppercase;font-size:13px;margin:0;">Elegi una foto</p><p style="color:rgba(255,255,255,0.3);font-size:11px;margin:0;">JPG o PNG · Max 10MB</p></div>';
@@ -360,14 +441,11 @@ function sProfile(){
   var mr=entries.findIndex(function(e){return e.uid===user.uid;});
   var isAdmin=user.email===ADMIN;
   var html='<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">';
-  html+='<div style="display:flex;align-items:center;gap:16px;background:#1c1b1b;padding:16px;border-radius:2px;"><div style="width:56px;height:56px;background:#E31B23;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;flex-shrink:0;">'+l+'</div><div><p style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:18px;margin:0;">'+(user.displayName||user.email.split("@")[0].toUpperCase())+'</p><p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+user.email+'</p>'+(needsVerif(user)?'<p style="font-size:10px;color:rgba(255,180,0,0.8);margin:4px 0 0;">⚠️ Email pendiente de verificación</p>':'')+'</div></div>';
+  html+='<div style="display:flex;align-items:center;gap:16px;background:#1c1b1b;padding:16px;border-radius:2px;"><div style="width:56px;height:56px;background:#E31B23;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;flex-shrink:0;">'+l+'</div><div><p style="font-weight:900;text-transform:uppercase;font-style:italic;font-size:18px;margin:0;">'+(user.displayName||user.email.split("@")[0].toUpperCase())+'</p><p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+user.email+'</p></div></div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
   var stats=[{l:"Motos cargadas",v:mine.length},{l:"Votos recibidos",v:tv},{l:"Puntos RS",v:String(tv*10),u:"PRS"},{l:"Ranking",v:mr>=0?"#"+(mr+1):"---"}];
   stats.forEach(function(s){html+='<div style="background:#1c1b1b;padding:16px;border-radius:2px;border-bottom:2px solid transparent;" onmouseover="this.style.borderColor=\'#E31B23\'" onmouseout="this.style.borderColor=\'transparent\'"><p style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;">'+s.l+'</p><div style="display:flex;align-items:baseline;gap:4px;"><span style="font-size:26px;font-weight:900;">'+s.v+'</span>'+(s.u?'<span style="color:#E31B23;font-size:11px;font-weight:700;font-style:italic;">'+s.u+'</span>':'')+'</div></div>';});
   html+='</div>';
-  if(needsVerif(user)){
-    html+='<div style="background:rgba(255,180,0,0.08);border:1px solid rgba(255,180,0,0.3);border-radius:2px;padding:14px;text-align:center;"><p style="font-size:13px;font-weight:700;color:rgba(255,180,0,0.9);margin:0 0 8px;">✉️ Verificá tu email para participar</p><p style="font-size:11px;color:rgba(255,255,255,0.4);margin:0 0 12px;">Revisá tu casilla y hacé click en el link que te enviamos.</p><button onclick="window.doResendVerif()" style="background:transparent;border:1px solid rgba(255,180,0,0.5);color:rgba(255,180,0,0.9);padding:8px 20px;font-weight:700;font-size:11px;text-transform:uppercase;cursor:pointer;border-radius:2px;">Reenviar email</button></div>';
-  }
   if(isAdmin){
     html+='<div style="background:#1c1b1b;border-radius:2px;overflow:hidden;border:1px solid rgba(227,27,35,0.4);">';
     var totalV=entries.reduce(function(s,e){return s+(e.votes||0);},0);
@@ -380,11 +458,7 @@ function sProfile(){
       entries.forEach(function(e){
         html+='<div style="background:#131313;border-radius:2px;overflow:hidden;"><img src="'+e.imageUrl+'" onclick="openLB(\''+e.imageUrl+'\')" style="width:100%;height:160px;object-fit:cover;display:block;cursor:zoom-in;" /><div style="padding:10px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><p style="font-weight:900;text-transform:uppercase;font-size:13px;margin:0;">'+(e.username||'ANONIMO')+'</p><span style="font-size:11px;color:#E31B23;font-weight:700;">'+fv(e.votes)+' votos</span></div><p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0 0 8px;">📍 '+(e.location||'')+' · '+(e.moto||'')+'</p>';
         if(e.parts&&e.parts.filter(Boolean).length){html+='<p style="color:rgba(255,255,255,0.3);font-size:10px;margin:0 0 8px;">⚙ '+e.parts.filter(Boolean).join(' · ')+'</p>';}
-        html+='<button onclick="doDelete(\''+e.id+'\')" style="width:100%;padding:8px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.4);color:#ff5050;font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🗑️ Eliminar entrada</button>'
-        +'<button onclick="window.showVoters(\''+e.id+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(100,100,255,0.1);border:1px solid rgba(100,100,255,0.3);color:rgba(150,150,255,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">👥 Ver voters ('+((e.voters&&e.voters.length)||0)+')</button>'
-        +'<button onclick="window.resetVotes(\''+e.id+'\')" style="width:100%;margin-top:5px;padding:8px;background:rgba(255,140,0,0.1);border:1px solid rgba(255,140,0,0.3);color:rgba(255,140,0,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🔄 Resetear votos a 0</button>'
-        +'<button onclick="window.setVotos(&quot;'+e.id+'&quot;)" style="width:100%;margin-top:5px;padding:8px;background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3);color:rgba(0,220,110,0.9);font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">✏️ Setear votos manualmente</button>'
-        +'</div></div>';
+        html+='<button onclick="doDelete(\''+e.id+'\')" style="width:100%;padding:8px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.4);color:#ff5050;font-weight:900;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;">🗑️ Eliminar entrada</button></div></div>';
       });
     }
     html+='</div></div>';
@@ -406,24 +480,71 @@ function sProfile(){
 }
 
 function sAuth(){
-  var html='<div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;padding:28px;gap:20px;text-align:center;">';
-  html+='<img src="https://res.cloudinary.com/ddozrdmok/image/upload/v1776258543/Logo_rama_1_uuvrq1.png" style="height:48px;object-fit:contain;" />';
-  html+='<div><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 6px;">Concurso mensual</p>';
-  html+='<h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:22px;">MOTO DEL MES</h2>';
-  html+='<p style="color:rgba(255,255,255,0.35);font-size:12px;margin:8px 0 0;">Ingresa con Google para votar y participar</p></div>';
-  html+='<button onclick="doGoogleLogin()" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 24px;background:white;border:none;color:#1a1a1a;font-weight:700;font-size:14px;cursor:pointer;border-radius:4px;">';
-  html+='<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
-  html+='Continuar con Google</button>';
-  // Email/password hidden - only visible when clicked
-  html+='<div id="email-login-wrap" style="width:100%;">';
-  html+='<button onclick="document.getElementById('email-login-form').style.display='flex';this.style.display='none'" style="background:transparent;border:none;color:rgba(255,255,255,0.2);font-size:11px;cursor:pointer;text-decoration:underline;">Ya tenia cuenta? Ingresar con email</button>';
-  html+='<div id="email-login-form" style="display:none;flex-direction:column;gap:10px;width:100%;margin-top:4px;">';
-  html+='<input id="aemail" type="email" placeholder="tu@email.com" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:11px 12px;font-size:13px;color:white;" onfocus="this.style.borderColor='#E31B23'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'" />';
-  html+='<input id="apass" type="password" placeholder="Contraseña" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:11px 12px;font-size:13px;color:white;" onfocus="this.style.borderColor='#E31B23'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'" />';
+  var isReg=amode==="register";
+  var html='<div style="display:flex;flex-direction:column;justify-content:center;height:100%;padding:24px;gap:20px;">';
+  html+='<div style="text-align:center;"><p style="font-size:10px;color:#E31B23;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 6px;">Concurso mensual</p><h2 style="font-weight:900;text-transform:uppercase;font-style:italic;margin:0;font-size:22px;">'+(isReg?"Sumate al concurso":"Bienvenido de vuelta")+'</h2><p style="color:rgba(255,255,255,0.3);font-size:12px;margin:6px 0 0;">'+(isReg?"Registrate para subir tu moto":"Ingresa para votar y participar")+'</p></div>';
+  html+='<div style="display:flex;flex-direction:column;gap:12px;">';
+  if(isReg){html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Nombre de piloto</label><input id="auser" type="text" placeholder="DARK_KNIGHT_88" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;text-transform:uppercase;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" oninput="this.value=this.value.toUpperCase()" /></div>';}
+  html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Email</label><input id="aemail" type="email" placeholder="tu@email.com" style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
+  html+='<div><label style="font-size:10px;color:#E31B23;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;">Contrasena</label><input id="apass" type="password" placeholder="..." style="width:100%;background:#1c1b1b;border:1px solid rgba(255,255,255,0.1);outline:none;padding:12px;font-size:13px;color:white;" onfocus="this.style.borderColor=\'#E31B23\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.1)\'" /></div>';
   html+='<div id="aerr" style="color:#E31B23;font-size:12px;text-align:center;display:none;"></div>';
-  html+='<button onclick="doEmailLogin()" style="width:100%;padding:12px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Entrar</button>';
+  html+='<button id="abtn" onclick="doAuth()" style="width:100%;padding:14px;background:#E31B23;border:none;color:white;font-weight:900;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;margin-top:4px;">'+(isReg?"Crear cuenta":"Entrar")+'</button>';
+  html+='<button onclick="toggleAM()" style="background:transparent;border:none;color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;padding:4px;">'+(isReg?"Ya tenes cuenta? Ingresa":"No tenes cuenta? Registrate")+'</button>';
   html+='</div></div>';
-  html+='<p style="font-size:10px;color:rgba(255,255,255,0.15);margin:0;">Al continuar aceptas participar bajo los terminos del concurso.</p>';
-  html+='</div>';
   return html;
 }
+
+window.doAuth=async function(){
+  var email=$("aemail")&&$("aemail").value.trim();
+  var pass=$("apass")&&$("apass").value;
+  var uname=$("auser")&&$("auser").value.trim();
+  var err=$("aerr"),btn=$("abtn");
+  if(!email||!pass){err.textContent="Completa email y contrasena";err.style.display="block";return;}
+  if(amode==="register"&&!uname){err.textContent="Elegi un nombre de piloto";err.style.display="block";return;}
+  err.style.display="none";btn.textContent="...";btn.disabled=true;
+  try{
+    if(amode==="register"){var c=await createUserWithEmailAndPassword(auth,email,pass);await updateProfile(c.user,{displayName:uname});try{await setDoc(doc(db,"users",c.user.uid),{username:uname,createdAt:new Date().toISOString()});userCount++;}catch(ex){}}
+    else{await signInWithEmailAndPassword(auth,email,pass);}
+    amode="login";tab="feed";rNav();rScr();
+  }catch(e){
+    var msgs={"auth/email-already-in-use":"Ese email ya esta registrado","auth/weak-password":"La contrasena debe tener al menos 6 caracteres","auth/invalid-credential":"Email o contrasena incorrectos","auth/invalid-email":"Email invalido"};
+    err.textContent=msgs[e.code]||"Error. Intenta de nuevo.";
+    err.style.display="block";
+    btn.textContent=amode==="login"?"Entrar":"Crear cuenta";
+    btn.disabled=false;
+  }
+};
+
+function loadWinners(){
+  var wlist=document.getElementById("winners-list");if(!wlist)return;
+  onSnapshot(query(collection(db,"winners"),orderBy("date","desc")),function(snap){
+    if(snap.empty){wlist.innerHTML='<p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin:8px 0;">Aun no hay ganadores registrados.</p>';return;}
+    var whtml="";
+    snap.docs.forEach(function(d){
+      var w=d.data();
+      whtml+='<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#131313;border-radius:2px;margin-bottom:6px;"><img src="'+w.imageUrl+'" style="width:52px;height:52px;object-fit:cover;border-radius:2px;flex-shrink:0;" /><div style="flex:1;min-width:0;"><p style="font-weight:900;font-size:13px;text-transform:uppercase;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+w.username+'</p><p style="color:rgba(255,255,255,0.4);font-size:10px;margin:2px 0;">'+w.month+' · '+w.votes+' votos</p>'+(w.instagram?'<p style="font-size:10px;font-weight:700;margin:0;"><span style="color:#E31B23;">@</span>'+w.instagram+'</p>':'')+'</div><span style="font-size:22px;">🏆</span></div>';
+    });
+    wlist.innerHTML=whtml;
+  });
+}
+
+window.doSorteo=async function(){
+  if(!entries.length){alert("No hay participantes.");return;}
+  var top=entries.slice(0,3);
+  var winner=top[Math.floor(Math.random()*top.length)];
+  var now3=new Date();
+  var monthName=now3.toLocaleString("es-AR",{month:"long",year:"numeric"}).toUpperCase();
+  if(!confirm("Ganador sorteado: "+winner.username+" con "+winner.votes+" votos. Confirmar y guardar en el historial?")){return;}
+  try{
+    await addDoc(collection(db,"winners"),{uid:winner.uid||"",username:winner.username||"ANONIMO",instagram:winner.instagram||"",moto:winner.moto||"",imageUrl:winner.imageUrl||"",votes:winner.votes||0,month:monthName,date:new Date().toISOString()});
+    alert("Ganador guardado! "+winner.username+" quedo en el historial.");
+    rScr();
+  }catch(err){alert("Error: "+err.message);}
+};
+
+$("mlabel").textContent=mo();
+onAuthStateChanged(auth,function(u){user=u;rHdr();rNav();rScr();});
+loadE();rNav();rScr();
+</script>
+</body>
+</html>
