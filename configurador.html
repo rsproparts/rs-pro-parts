@@ -208,15 +208,22 @@
     display:flex;
     align-items:center;
     justify-content:center;
+    width: 100%;
     aspect-ratio: 1/1.55;
     position: relative;
     overflow:hidden;
     touch-action: none;
+    min-width: 0;
+    min-height: 0;
   }
 
   .preview-stage canvas{
+    display: block;
+    width: auto;
+    height: auto;
     max-width: 100%;
     max-height: 100%;
+    object-fit: contain;
     cursor: grab;
   }
   .preview-stage canvas:active{ cursor: grabbing; }
