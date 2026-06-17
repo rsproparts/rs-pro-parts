@@ -566,13 +566,74 @@ function render(){
   ctx.drawImage(mockupImg, 0, 0, canvas.width, canvas.height);
 }
 
+// ---- Generar archivo de IMPRESION (sin marco, sin mockup, alta resolucion) ----
+
+// Cada modelo de funda tiene su propia proporcion real (ya detectada en los
+// mockups). Para imprimir, generamos un archivo en esa MISMA proporcion pero
+// en alta resolucion (300dpi aprox), sin marco ni hueco de camara, listo para
+// sublimar. Se imprime con un poco de margen de sobra y se corta a medida.
+const PRINT_DPI = 300;
+const PRINT_LONG_SIDE_MM = 160; // lado mas largo de la placa, con margen de sobra para cortar
+
+function mmToPx(mm, dpi){
+  return Math.round((mm / 25.4) * dpi);
+}
+
+function renderPrintFile(){
+  const data = MOCKUP_DATA[currentModel];
+  const aspect = data.width / data.height; // proporcion real de ESTE modelo
+
+  // El lado mas largo de la placa se fija en PRINT_LONG_SIDE_MM (con margen),
+  // y el otro lado se calcula respetando la proporcion del mockup.
+  let printW, printH;
+  if (aspect <= 1) {
+    // mas alto que ancho (caso normal de funda de celular)
+    printH = mmToPx(PRINT_LONG_SIDE_MM, PRINT_DPI);
+    printW = Math.round(printH * aspect);
+  } else {
+    printW = mmToPx(PRINT_LONG_SIDE_MM, PRINT_DPI);
+    printH = Math.round(printW / aspect);
+  }
+
+  const printCanvas = document.createElement('canvas');
+  printCanvas.width = printW;
+  printCanvas.height = printH;
+  const pctx = printCanvas.getContext('2d');
+
+  // Mismo encuadre que el preview (mismo zoom/pan), pero a resolucion de impresion,
+  // y SIN dibujar el mockup (sin marco negro, sin hueco de camara).
+  const imgRatio = userImgNaturalSize.w / userImgNaturalSize.h;
+  const canvasRatio = printW / printH;
+
+  let drawW, drawH;
+  if(imgRatio > canvasRatio){
+    drawH = printH * state.zoom;
+    drawW = drawH * imgRatio;
+  } else {
+    drawW = printW * state.zoom;
+    drawH = drawW / imgRatio;
+  }
+
+  // Escalamos el pan proporcionalmente, porque el pan se definio en
+  // coordenadas del canvas de preview (canvas.width/height), no de impresion.
+  const scalePanX = printW / canvas.width;
+  const scalePanY = printH / canvas.height;
+
+  const dx = (printW - drawW)/2 + state.panX * scalePanX;
+  const dy = (printH - drawH)/2 + state.panY * scalePanY;
+
+  pctx.imageSmoothingEnabled = true;
+  pctx.imageSmoothingQuality = 'high';
+  pctx.drawImage(userImg, dx, dy, drawW, drawH);
+
+  return printCanvas.toDataURL('image/png', 1.0);
+}
+
 // ---- Envio por WhatsApp ----
 sendBtn.addEventListener('click', () => {
   if(!currentModel || !userImg) return;
 
-  // Generamos una imagen final (mockup compuesto) para que el cliente la vea/descargue
-  // NOTA: el envio del ARCHIVO en si a Cloudinary se conecta en el siguiente paso.
-  const finalDataUrl = canvas.toDataURL('image/png');
+  const printDataUrl = renderPrintFile();
 
   const modelLabel = MODEL_LABELS[currentModel] || currentModel;
   const name = customerName.value.trim();
@@ -585,14 +646,14 @@ sendBtn.addEventListener('click', () => {
   const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');
 
-  // Tambien ofrecemos descargar el preview para que lo pueda adjuntar a mano
-  downloadPreview(finalDataUrl);
+  // Descargamos el archivo de IMPRESION (rectangular, sin marco, alta resolucion)
+  downloadPreview(printDataUrl);
 });
 
 function downloadPreview(dataUrl){
   const a = document.createElement('a');
   a.href = dataUrl;
-  a.download = `funda-rs-design-${currentModel || 'preview'}.png`;
+  a.download = `funda-rs-design-${currentModel || 'preview'}-PARA-IMPRIMIR.png`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
