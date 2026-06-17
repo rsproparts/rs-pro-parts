@@ -440,6 +440,7 @@ const previewStage = document.getElementById('previewStage');
 
 let currentModel = null;
 let mockupImg = null;
+let clipImg = null;
 let userImg = null;
 let userImgNaturalSize = {w:0, h:0};
 
@@ -499,14 +500,24 @@ modelSelect.addEventListener('change', () => {
 function loadMockup(modelKey){
   const data = MOCKUP_DATA[modelKey];
   if(!data) return;
-  mockupImg = new Image();
-  mockupImg.onload = () => {
+
+  let loaded = 0;
+  const onBothLoaded = () => {
+    loaded++;
+    if(loaded < 2) return;
     canvas.width = data.width;
     canvas.height = data.height;
     if(userImg){ updatePanLimits(); }
     render();
   };
+
+  mockupImg = new Image();
+  mockupImg.onload = onBothLoaded;
   mockupImg.src = data.src;
+
+  clipImg = new Image();
+  clipImg.onload = onBothLoaded;
+  clipImg.src = data.clip_src;
 }
 
 // ---- Upload de imagen ----
@@ -619,22 +630,40 @@ window.addEventListener('pointermove', (e) => {
 });
 window.addEventListener('pointerup', () => dragging = false);
 
+// Canvas offscreen reutilizable para el recorte (clip) de la foto del usuario
+const clipCanvas = document.createElement('canvas');
+const clipCtx = clipCanvas.getContext('2d');
+
 // ---- Render principal ----
 function render(){
   if(!mockupImg) return;
   ctx.clearRect(0,0,canvas.width, canvas.height);
 
-  if(userImg){
+  if(userImg && clipImg){
     const cw = canvas.width, ch = canvas.height;
     const {drawW, drawH} = computeDrawSize(state.zoom);
-
     const dx = (cw - drawW)/2 + state.panX;
     const dy = (ch - drawH)/2 + state.panY;
 
-    ctx.drawImage(userImg, dx, dy, drawW, drawH);
+    // 1) Dibujamos la foto del usuario en un canvas aparte, del mismo
+    //    tamaño que el mockup.
+    clipCanvas.width = cw;
+    clipCanvas.height = ch;
+    clipCtx.clearRect(0,0,cw,ch);
+    clipCtx.drawImage(userImg, dx, dy, drawW, drawH);
+
+    // 2) Recortamos ese resultado a la silueta EXACTA de la funda (esquinas
+    //    redondeadas reales), usando destination-in: solo queda visible lo
+    //    que cae dentro del area blanca de la mascara de clip.
+    clipCtx.globalCompositeOperation = 'destination-in';
+    clipCtx.drawImage(clipImg, 0, 0, cw, ch);
+    clipCtx.globalCompositeOperation = 'source-over';
+
+    // 3) Pegamos el resultado ya recortado en el canvas principal.
+    ctx.drawImage(clipCanvas, 0, 0);
   }
 
-  // Mockup (marco + hueco de camara) siempre arriba
+  // Mockup (borde + zona de camara en negro) siempre arriba
   ctx.drawImage(mockupImg, 0, 0, canvas.width, canvas.height);
 }
 
