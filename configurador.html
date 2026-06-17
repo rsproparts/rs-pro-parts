@@ -385,11 +385,11 @@
       </div>
 
       <button class="btn whatsapp" id="sendBtn" disabled>
-        Enviar pedido por WhatsApp
+        Continuar y comprar
       </button>
 
       <div class="hint">
-        Al confirmar se abre WhatsApp con tu pedido armado. Coordinamos el pago y el envío por ahí.
+        Subimos tu diseño y te llevamos directo a comprar en nuestra tienda. Vamos a copiar el link de tu diseño — solo tenés que pegarlo en "Notas del pedido" antes de pagar.
       </div>
     </div>
 
@@ -782,35 +782,87 @@ function renderPrintFile(){
   return printCanvas.toDataURL('image/png', 1.0);
 }
 
-// ---- Envio por WhatsApp ----
-sendBtn.addEventListener('click', () => {
+// ---- Configuracion de Cloudinary y producto de Tiendanube ----
+// TODO: completar CLOUDINARY_UPLOAD_PRESET una vez creado en el dashboard
+// de Cloudinary (Settings -> Upload -> Upload presets -> Add upload preset,
+// modo "Unsigned"). El CLOUD_NAME ya esta confirmado.
+const CLOUDINARY_CLOUD_NAME = "ddozrdmok";
+const CLOUDINARY_UPLOAD_PRESET = ""; // <-- TODO: pegar el nombre del preset unsigned aca
+const TIENDANUBE_PRODUCT_URL = "https://rsproparts.com/productos/funda-personalizada-lkdx6/";
+
+async function uploadToCloudinary(dataUrl){
+  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+  const formData = new FormData();
+  formData.append('file', dataUrl);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', 'fundas-rs-design');
+
+  const res = await fetch(endpoint, { method: 'POST', body: formData });
+  if(!res.ok){
+    const errText = await res.text();
+    throw new Error('Cloudinary respondio con error: ' + res.status + ' ' + errText);
+  }
+  const json = await res.json();
+  return json.secure_url;
+}
+
+function setSendBtnLoading(isLoading, text){
+  sendBtn.disabled = isLoading;
+  sendBtn.textContent = isLoading ? (text || 'Subiendo tu diseño...') : 'Enviar pedido por WhatsApp';
+}
+
+// ---- Envio del pedido ----
+sendBtn.addEventListener('click', async () => {
   if(!currentModel || !userImg) return;
 
-  const printDataUrl = renderPrintFile();
+  if(!CLOUDINARY_UPLOAD_PRESET){
+    debugLog('ERROR: falta configurar CLOUDINARY_UPLOAD_PRESET en el codigo.');
+    alert('Falta un paso de configuración técnica (Cloudinary). Avisale a Ramiro.');
+    return;
+  }
 
   const modelLabel = MODEL_LABELS[currentModel] || currentModel;
   const name = customerName.value.trim();
 
-  let message = `¡Hola! Quiero pedir una funda personalizada RS Design 🏁\n\n`;
-  message += `Modelo: ${modelLabel}\n`;
-  if(name) message += `Nombre para grabar: ${name}\n`;
-  message += `\n(Voy a adjuntar la imagen de mi diseño por este chat)`;
+  try {
+    setSendBtnLoading(true, 'Subiendo tu diseño...');
 
-  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-  window.open(url, '_blank');
+    const printDataUrl = renderPrintFile();
+    const imageUrl = await uploadToCloudinary(printDataUrl);
 
-  // Descargamos el archivo de IMPRESION (rectangular, sin marco, alta resolucion)
-  downloadPreview(printDataUrl);
+    debugLog('Imagen subida a Cloudinary: ' + imageUrl);
+
+    // Armamos el texto que el cliente va a pegar en "Notas del pedido"
+    let note = `Funda personalizada RS Design — Modelo: ${modelLabel}`;
+    if(name) note += ` — Nombre: ${name}`;
+    note += ` — Diseño: ${imageUrl}`;
+
+    // Copiamos automaticamente al portapapeles para minimizar el trabajo
+    // del cliente: solo tiene que pegar (Ctrl+V) en el campo de notas.
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(note);
+      copied = true;
+    } catch(clipErr){
+      debugLog('No se pudo copiar al portapapeles automaticamente: ' + clipErr.message);
+    }
+
+    setSendBtnLoading(false);
+
+    if(copied){
+      alert('¡Listo! Ya copiamos el link de tu diseño.\n\nAhora te llevamos al producto: pegá ese link (mantené presionado y elegí "Pegar") en el campo de "Notas del pedido" antes de pagar.');
+    } else {
+      alert('¡Listo! Copiá este link y pegalo en "Notas del pedido" al pagar:\n\n' + note);
+    }
+
+    window.location.href = TIENDANUBE_PRODUCT_URL;
+
+  } catch(err){
+    setSendBtnLoading(false);
+    debugLog('ERROR al subir la imagen: ' + err.message);
+    alert('Hubo un problema subiendo tu diseño. Probá de nuevo en un momento.');
+  }
 });
-
-function downloadPreview(dataUrl){
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = `funda-rs-design-${currentModel || 'preview'}-PARA-IMPRIMIR.png`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
 </script>
 </body>
 </html>
