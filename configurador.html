@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RS Design — Configurador de Fundas</title>
+<style>
+  :root{
+    --black: #0a0a0a;
+    --black-soft: #161616;
+    --red: #d62828;
+    --red-dark: #a01f1f;
+    --gray: #6b6b6b;
+    --gray-light: #b8b8b8;
+    --white: #f2f2f0;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  body{
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    min-height: 100vh;
+  }
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 18px 28px;
+    border-bottom: 3px solid var(--red);
+    background: linear-gradient(180deg, #111 0%, #0a0a0a 100%);
+  }
+
+  .topbar .logo{
+    font-weight: 900;
+    font-style: italic;
+    font-size: 26px;
+    letter-spacing: 1px;
+    color: var(--white);
+  }
+  .topbar .logo span{ color: var(--red); }
+
+  .topbar .tag{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--gray-light);
+  }
+
+  .wrap{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 36px 20px 80px;
+  }
+
+  .headline{
+    text-align:center;
+    margin-bottom: 40px;
+  }
+  .headline h1{
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    line-height: 1.05;
+    letter-spacing: 0.5px;
+  }
+  .headline h1 .accent{ color: var(--red); }
+  .headline p{
+    margin-top: 10px;
+    color: var(--gray-light);
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  @media (max-width: 860px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  .panel{
+    background: var(--black-soft);
+    border: 1px solid #262626;
+    border-radius: 4px;
+    padding: 24px;
+    position: relative;
+  }
+
+  .panel::before{
+    content:'';
+    position:absolute;
+    top:0; left:0;
+    width: 40px; height: 3px;
+    background: var(--red);
+  }
+
+  .step-label{
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    font-weight: 700;
+    margin-bottom: 14px;
+    display:block;
+  }
+
+  select{
+    width: 100%;
+    background: var(--black);
+    color: var(--white);
+    border: 1px solid #333;
+    padding: 14px 16px;
+    font-size: 15px;
+    border-radius: 3px;
+    appearance: none;
+    cursor:pointer;
+    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  select:focus{ outline: 2px solid var(--red); }
+
+  .upload-zone{
+    margin-top: 18px;
+    border: 2px dashed #333;
+    border-radius: 4px;
+    padding: 28px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition: border-color .2s, background .2s;
+  }
+  .upload-zone:hover, .upload-zone.dragover{
+    border-color: var(--red);
+    background: rgba(214,40,40,0.06);
+  }
+  .upload-zone input{ display:none; }
+  .upload-zone .icon{ font-size: 30px; margin-bottom:8px; }
+  .upload-zone .main-text{
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+  .upload-zone .sub-text{
+    font-size: 12px;
+    color: var(--gray-light);
+    margin-top: 6px;
+  }
+
+  .controls{
+    margin-top: 20px;
+    display:none;
+  }
+  .controls.active{ display:block; }
+
+  .control-row{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .control-row label{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gray-light);
+    width: 70px;
+    flex-shrink:0;
+  }
+  input[type="range"]{
+    flex:1;
+    accent-color: var(--red);
+  }
+
+  .name-input, .number-input{
+    width: 100%;
+    background: var(--black);
+    color: var(--white);
+    border: 1px solid #333;
+    padding: 12px 14px;
+    font-size: 15px;
+    border-radius: 3px;
+    font-family: inherit;
+    margin-bottom: 14px;
+  }
+  .name-input::placeholder, .number-input::placeholder{ color: #555; }
+  .name-input:focus, .number-input:focus{ outline: 2px solid var(--red); border-color: var(--red); }
+
+  .preview-stage{
+    background:
+      linear-gradient(45deg, #1a1a1a 25%, transparent 25%),
+      linear-gradient(-45deg, #1a1a1a 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #1a1a1a 75%),
+      linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    background-color: #0d0d0d;
+    border-radius: 4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    aspect-ratio: 1/1.55;
+    position: relative;
+    overflow:hidden;
+    touch-action: none;
+  }
+
+  .preview-stage canvas{
+    max-width: 100%;
+    max-height: 100%;
+    cursor: grab;
+  }
+  .preview-stage canvas:active{ cursor: grabbing; }
+
+  .preview-empty{
+    color: #444;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align:center;
+    padding: 20px;
+  }
+
+  .price-tag{
+    text-align:center;
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--gray-light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .price-tag strong{
+    color: var(--white);
+    font-size: 22px;
+    display:block;
+    margin-top: 4px;
+  }
+
+  .btn{
+    width:100%;
+    margin-top: 22px;
+    background: var(--red);
+    color: var(--white);
+    border:none;
+    padding: 16px;
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-radius: 3px;
+    cursor:pointer;
+    transition: background .15s, transform .1s;
+    font-style: italic;
+  }
+  .btn:hover{ background: var(--red-dark); }
+  .btn:active{ transform: scale(0.98); }
+  .btn:disabled{
+    background:#333;
+    color:#666;
+    cursor:not-allowed;
+  }
+  .btn.whatsapp{
+    background: #1ea952;
+  }
+  .btn.whatsapp:hover{ background: #168a42; }
+
+  .hint{
+    font-size: 11px;
+    color: #555;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  .hint.warn{ color: #c98a3a; }
+
+  .footer-note{
+    text-align:center;
+    margin-top: 50px;
+    font-size: 11px;
+    color: #444;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">RS <span>DESIGN</span></div>
+  <div class="tag">Fundas Personalizadas</div>
+</div>
+
+<div class="wrap">
+
+  <div class="headline">
+    <h1>Subí tu foto. <span class="accent">Armá tu funda.</span></h1>
+    <p>Elegí tu modelo, cargá la imagen y mirá el resultado al instante</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- PANEL IZQUIERDO: controles -->
+    <div class="panel">
+      <span class="step-label">01 — Tu modelo</span>
+      <select id="modelSelect">
+        <option value="" disabled selected>Elegí tu iPhone</option>
+      </select>
+
+      <span class="step-label" style="margin-top:24px;">02 — Tu imagen</span>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="icon">📷</div>
+        <div class="main-text">Tocá para subir tu foto</div>
+        <div class="sub-text">JPG o PNG — mínimo 960×1080px</div>
+      </div>
+
+      <div class="controls" id="controls">
+        <span class="step-label" style="margin-top:24px;">03 — Ajustá la imagen</span>
+        <div class="control-row">
+          <label>Zoom</label>
+          <input type="range" id="zoomRange" min="100" max="300" value="100">
+        </div>
+        <div class="control-row">
+          <label>Mover X</label>
+          <input type="range" id="panXRange" min="-200" max="200" value="0">
+        </div>
+        <div class="control-row">
+          <label>Mover Y</label>
+          <input type="range" id="panYRange" min="-200" max="200" value="0">
+        </div>
+
+        <span class="step-label" style="margin-top:24px;">04 — Datos (opcional)</span>
+        <input type="text" class="name-input" id="customerName" placeholder="Nombre para grabar (opcional)">
+
+        <div class="hint" id="sizeHint"></div>
+      </div>
+    </div>
+
+    <!-- PANEL DERECHO: preview -->
+    <div class="panel">
+      <span class="step-label">Vista previa</span>
+      <div class="preview-stage" id="previewStage">
+        <div class="preview-empty" id="previewEmpty">
+          Elegí un modelo<br>y subí tu foto
+        </div>
+        <canvas id="canvas" style="display:none;"></canvas>
+      </div>
+
+      <div class="price-tag">
+        Funda personalizada
+        <strong>$29.900</strong>
+      </div>
+
+      <button class="btn whatsapp" id="sendBtn" disabled>
+        Enviar pedido por WhatsApp
+      </button>
+
+      <div class="hint">
+        Al confirmar se abre WhatsApp con tu pedido armado. Coordinamos el pago y el envío por ahí.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-note">RS Design — Mar del Plata, Argentina</div>
+
+</div>
+
+<script src="mockup-data.js"></script>
+<script>
+/* ====================================================
+   CONFIGURADOR DE FUNDAS — RS DESIGN
+   ==================================================== */
+
+const MODEL_LABELS = {
+  iphone_13_14: "iPhone 13 / 14",
+  iphone_13_14_pro: "iPhone 13 Pro / 14 Pro",
+  iphone_13_14_pro_max: "iPhone 13 Pro Max / 14 Pro Max",
+  iphone_15: "iPhone 15",
+  iphone_15_pro: "iPhone 15 Pro",
+  iphone_15_pro_max: "iPhone 15 Pro Max",
+  iphone_16: "iPhone 16",
+  iphone_16_pro: "iPhone 16 Pro",
+  iphone_16_pro_max: "iPhone 16 Pro Max",
+  iphone_17: "iPhone 17",
+  iphone_17_pro: "iPhone 17 Pro",
+  iphone_17_pro_max: "iPhone 17 Pro Max",
+};
+
+const WHATSAPP_NUMBER = "5492235555555"; // <-- TODO: poner el numero real de RS Pro Parts/RS Design
+
+const modelSelect = document.getElementById('modelSelect');
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+const controls = document.getElementById('controls');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const previewEmpty = document.getElementById('previewEmpty');
+const zoomRange = document.getElementById('zoomRange');
+const panXRange = document.getElementById('panXRange');
+const panYRange = document.getElementById('panYRange');
+const sendBtn = document.getElementById('sendBtn');
+const sizeHint = document.getElementById('sizeHint');
+const customerName = document.getElementById('customerName');
+
+let currentModel = null;
+let mockupImg = null;
+let userImg = null;
+let userImgNaturalSize = {w:0, h:0};
+
+let state = { zoom: 1, panX: 0, panY: 0 };
+
+// ---- Poblar select de modelos ----
+Object.keys(MOCKUP_DATA).forEach(key => {
+  const opt = document.createElement('option');
+  opt.value = key;
+  opt.textContent = MODEL_LABELS[key] || key;
+  modelSelect.appendChild(opt);
+});
+
+modelSelect.addEventListener('change', () => {
+  currentModel = modelSelect.value;
+  loadMockup(currentModel);
+});
+
+function loadMockup(modelKey){
+  const data = MOCKUP_DATA[modelKey];
+  if(!data) return;
+  mockupImg = new Image();
+  mockupImg.onload = () => {
+    canvas.width = data.width;
+    canvas.height = data.height;
+    render();
+  };
+  mockupImg.src = data.src;
+}
+
+// ---- Upload de imagen ----
+uploadZone.addEventListener('click', () => fileInput.click());
+
+uploadZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadZone.classList.add('dragover');
+});
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  if(e.dataTransfer.files && e.dataTransfer.files[0]){
+    handleFile(e.dataTransfer.files[0]);
+  }
+});
+
+fileInput.addEventListener('change', (e) => {
+  if(e.target.files && e.target.files[0]){
+    handleFile(e.target.files[0]);
+  }
+});
+
+function handleFile(file){
+  if(!file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    userImg = new Image();
+    userImg.onload = () => {
+      userImgNaturalSize = {w: userImg.naturalWidth, h: userImg.naturalHeight};
+      checkImageSize();
+      state = { zoom: 1, panX: 0, panY: 0 };
+      zoomRange.value = 100;
+      panXRange.value = 0;
+      panYRange.value = 0;
+      controls.classList.add('active');
+      canvas.style.display = 'block';
+      previewEmpty.style.display = 'none';
+      sendBtn.disabled = !currentModel;
+      render();
+    };
+    userImg.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function checkImageSize(){
+  const minW = 960, minH = 1080;
+  if(userImgNaturalSize.w < minW || userImgNaturalSize.h < minH){
+    sizeHint.textContent = `⚠ Tu imagen es de ${userImgNaturalSize.w}x${userImgNaturalSize.h}px. Recomendamos mínimo ${minW}x${minH}px para que la impresión salga nítida.`;
+    sizeHint.classList.add('warn');
+  } else {
+    sizeHint.textContent = `Imagen cargada: ${userImgNaturalSize.w}x${userImgNaturalSize.h}px ✓`;
+    sizeHint.classList.remove('warn');
+  }
+}
+
+// ---- Controles de zoom/pan ----
+zoomRange.addEventListener('input', () => {
+  state.zoom = zoomRange.value / 100;
+  render();
+});
+panXRange.addEventListener('input', () => {
+  state.panX = parseInt(panXRange.value);
+  render();
+});
+panYRange.addEventListener('input', () => {
+  state.panY = parseInt(panYRange.value);
+  render();
+});
+
+// ---- Arrastrar la imagen directo en el canvas ----
+let dragging = false;
+let dragStart = {x:0, y:0};
+let panStart = {x:0, y:0};
+
+canvas.addEventListener('pointerdown', (e) => {
+  if(!userImg) return;
+  dragging = true;
+  dragStart = {x: e.clientX, y: e.clientY};
+  panStart = {x: state.panX, y: state.panY};
+});
+window.addEventListener('pointermove', (e) => {
+  if(!dragging) return;
+  const scaleFactor = canvas.width / canvas.getBoundingClientRect().width;
+  const dx = (e.clientX - dragStart.x) * scaleFactor;
+  const dy = (e.clientY - dragStart.y) * scaleFactor;
+  state.panX = panStart.x + dx;
+  state.panY = panStart.y + dy;
+  panXRange.value = Math.max(-200, Math.min(200, state.panX));
+  panYRange.value = Math.max(-200, Math.min(200, state.panY));
+  render();
+});
+window.addEventListener('pointerup', () => dragging = false);
+
+// ---- Render principal ----
+function render(){
+  if(!mockupImg) return;
+  ctx.clearRect(0,0,canvas.width, canvas.height);
+
+  if(userImg){
+    const cw = canvas.width, ch = canvas.height;
+    const imgRatio = userImgNaturalSize.w / userImgNaturalSize.h;
+    const canvasRatio = cw / ch;
+
+    let drawW, drawH;
+    if(imgRatio > canvasRatio){
+      drawH = ch * state.zoom;
+      drawW = drawH * imgRatio;
+    } else {
+      drawW = cw * state.zoom;
+      drawH = drawW / imgRatio;
+    }
+
+    const dx = (cw - drawW)/2 + state.panX;
+    const dy = (ch - drawH)/2 + state.panY;
+
+    ctx.drawImage(userImg, dx, dy, drawW, drawH);
+  }
+
+  // Mockup (marco + hueco de camara) siempre arriba
+  ctx.drawImage(mockupImg, 0, 0, canvas.width, canvas.height);
+}
+
+// ---- Envio por WhatsApp ----
+sendBtn.addEventListener('click', () => {
+  if(!currentModel || !userImg) return;
+
+  // Generamos una imagen final (mockup compuesto) para que el cliente la vea/descargue
+  // NOTA: el envio del ARCHIVO en si a Cloudinary se conecta en el siguiente paso.
+  const finalDataUrl = canvas.toDataURL('image/png');
+
+  const modelLabel = MODEL_LABELS[currentModel] || currentModel;
+  const name = customerName.value.trim();
+
+  let message = `¡Hola! Quiero pedir una funda personalizada RS Design 🏁\n\n`;
+  message += `Modelo: ${modelLabel}\n`;
+  if(name) message += `Nombre para grabar: ${name}\n`;
+  message += `\n(Voy a adjuntar la imagen de mi diseño por este chat)`;
+
+  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  window.open(url, '_blank');
+
+  // Tambien ofrecemos descargar el preview para que lo pueda adjuntar a mano
+  downloadPreview(finalDataUrl);
+});
+
+function downloadPreview(dataUrl){
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = `funda-rs-design-${currentModel || 'preview'}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>
