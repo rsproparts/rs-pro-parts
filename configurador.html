@@ -377,6 +377,7 @@
         <canvas id="canvas" style="display:none;"></canvas>
         <div class="drag-hint" id="dragHint" style="display:none;">↕ Arrastrá para ajustar ↔</div>
       </div>
+      <div id="debugBox" style="display:none; margin-top:10px; padding:10px; background:#3a1a1a; border:1px solid #c0392b; border-radius:4px; font-size:11px; color:#ffb3b3; white-space:pre-wrap; font-family:monospace;"></div>
 
       <div class="price-tag">
         Funda personalizada
@@ -420,6 +421,27 @@ const MODEL_LABELS = {
 };
 
 const WHATSAPP_NUMBER = "5492235555555"; // <-- TODO: poner el numero real de RS Pro Parts/RS Design
+
+const debugBox = document.getElementById('debugBox');
+function debugLog(msg){
+  debugBox.style.display = 'block';
+  debugBox.textContent += msg + '\n';
+}
+
+window.addEventListener('error', (e) => {
+  debugLog('ERROR JS: ' + e.message + ' (linea ' + e.lineno + ')');
+});
+
+debugLog('Script iniciado correctamente.');
+debugLog('MOCKUP_DATA existe: ' + (typeof MOCKUP_DATA !== 'undefined'));
+if(typeof MOCKUP_DATA !== 'undefined'){
+  const keys = Object.keys(MOCKUP_DATA);
+  debugLog('Modelos cargados: ' + keys.length);
+  if(keys.length > 0){
+    const sample = MOCKUP_DATA[keys[0]];
+    debugLog('Tiene src: ' + (!!sample.src) + ' | Tiene clip_src: ' + (!!sample.clip_src));
+  }
+}
 
 const modelSelect = document.getElementById('modelSelect');
 const fileInput = document.getElementById('fileInput');
@@ -497,26 +519,47 @@ modelSelect.addEventListener('change', () => {
   loadMockup(currentModel);
 });
 
-function loadMockup(modelKey){
-  const data = MOCKUP_DATA[modelKey];
-  if(!data) return;
+let loadMockupToken = 0;
 
+function loadMockup(modelKey){
+  debugLog('loadMockup llamado con: ' + modelKey);
+  const data = MOCKUP_DATA[modelKey];
+  if(!data) { debugLog('ERROR: no hay datos para el modelo ' + modelKey); return; }
+
+  const token = ++loadMockupToken;
   let loaded = 0;
-  const onBothLoaded = () => {
+  let failed = false;
+
+  const onReady = () => {
+    if(token !== loadMockupToken) { debugLog('Carga obsoleta ignorada'); return; }
     loaded++;
-    if(loaded < 2) return;
+    debugLog('Imagen cargada (' + loaded + '/2)');
+    if(loaded < 2 || failed) return;
     canvas.width = data.width;
     canvas.height = data.height;
+    canvas.style.display = 'block';
+    previewEmpty.style.display = 'none';
+    debugLog('Canvas configurado: ' + data.width + 'x' + data.height + '. Renderizando...');
     if(userImg){ updatePanLimits(); }
     render();
+    debugLog('Render completado.');
+  };
+
+  const onFail = (which) => {
+    failed = true;
+    debugLog('ERROR cargando imagen: ' + which);
+    sizeHint.textContent = '⚠ No se pudo cargar el mockup de este modelo. Probá recargar la página.';
+    sizeHint.classList.add('warn');
   };
 
   mockupImg = new Image();
-  mockupImg.onload = onBothLoaded;
+  mockupImg.onload = onReady;
+  mockupImg.onerror = () => onFail('mockup (src), longitud del data url: ' + (data.src ? data.src.length : 'undefined'));
   mockupImg.src = data.src;
 
   clipImg = new Image();
-  clipImg.onload = onBothLoaded;
+  clipImg.onload = onReady;
+  clipImg.onerror = () => onFail('clip (clip_src), longitud del data url: ' + (data.clip_src ? data.clip_src.length : 'undefined'));
   clipImg.src = data.clip_src;
 }
 
@@ -543,11 +586,16 @@ fileInput.addEventListener('change', (e) => {
 });
 
 function handleFile(file){
-  if(!file.type.startsWith('image/')) return;
+  debugLog('handleFile llamado. Tipo: ' + file.type + ' Tamaño: ' + file.size);
+  if(!file.type.startsWith('image/')) { debugLog('ERROR: tipo de archivo no es imagen'); return; }
   const reader = new FileReader();
+  reader.onerror = () => debugLog('ERROR: FileReader fallo al leer el archivo');
   reader.onload = (e) => {
+    debugLog('Archivo leido por FileReader, creando Image()...');
     userImg = new Image();
+    userImg.onerror = () => debugLog('ERROR: la imagen del usuario no pudo decodificarse');
     userImg.onload = () => {
+      debugLog('Foto del usuario cargada: ' + userImg.naturalWidth + 'x' + userImg.naturalHeight);
       userImgNaturalSize = {w: userImg.naturalWidth, h: userImg.naturalHeight};
       checkImageSize();
       state = { zoom: 1, panX: 0, panY: 0 };
@@ -557,8 +605,10 @@ function handleFile(file){
       canvas.style.display = 'block';
       previewEmpty.style.display = 'none';
       sendBtn.disabled = !currentModel;
+      debugLog('currentModel actual: ' + currentModel + ' | mockupImg listo: ' + (!!mockupImg) + ' | clipImg listo: ' + (!!clipImg));
       showDragHint();
       render();
+      debugLog('Render llamado desde handleFile.');
     };
     userImg.src = e.target.result;
   };
@@ -636,7 +686,7 @@ const clipCtx = clipCanvas.getContext('2d');
 
 // ---- Render principal ----
 function render(){
-  if(!mockupImg) return;
+  if(!mockupImg) { debugLog('render: abortado, no hay mockupImg'); return; }
   ctx.clearRect(0,0,canvas.width, canvas.height);
 
   if(userImg && clipImg){
@@ -661,6 +711,8 @@ function render(){
 
     // 3) Pegamos el resultado ya recortado en el canvas principal.
     ctx.drawImage(clipCanvas, 0, 0);
+  } else {
+    debugLog('render: solo mockup, falta userImg=' + (!!userImg) + ' o clipImg=' + (!!clipImg));
   }
 
   // Mockup (borde + zona de camara en negro) siempre arriba
