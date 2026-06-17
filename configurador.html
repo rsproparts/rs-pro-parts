@@ -3,77 +3,589 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RS Design — Configurador de Fundas</title>
+<title>Fundas Personalizadas RS Design — Tu diseño, tu funda</title>
+<meta name="description" content="Fundas de celular personalizadas en aluminio sublimado. Subí tu foto, armá tu diseño y recibila en todo Argentina por Correo Argentino.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
     --black: #0a0a0a;
-    --black-soft: #161616;
+    --black-soft: #141414;
+    --panel: #161616;
     --red: #d62828;
     --red-dark: #a01f1f;
-    --gray: #6b6b6b;
-    --gray-light: #b8b8b8;
+    --red-glow: rgba(214,40,40,0.25);
+    --steel: #6b6b6b;
+    --steel-light: #b8b8b8;
     --white: #f2f2f0;
+    --line: #262626;
   }
 
   *{ margin:0; padding:0; box-sizing:border-box; }
 
+  html{ scroll-behavior: smooth; }
+
   body{
     background: var(--black);
     color: var(--white);
-    font-family: 'Arial Narrow', Arial, sans-serif;
-    min-height: 100vh;
+    font-family: 'Space Grotesk', sans-serif;
+    overflow-x: hidden;
   }
 
-  .topbar{
+  .display{
+    font-family: 'Oswald', sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .mono{
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  img{ max-width: 100%; display:block; }
+
+  .container{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ============ ANNOUNCEMENT BAR ============ */
+  .announce-bar{
+    background: var(--red);
+    color: var(--black);
+    text-align: center;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .announce-track{
+    display: inline-flex;
+    gap: 48px;
+    animation: scrollTrack 22s linear infinite;
+  }
+  @keyframes scrollTrack{
+    from{ transform: translateX(0); }
+    to{ transform: translateX(-50%); }
+  }
+
+  /* ============ NAV ============ */
+  .nav{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding: 18px 28px;
-    border-bottom: 3px solid var(--red);
-    background: linear-gradient(180deg, #111 0%, #0a0a0a 100%);
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--line);
   }
-
-  .topbar .logo{
-    font-weight: 900;
-    font-style: italic;
-    font-size: 26px;
-    letter-spacing: 1px;
+  .nav .logo{
+    font-size: 22px;
+    letter-spacing: 0.5px;
+  }
+  .nav .logo span{ color: var(--red); }
+  .nav .cta-mini{
+    border: 1.5px solid var(--red);
     color: var(--white);
-  }
-  .topbar .logo span{ color: var(--red); }
-
-  .topbar .tag{
-    font-size: 11px;
+    text-decoration:none;
+    padding: 9px 18px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
     text-transform: uppercase;
-    letter-spacing: 3px;
-    color: var(--gray-light);
+    border-radius: 3px;
+    transition: background .15s;
+  }
+  .nav .cta-mini:hover{ background: var(--red); }
+
+  /* ============ HERO ============ */
+  .hero{
+    position: relative;
+    padding: 80px 24px 60px;
+    text-align: center;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, var(--red-glow), transparent 70%);
+    overflow: hidden;
   }
 
+  .hero::before{
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(255,255,255,0.018) 39px),
+      repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(255,255,255,0.018) 39px);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow{
+    position: relative;
+    display:inline-flex;
+    align-items:center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    font-weight: 700;
+    margin-bottom: 22px;
+  }
+  .hero-eyebrow::before, .hero-eyebrow::after{
+    content:'';
+    width: 24px; height: 1px;
+    background: var(--red);
+  }
+
+  .hero h1{
+    position: relative;
+    font-size: clamp(40px, 8vw, 88px);
+    line-height: 0.95;
+    letter-spacing: 0.5px;
+  }
+  .hero h1 .line2{ color: var(--red); display:block; }
+
+  .hero p.sub{
+    position: relative;
+    max-width: 560px;
+    margin: 22px auto 0;
+    color: var(--steel-light);
+    font-size: 17px;
+    line-height: 1.6;
+  }
+
+  .hero-cta-row{
+    position: relative;
+    display:flex;
+    gap: 16px;
+    justify-content:center;
+    margin-top: 36px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary{
+    background: var(--red);
+    color: var(--white);
+    text-decoration:none;
+    padding: 18px 38px;
+    font-family: 'Oswald', sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-radius: 3px;
+    display:inline-flex;
+    align-items:center;
+    gap: 10px;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 0 0 0 var(--red-glow);
+  }
+  .btn-primary:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--red-glow);
+  }
+  .btn-secondary{
+    border: 1.5px solid var(--line);
+    color: var(--steel-light);
+    text-decoration:none;
+    padding: 18px 32px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-radius: 3px;
+    display:inline-flex;
+    align-items:center;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-secondary:hover{ border-color: var(--steel-light); color: var(--white); }
+
+  .hero-price{
+    position: relative;
+    margin-top: 28px;
+    font-size: 13px;
+    color: var(--steel);
+  }
+  .hero-price strong{ color: var(--white); font-size: 15px; }
+
+  /* ============ HERO PRODUCT SHOWCASE ============ */
+  .showcase{
+    position: relative;
+    margin-top: 56px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    max-width: 980px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .showcase-item{
+    aspect-ratio: 3/4;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--line);
+  }
+  .showcase-item img{ width:100%; height:100%; object-fit:cover; }
+  .showcase-item.center{ transform: scale(1.06); z-index: 2; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+  .showcase-tag{
+    position:absolute; bottom: 12px; left: 12px; right:12px;
+    font-size: 10.5px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--white);
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
+    padding: 7px 10px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 720px){
+    .showcase{ grid-template-columns: 1fr; max-width: 320px; }
+    .showcase-item.center{ transform: none; order: -1; }
+  }
+
+  /* ============ TRUST STRIP ============ */
+  .trust-strip{
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 28px 24px;
+    display:flex;
+    justify-content:center;
+    gap: 56px;
+    flex-wrap: wrap;
+    background: var(--black-soft);
+  }
+  .trust-item{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+  }
+  .trust-item .icon{
+    font-size: 22px;
+    width: 40px; height: 40px;
+    display:flex; align-items:center; justify-content:center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    flex-shrink:0;
+  }
+  .trust-item .text strong{
+    display:block;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+  .trust-item .text span{
+    font-size: 12px;
+    color: var(--steel);
+  }
+
+  /* ============ SECTION HEADER (shared) ============ */
+  .section{ padding: 90px 24px; }
+  .section-eyebrow{
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .section-title{
+    font-size: clamp(30px, 4.5vw, 46px);
+    line-height: 1.05;
+    max-width: 700px;
+  }
+  .section-title .accent{ color: var(--red); }
+  .section-desc{
+    margin-top: 16px;
+    max-width: 560px;
+    color: var(--steel-light);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* ============ SPEC PLATE (signature element) ============ */
+  .spec-section{
+    padding: 90px 24px;
+    background: var(--black-soft);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .spec-plate{
+    max-width: 980px;
+    margin: 48px auto 0;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.03), transparent 40%),
+      var(--panel);
+    position: relative;
+    overflow: hidden;
+  }
+  .spec-plate::before{
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--red), transparent 70%);
+  }
+  .spec-plate-header{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 28px 32px 20px;
+    border-bottom: 1px dashed #333;
+  }
+  .spec-plate-header .mono{
+    font-size: 11px;
+    color: var(--steel);
+    letter-spacing: 1px;
+  }
+  .spec-plate-header h3{
+    font-size: 20px;
+    letter-spacing: 0.5px;
+  }
+  .spec-grid{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .spec-cell{
+    padding: 28px 32px;
+    border-right: 1px dashed #333;
+    border-bottom: 1px dashed #333;
+  }
+  .spec-cell:nth-child(4n){ border-right:none; }
+  .spec-cell .mono.label{
+    font-size: 10.5px;
+    color: var(--red);
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+    display:block;
+  }
+  .spec-cell .value{
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.3px;
+  }
+  .spec-cell .value-sub{
+    font-size: 12.5px;
+    color: var(--steel);
+    margin-top: 4px;
+  }
+
+  @media (max-width: 860px){
+    .spec-grid{ grid-template-columns: repeat(2, 1fr); }
+    .spec-cell:nth-child(4n){ border-right:1px dashed #333; }
+    .spec-cell:nth-child(2n){ border-right:none; }
+  }
+
+  /* ============ CAROUSEL ============ */
+  .carousel-section{ padding: 90px 0; }
+  .carousel-header{
+    padding: 0 24px;
+    max-width: 1180px;
+    margin: 0 auto;
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .carousel-track-wrap{
+    overflow: hidden;
+    position: relative;
+  }
+  .carousel-track-wrap::before, .carousel-track-wrap::after{
+    content:'';
+    position:absolute;
+    top:0; bottom:0;
+    width: 80px;
+    z-index: 2;
+    pointer-events:none;
+  }
+  .carousel-track-wrap::before{ left:0; background: linear-gradient(90deg, var(--black), transparent); }
+  .carousel-track-wrap::after{ right:0; background: linear-gradient(-90deg, var(--black), transparent); }
+
+  .carousel-track{
+    display:flex;
+    gap: 18px;
+    padding: 0 24px;
+    animation: carouselScroll 32s linear infinite;
+    width: max-content;
+  }
+  .carousel-track:hover{ animation-play-state: paused; }
+  @keyframes carouselScroll{
+    from{ transform: translateX(0); }
+    to{ transform: translateX(-50%); }
+  }
+
+  .carousel-card{
+    width: 230px;
+    flex-shrink:0;
+    border-radius: 8px;
+    overflow:hidden;
+    border: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .carousel-card .img-wrap{
+    aspect-ratio: 1/1.4;
+    background: linear-gradient(160deg, #1c1c1c, #0d0d0d);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position: relative;
+    overflow: hidden;
+  }
+  .carousel-card .img-wrap img{ width:100%; height:100%; object-fit:cover; }
+  .carousel-card .placeholder-case{
+    width: 62%;
+    aspect-ratio: 1/1.95;
+    border-radius: 22px;
+    border: 2px solid #3a3a3a;
+    background: linear-gradient(160deg, var(--red-dark), #1a1a1a 60%);
+    position: relative;
+  }
+  .carousel-card .placeholder-case::before{
+    content:'';
+    position:absolute;
+    top: 12%; left: 14%;
+    width: 26%; height: 16%;
+    border-radius: 8px;
+    background: #0a0a0a;
+  }
+  .carousel-card .caption{
+    padding: 14px 16px;
+    font-size: 12.5px;
+    color: var(--steel-light);
+    display:flex;
+    justify-content:space-between;
+  }
+  .carousel-card .caption strong{ color: var(--white); font-weight: 600; }
+
+  /* ============ PROCESS ============ */
+  .process-section{ padding: 90px 24px; }
+  .process-steps{
+    margin-top: 56px;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .process-step{
+    padding: 0 28px;
+    position: relative;
+  }
+  .process-step:not(:last-child)::after{
+    content: '→';
+    position: absolute;
+    top: 18px;
+    right: -6px;
+    color: var(--red);
+    font-size: 22px;
+  }
+  .process-num{
+    font-family: 'Oswald', sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--red);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+  .process-step h4{
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 21px;
+    margin-bottom: 10px;
+    letter-spacing: 0.3px;
+  }
+  .process-step p{
+    color: var(--steel-light);
+    font-size: 14.5px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 860px){
+    .process-steps{ grid-template-columns: 1fr; gap: 40px; }
+    .process-step:not(:last-child)::after{ content:'↓'; top: auto; bottom: -32px; left: 28px; right:auto; }
+  }
+
+  /* ============ PRICING / FINAL CTA ============ */
+  .final-cta{
+    padding: 100px 24px;
+    text-align: center;
+    background:
+      radial-gradient(ellipse 700px 400px at 50% 100%, var(--red-glow), transparent 70%),
+      var(--black-soft);
+    border-top: 1px solid var(--line);
+  }
+  .price-block{
+    margin: 32px 0 40px;
+    display:flex;
+    justify-content:center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .price-card{
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 26px 36px;
+    min-width: 220px;
+  }
+  .price-card.highlight{
+    border-color: var(--red);
+    background: rgba(214,40,40,0.06);
+  }
+  .price-card .label{
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--steel);
+    margin-bottom: 10px;
+  }
+  .price-card .amount{
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 38px;
+  }
+  .price-card.highlight .amount{ color: var(--red); }
+  .price-card .note{
+    font-size: 12px;
+    color: var(--steel);
+    margin-top: 6px;
+  }
+
+  .final-shipping{
+    margin-top: 28px;
+    font-size: 13.5px;
+    color: var(--steel-light);
+  }
+  .final-shipping strong{ color: var(--white); }
+
+  /* ============ FOOTER ============ */
+  footer{
+    padding: 36px 24px;
+    text-align:center;
+    border-top: 1px solid var(--line);
+    color: var(--steel);
+    font-size: 12px;
+  }
+
+  /* ============ Reduced motion ============ */
+  @media (prefers-reduced-motion: reduce){
+    .announce-track, .carousel-track{ animation: none; }
+  }
+
+  /* ============ CONFIGURADOR (embebido) ============ */
   .wrap{
     max-width: 1100px;
     margin: 0 auto;
     padding: 36px 20px 80px;
-  }
-
-  .headline{
-    text-align:center;
-    margin-bottom: 40px;
-  }
-  .headline h1{
-    font-size: clamp(28px, 5vw, 48px);
-    font-weight: 900;
-    font-style: italic;
-    text-transform: uppercase;
-    line-height: 1.05;
-    letter-spacing: 0.5px;
-  }
-  .headline h1 .accent{ color: var(--red); }
-  .headline p{
-    margin-top: 10px;
-    color: var(--gray-light);
-    font-size: 14px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
   }
 
   .grid{
@@ -152,7 +664,7 @@
   }
   .upload-zone .sub-text{
     font-size: 12px;
-    color: var(--gray-light);
+    color: var(--steel-light);
     margin-top: 6px;
   }
 
@@ -172,7 +684,7 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    color: var(--gray-light);
+    color: var(--steel-light);
     width: 70px;
     flex-shrink:0;
   }
@@ -262,7 +774,7 @@
     text-align:center;
     margin-top: 18px;
     font-size: 13px;
-    color: var(--gray-light);
+    color: var(--steel-light);
     text-transform: uppercase;
     letter-spacing: 1px;
   }
@@ -297,9 +809,9 @@
     cursor:not-allowed;
   }
   .btn.whatsapp{
-    background: #1ea952;
+    background: var(--red);
   }
-  .btn.whatsapp:hover{ background: #168a42; }
+  .btn.whatsapp:hover{ background: var(--red-dark); }
 
   .hint{
     font-size: 11px;
@@ -309,29 +821,214 @@
   }
   .hint.warn{ color: #c98a3a; }
 
-  .footer-note{
-    text-align:center;
-    margin-top: 50px;
-    font-size: 11px;
-    color: #444;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+  /* ============ Focus visibility ============ */
+  a:focus-visible, button:focus-visible{
+    outline: 2px solid var(--red);
+    outline-offset: 2px;
   }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="logo">RS <span>DESIGN</span></div>
-  <div class="tag">Fundas Personalizadas</div>
+<div class="announce-bar">
+  <div class="announce-track">
+    <span>🔥 ENVÍOS A TODO ARGENTINA POR CORREO ARGENTINO</span>
+    <span>💳 $32.000 TARJETA — $25.600 TRANSFERENCIA</span>
+    <span>🏁 SUBLIMADO SOBRE ALUMINIO — NO SE DESCASCARA</span>
+    <span>🔥 ENVÍOS A TODO ARGENTINA POR CORREO ARGENTINO</span>
+    <span>💳 $32.000 TARJETA — $25.600 TRANSFERENCIA</span>
+    <span>🏁 SUBLIMADO SOBRE ALUMINIO — NO SE DESCASCARA</span>
+  </div>
 </div>
 
-<div class="wrap">
+<nav class="nav">
+  <div class="logo display">RS <span>DESIGN</span></div>
+  <a href="#armar" class="cta-mini">Armar mi funda</a>
+</nav>
 
-  <div class="headline">
-    <h1>Subí tu foto. <span class="accent">Armá tu funda.</span></h1>
-    <p>Elegí tu modelo, cargá la imagen y mirá el resultado al instante</p>
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero-eyebrow">Funda personalizada · Sublimado en aluminio</div>
+  <h1 class="display">Tu foto.<span class="line2">Tu funda.</span></h1>
+  <p class="sub">Subí la imagen que quieras, ajustala con tus propias manos, y la imprimimos sobre una placa de aluminio que no destiñe, no se raya y no se descascara. Lista para enviar a todo el país.</p>
+
+  <div class="hero-cta-row">
+    <a href="#armar" class="btn-primary">Armar mi funda ahora →</a>
+    <a href="#calidad" class="btn-secondary">Ver la calidad de impresión</a>
   </div>
+
+  <div class="hero-price">Desde <strong>$25.600</strong> con transferencia · <strong>$32.000</strong> con tarjeta</div>
+
+  <div class="showcase">
+    <div class="showcase-item">
+      <!-- ════════════════════════════════════════════════════════════
+           REEMPLAZAR: foto real de funda terminada (detalle/textura)
+           Cambiar el src por la URL de Cloudinary o la imagen que subas.
+           ════════════════════════════════════════════════════════════ -->
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='800'%3E%3Crect width='600' height='800' fill='%231a1a1a'/%3E%3Ctext x='300' y='380' font-family='monospace' font-size='22' fill='%23d62828' text-anchor='middle'%3EFOTO REAL%3C/text%3E%3Ctext x='300' y='415' font-family='monospace' font-size='15' fill='%23888' text-anchor='middle'%3E(detalle de textura)%3C/text%3E%3C/svg%3E" alt="Detalle de textura de impresión en aluminio">
+      <div class="showcase-tag">Detalle de impresión</div>
+    </div>
+    <div class="showcase-item center">
+      <!-- ════════════════════════════════════════════════════════════
+           REEMPLAZAR: foto real de la funda completa, vista frontal
+           ════════════════════════════════════════════════════════════ -->
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='800'%3E%3Crect width='600' height='800' fill='%230d0d0d'/%3E%3Ctext x='300' y='380' font-family='monospace' font-size='22' fill='%23f2f2f0' text-anchor='middle'%3EFOTO REAL%3C/text%3E%3Ctext x='300' y='415' font-family='monospace' font-size='15' fill='%23888' text-anchor='middle'%3E(funda completa)%3C/text%3E%3C/svg%3E" alt="Funda personalizada RS Design completa">
+      <div class="showcase-tag">Funda terminada</div>
+    </div>
+    <div class="showcase-item">
+      <!-- ════════════════════════════════════════════════════════════
+           REEMPLAZAR: foto real de la funda en mano / en uso
+           ════════════════════════════════════════════════════════════ -->
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='800'%3E%3Crect width='600' height='800' fill='%231a1a1a'/%3E%3Ctext x='300' y='380' font-family='monospace' font-size='22' fill='%23d62828' text-anchor='middle'%3EFOTO REAL%3C/text%3E%3Ctext x='300' y='415' font-family='monospace' font-size='15' fill='%23888' text-anchor='middle'%3E(en mano)%3C/text%3E%3C/svg%3E" alt="Funda personalizada RS Design en mano">
+      <div class="showcase-tag">En mano</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TRUST STRIP ============ -->
+<div class="trust-strip">
+  <div class="trust-item">
+    <div class="icon">🔒</div>
+    <div class="text"><strong>Compra segura</strong><span>Múltiples medios de pago</span></div>
+  </div>
+  <div class="trust-item">
+    <div class="icon">🚚</div>
+    <div class="text"><strong>Envíos a todo Argentina</strong><span>Correo Argentino</span></div>
+  </div>
+  <div class="trust-item">
+    <div class="icon">⭐</div>
+    <div class="text"><strong>+16.000 pedidos</strong><span>Desde 2022 en Mar del Plata</span></div>
+  </div>
+  <div class="trust-item">
+    <div class="icon">📍</div>
+    <div class="text"><strong>Local físico</strong><span>Jara 1813, Mar del Plata</span></div>
+  </div>
+</div>
+
+<!-- ============ CALIDAD / SPEC PLATE ============ -->
+<section class="spec-section" id="calidad">
+  <div class="container">
+    <div class="section-eyebrow">Ficha técnica</div>
+    <h2 class="section-title display">No es una calcomanía.<br><span class="accent">Es sublimado real.</span></h2>
+    <p class="section-desc">La diferencia entre una funda que se descascara en dos semanas y una que dura años está en el proceso. Sublimamos tinta directo sobre una placa de aluminio a alta temperatura: el color queda integrado al metal, no pegado encima.</p>
+
+    <div class="spec-plate">
+      <div class="spec-plate-header">
+        <h3 class="display">RS Design — Ficha de producto</h3>
+        <span class="mono">REF. FUNDA-AL-300</span>
+      </div>
+      <div class="spec-grid">
+        <div class="spec-cell">
+          <span class="mono label">MATERIAL</span>
+          <div class="value">Aluminio sublimado</div>
+          <div class="value-sub">No se descascara ni se desgasta con el uso diario</div>
+        </div>
+        <div class="spec-cell">
+          <span class="mono label">RESOLUCIÓN</span>
+          <div class="value">300 DPI</div>
+          <div class="value-sub">Misma calidad que una impresión fotográfica profesional</div>
+        </div>
+        <div class="spec-cell">
+          <span class="mono label">PROCESO</span>
+          <div class="value">Sublimación térmica</div>
+          <div class="value-sub">La tinta se funde con el metal, no queda en la superficie</div>
+        </div>
+        <div class="spec-cell">
+          <span class="mono label">COMPATIBILIDAD</span>
+          <div class="value">iPhone 13 al 17</div>
+          <div class="value-sub">Incluye todas las variantes Pro y Pro Max</div>
+        </div>
+        <div class="spec-cell">
+          <span class="mono label">PROTECCIÓN</span>
+          <div class="value">Bordes reforzados</div>
+          <div class="value-sub">Acceso completo a cámara, botones y carga</div>
+        </div>
+        <div class="spec-cell">
+          <span class="mono label">PERSONALIZACIÓN</span>
+          <div class="value">100% tu diseño</div>
+          <div class="value-sub">Subís la foto, vos decidís el encuadre final</div>
+        </div>
+        <div class="spec-cell">
+          <span class="mono label">TIEMPO DE ARMADO</span>
+          <div class="value">2 minutos</div>
+          <div class="value-sub">Desde que subís la foto hasta que confirmás el diseño</div>
+        </div>
+        <div class="spec-cell">
+          <span class="mono label">ORIGEN</span>
+          <div class="value">Mar del Plata, ARG</div>
+          <div class="value-sub">Fabricado e impreso en nuestro taller propio</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CARRUSEL ============ -->
+<section class="carousel-section">
+  <div class="carousel-header">
+    <div>
+      <div class="section-eyebrow">Comunidad RS Design</div>
+      <h2 class="section-title display">Fundas que ya<br><span class="accent">armamos para la gente.</span></h2>
+    </div>
+  </div>
+
+  <div class="carousel-track-wrap">
+    <!-- PLACEHOLDER: reemplazar cada placeholder-case por <img> con foto real de funda entregada -->
+    <div class="carousel-track" id="carouselTrack">
+      <!-- Se genera dinámicamente más abajo con JS para poder loopear fácil -->
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROCESO ============ -->
+<section class="process-section" id="proceso">
+  <div class="container">
+    <div class="section-eyebrow">Cómo funciona</div>
+    <h2 class="section-title display">De tu foto a tu funda<br><span class="accent">en tres pasos.</span></h2>
+
+    <div class="process-steps">
+      <div class="process-step">
+        <div class="process-num mono">PASO 01</div>
+        <h4>Armá tu diseño</h4>
+        <p>Elegí tu modelo de iPhone, subí la foto que quieras y ajustá el encuadre hasta que quede exactamente como te gusta.</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num mono">PASO 02</div>
+        <h4>Completá tu nombre</h4>
+        <p>Nos decís quién sos para identificar tu pedido, y confirmás tu diseño final antes de continuar.</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num mono">PASO 03</div>
+        <h4>Pagá en la web</h4>
+        <p>Te lleva directo a nuestra tienda para que completes tus datos de envío y pago. Así de simple.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRICING / FINAL CTA ============ -->
+<section class="final-cta" id="armar">
+  <div class="section-eyebrow" style="justify-content:center; display:flex;">Tu funda te espera</div>
+  <h2 class="section-title display" style="margin: 0 auto; text-align:center;">Armala ahora.<br><span class="accent">Tardás 2 minutos.</span></h2>
+
+  <div class="price-block">
+    <div class="price-card highlight">
+      <div class="label">Transferencia</div>
+      <div class="amount">$25.600</div>
+      <div class="note">Precio final, sin recargo</div>
+    </div>
+    <div class="price-card">
+      <div class="label">Tarjeta</div>
+      <div class="amount">$32.000</div>
+      <div class="note">Hasta en cuotas</div>
+    </div>
+  </div>
+
+  <div class="final-shipping" style="margin-bottom:8px;">📦 Enviamos a <strong>todo Argentina</strong> por <strong>Correo Argentino</strong> · Local físico en Mar del Plata</div>
+</section>
+
+<!-- ============ CONFIGURADOR EMBEBIDO ============ -->
+<div class="wrap">
 
   <div class="grid">
 
@@ -391,7 +1088,7 @@
 
       <div class="price-tag">
         Funda personalizada
-        <strong>$29.900</strong>
+        <strong>$25.600</strong> transferencia · $32.000 tarjeta
       </div>
 
       <button class="btn whatsapp" id="sendBtn" disabled>
@@ -405,10 +1102,45 @@
 
   </div>
 
-  <div class="footer-note">RS Design — Mar del Plata, Argentina</div>
-
 </div>
 
+<footer>
+  RS Design — Mar del Plata, Argentina · Parte de RS Pro Parts
+</footer>
+
+<script>
+// Generamos el carrusel con placeholders, repetido x2 para el efecto de loop infinito en CSS.
+// TODO: cuando haya fotos reales de fundas entregadas, reemplazar este array por
+// objetos {img: "url_de_cloudinary", model: "iPhone 15 Pro", name: "Nombre Cliente"}
+// y cambiar el render de abajo para usar <img> en vez del placeholder-case.
+const sampleCases = [
+  { name: "Rider #97", model: "iPhone 15 Pro", color: "#d62828" },
+  { name: "Moto Honda", model: "iPhone 14", color: "#1D4ED8" },
+  { name: "Logo Personal", model: "iPhone 16 Pro Max", color: "#d62828" },
+  { name: "Foto Familiar", model: "iPhone 13", color: "#2a2a2a" },
+  { name: "Paisaje", model: "iPhone 17 Pro", color: "#1D4ED8" },
+  { name: "Mascota", model: "iPhone 15", color: "#d62828" },
+];
+
+const track = document.getElementById('carouselTrack');
+function renderCarousel(){
+  const items = [...sampleCases, ...sampleCases]; // duplicado para loop continuo
+  track.innerHTML = items.map(item => `
+    <div class="carousel-card">
+      <div class="img-wrap">
+        <div class="placeholder-case" style="background: linear-gradient(160deg, ${item.color}, #1a1a1a 65%);"></div>
+      </div>
+      <div class="caption">
+        <strong>${item.name}</strong>
+        <span>${item.model}</span>
+      </div>
+    </div>
+  `).join('');
+}
+renderCarousel();
+</script>
+
+<!-- ============ CONFIGURADOR EMBEBIDO: datos y lógica ============ -->
 <script src="mockup-data.js"></script>
 <script>
 /* ====================================================
@@ -907,6 +1639,8 @@ sendBtn.addEventListener('click', async () => {
     alert('Hubo un problema subiendo tu diseño. Probá de nuevo en un momento.');
   }
 });
+
 </script>
+
 </body>
 </html>
