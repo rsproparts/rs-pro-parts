@@ -371,8 +371,8 @@
           Centrar imagen
         </button>
 
-        <span class="step-label" style="margin-top:24px;">04 — Datos (opcional)</span>
-        <input type="text" class="name-input" id="customerName" placeholder="Nombre para grabar (opcional)">
+        <span class="step-label" style="margin-top:24px;">04 — Tus datos</span>
+        <input type="text" class="name-input" id="customerName" placeholder="Nombre y apellido (obligatorio)" required>
 
         <div class="hint" id="sizeHint"></div>
       </div>
@@ -801,12 +801,38 @@ const CLOUDINARY_CLOUD_NAME = "drpqcjjuj";
 const CLOUDINARY_UPLOAD_PRESET = "rs-design-fundas";
 const TIENDANUBE_PRODUCT_URL = "https://rsproparts.com/productos/funda-personalizada-lkdx6/";
 
-async function uploadToCloudinary(dataUrl){
+function slugify(text){
+  return (text || '')
+    .toString()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // sacar acentos
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .substring(0, 40);
+}
+
+function buildOrderFilename(modelLabel, customerNameRaw){
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const timestamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+  const namePart = slugify(customerNameRaw) || 'SinNombre';
+  const modelPart = slugify(modelLabel);
+
+  return `${namePart}__${modelPart}__${timestamp}`;
+}
+
+async function uploadToCloudinary(dataUrl, modelLabel, customerNameRaw){
   const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+  const publicId = buildOrderFilename(modelLabel, customerNameRaw);
+
   const formData = new FormData();
   formData.append('file', dataUrl);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
   formData.append('folder', 'fundas-rs-design');
+  formData.append('public_id', publicId);
+  // Contexto extra (queda visible en la pestaña "Metadata" de Cloudinary,
+  // por si en el futuro se necesita buscar/filtrar por estos datos).
+  formData.append('context', `cliente=${customerNameRaw || 'Sin nombre'}|modelo=${modelLabel}`);
 
   const res = await fetch(endpoint, { method: 'POST', body: formData });
   if(!res.ok){
@@ -835,11 +861,18 @@ sendBtn.addEventListener('click', async () => {
   const modelLabel = MODEL_LABELS[currentModel] || currentModel;
   const name = customerName.value.trim();
 
+  if(!name){
+    customerName.focus();
+    customerName.style.borderColor = 'var(--red)';
+    alert('Por favor ingresá tu nombre y apellido antes de continuar.');
+    return;
+  }
+
   try {
     setSendBtnLoading(true, 'Subiendo tu diseño...');
 
     const printDataUrl = renderPrintFile();
-    const imageUrl = await uploadToCloudinary(printDataUrl);
+    const imageUrl = await uploadToCloudinary(printDataUrl, modelLabel, name);
 
     debugLog('Imagen subida a Cloudinary: ' + imageUrl);
 
