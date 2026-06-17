@@ -230,6 +230,23 @@
     padding: 20px;
   }
 
+  .drag-hint{
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.65);
+    color: var(--white);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 20px;
+    pointer-events: none;
+    transition: opacity .3s;
+  }
+  .drag-hint.fade{ opacity: 0; }
+
   .price-tag{
     text-align:center;
     margin-top: 18px;
@@ -324,18 +341,24 @@
 
       <div class="controls" id="controls">
         <span class="step-label" style="margin-top:24px;">03 — Ajustá la imagen</span>
+        <div class="hint" style="margin-top:0; margin-bottom:14px;">
+          💡 Arrastrá la foto directamente sobre la vista previa para ubicarla donde quieras.
+        </div>
         <div class="control-row">
           <label>Zoom</label>
-          <input type="range" id="zoomRange" min="100" max="300" value="100">
+          <input type="range" id="zoomRange" min="100" max="400" value="100">
         </div>
         <div class="control-row">
           <label>Mover X</label>
-          <input type="range" id="panXRange" min="-200" max="200" value="0">
+          <input type="range" id="panXRange" min="-100" max="100" value="0">
         </div>
         <div class="control-row">
           <label>Mover Y</label>
-          <input type="range" id="panYRange" min="-200" max="200" value="0">
+          <input type="range" id="panYRange" min="-100" max="100" value="0">
         </div>
+        <button type="button" class="btn" id="centerBtn" style="background:#2a2a2a; margin-top:4px; margin-bottom:0;">
+          Centrar imagen
+        </button>
 
         <span class="step-label" style="margin-top:24px;">04 — Datos (opcional)</span>
         <input type="text" class="name-input" id="customerName" placeholder="Nombre para grabar (opcional)">
@@ -352,6 +375,7 @@
           Elegí un modelo<br>y subí tu foto
         </div>
         <canvas id="canvas" style="display:none;"></canvas>
+        <div class="drag-hint" id="dragHint" style="display:none;">↕ Arrastrá para ajustar ↔</div>
       </div>
 
       <div class="price-tag">
@@ -410,6 +434,9 @@ const panYRange = document.getElementById('panYRange');
 const sendBtn = document.getElementById('sendBtn');
 const sizeHint = document.getElementById('sizeHint');
 const customerName = document.getElementById('customerName');
+const centerBtn = document.getElementById('centerBtn');
+const dragHint = document.getElementById('dragHint');
+const previewStage = document.getElementById('previewStage');
 
 let currentModel = null;
 let mockupImg = null;
@@ -417,6 +444,44 @@ let userImg = null;
 let userImgNaturalSize = {w:0, h:0};
 
 let state = { zoom: 1, panX: 0, panY: 0 };
+
+// Limites de pan en px de canvas, recalculados cada vez que cambia zoom o imagen
+let panLimits = { x: 0, y: 0 };
+
+function computeDrawSize(zoom){
+  const cw = canvas.width, ch = canvas.height;
+  const imgRatio = userImgNaturalSize.w / userImgNaturalSize.h;
+  const canvasRatio = cw / ch;
+  let drawW, drawH;
+  if(imgRatio > canvasRatio){
+    drawH = ch * zoom;
+    drawW = drawH * imgRatio;
+  } else {
+    drawW = cw * zoom;
+    drawH = drawW / imgRatio;
+  }
+  return {drawW, drawH};
+}
+
+function updatePanLimits(){
+  if(!userImg) { panLimits = {x:0, y:0}; return; }
+  const {drawW, drawH} = computeDrawSize(state.zoom);
+  // Cuanto "sobra" de imagen respecto al canvas, a cada lado, es el limite de pan
+  panLimits.x = Math.max(0, (drawW - canvas.width) / 2);
+  panLimits.y = Math.max(0, (drawH - canvas.height) / 2);
+
+  // Sincronizamos los sliders con los limites reales en px de canvas
+  panXRange.min = -Math.round(panLimits.x);
+  panXRange.max = Math.round(panLimits.x);
+  panYRange.min = -Math.round(panLimits.y);
+  panYRange.max = Math.round(panLimits.y);
+
+  // Re-clampeamos el estado actual por si el nuevo limite quedo mas chico
+  state.panX = Math.max(-panLimits.x, Math.min(panLimits.x, state.panX));
+  state.panY = Math.max(-panLimits.y, Math.min(panLimits.y, state.panY));
+  panXRange.value = state.panX;
+  panYRange.value = state.panY;
+}
 
 // ---- Poblar select de modelos ----
 Object.keys(MOCKUP_DATA).forEach(key => {
@@ -438,6 +503,7 @@ function loadMockup(modelKey){
   mockupImg.onload = () => {
     canvas.width = data.width;
     canvas.height = data.height;
+    if(userImg){ updatePanLimits(); }
     render();
   };
   mockupImg.src = data.src;
@@ -475,17 +541,24 @@ function handleFile(file){
       checkImageSize();
       state = { zoom: 1, panX: 0, panY: 0 };
       zoomRange.value = 100;
-      panXRange.value = 0;
-      panYRange.value = 0;
+      updatePanLimits();
       controls.classList.add('active');
       canvas.style.display = 'block';
       previewEmpty.style.display = 'none';
       sendBtn.disabled = !currentModel;
+      showDragHint();
       render();
     };
     userImg.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+function showDragHint(){
+  dragHint.style.display = 'block';
+  dragHint.classList.remove('fade');
+  clearTimeout(showDragHint._t);
+  showDragHint._t = setTimeout(() => dragHint.classList.add('fade'), 2500);
 }
 
 function checkImageSize(){
@@ -502,6 +575,7 @@ function checkImageSize(){
 // ---- Controles de zoom/pan ----
 zoomRange.addEventListener('input', () => {
   state.zoom = zoomRange.value / 100;
+  updatePanLimits();
   render();
 });
 panXRange.addEventListener('input', () => {
@@ -510,6 +584,13 @@ panXRange.addEventListener('input', () => {
 });
 panYRange.addEventListener('input', () => {
   state.panY = parseInt(panYRange.value);
+  render();
+});
+centerBtn.addEventListener('click', () => {
+  state.panX = 0;
+  state.panY = 0;
+  panXRange.value = 0;
+  panYRange.value = 0;
   render();
 });
 
@@ -523,16 +604,17 @@ canvas.addEventListener('pointerdown', (e) => {
   dragging = true;
   dragStart = {x: e.clientX, y: e.clientY};
   panStart = {x: state.panX, y: state.panY};
+  dragHint.classList.add('fade');
 });
 window.addEventListener('pointermove', (e) => {
   if(!dragging) return;
   const scaleFactor = canvas.width / canvas.getBoundingClientRect().width;
   const dx = (e.clientX - dragStart.x) * scaleFactor;
   const dy = (e.clientY - dragStart.y) * scaleFactor;
-  state.panX = panStart.x + dx;
-  state.panY = panStart.y + dy;
-  panXRange.value = Math.max(-200, Math.min(200, state.panX));
-  panYRange.value = Math.max(-200, Math.min(200, state.panY));
+  state.panX = Math.max(-panLimits.x, Math.min(panLimits.x, panStart.x + dx));
+  state.panY = Math.max(-panLimits.y, Math.min(panLimits.y, panStart.y + dy));
+  panXRange.value = Math.round(state.panX);
+  panYRange.value = Math.round(state.panY);
   render();
 });
 window.addEventListener('pointerup', () => dragging = false);
@@ -544,17 +626,7 @@ function render(){
 
   if(userImg){
     const cw = canvas.width, ch = canvas.height;
-    const imgRatio = userImgNaturalSize.w / userImgNaturalSize.h;
-    const canvasRatio = cw / ch;
-
-    let drawW, drawH;
-    if(imgRatio > canvasRatio){
-      drawH = ch * state.zoom;
-      drawW = drawH * imgRatio;
-    } else {
-      drawW = cw * state.zoom;
-      drawH = drawW / imgRatio;
-    }
+    const {drawW, drawH} = computeDrawSize(state.zoom);
 
     const dx = (cw - drawW)/2 + state.panX;
     const dy = (ch - drawH)/2 + state.panY;
