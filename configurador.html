@@ -377,7 +377,6 @@
         <canvas id="canvas" style="display:none;"></canvas>
         <div class="drag-hint" id="dragHint" style="display:none;">↕ Arrastrá para ajustar ↔</div>
       </div>
-      <div id="debugBox" style="display:none; margin-top:10px; padding:10px; background:#3a1a1a; border:1px solid #c0392b; border-radius:4px; font-size:11px; color:#ffb3b3; white-space:pre-wrap; font-family:monospace;"></div>
 
       <div class="price-tag">
         Funda personalizada
@@ -422,10 +421,11 @@ const MODEL_LABELS = {
 
 const WHATSAPP_NUMBER = "5492235555555"; // <-- TODO: poner el numero real de RS Pro Parts/RS Design
 
-const debugBox = document.getElementById('debugBox');
 function debugLog(msg){
-  debugBox.style.display = 'block';
-  debugBox.textContent += msg + '\n';
+  // El panel visual de debug quedo desactivado (ya cumplio su proposito
+  // para diagnosticar el bug de carga). Dejamos el log en consola por si
+  // hace falta diagnosticar algo en el futuro, sin tapar la vista previa.
+  console.log('[RS Design debug]', msg);
 }
 
 window.addEventListener('error', (e) => {
