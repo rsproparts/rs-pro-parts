@@ -7,18 +7,18 @@
 <meta name="description" content="Subí tu foto, diseño o lo que quieras. Ajustala en el editor y recibí una funda única hecha especialmente para vos. Envíos a todo Argentina.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink: #000000;
-    --panel: #0d0d0d;
-    --panel-2: #161616;
+    --ink: #1e1e1e;
+    --panel: #252525;
+    --panel-2: #2d2d2d;
     --line: #242424;
     --white: #ffffff;
     --gray: #a3a3a3;
-    --red: #dc2626;
-    --red-dim: #7a1515;
-    --orange: #ff6b35;
+    --red: #f97316;
+    --red-dim: #9a3d05;
+    --orange: #fb923c;
   }
 
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -32,11 +32,11 @@
   }
 
   .display{
-    font-family: 'Anton', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; letter-spacing: -0.02em;
     text-transform: uppercase;
     letter-spacing: 0.01em;
   }
-  .mono{ font-family:'JetBrains Mono', monospace; }
+  .mono{ font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; letter-spacing: 0.08em; }
 
   img{ max-width:100%; display:block; }
   ::selection{ background: var(--red); color: var(--white); }
@@ -81,15 +81,13 @@
     text-align:center;
     position:relative;
     background:
-      radial-gradient(ellipse 90% 60% at 50% 0%, rgba(220,38,38,0.28), transparent 60%),
-      radial-gradient(ellipse 70% 40% at 80% 90%, rgba(255,107,53,0.18), transparent 60%),
-      var(--ink);
+var(--ink);
     overflow:hidden;
   }
   .hero-badge{
     display:inline-flex; align-items:center; gap:8px;
-    background: rgba(220,38,38,0.12);
-    border: 1px solid rgba(220,38,38,0.4);
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.18);
     color: var(--orange);
     font-size: 12px; font-weight:700;
     padding: 7px 14px; border-radius: 100px;
@@ -121,15 +119,15 @@
   .btn-hero-primary{
     background: linear-gradient(135deg, var(--red), var(--orange));
     color: var(--white); text-decoration:none;
-    padding: 17px 30px; border-radius: 10px;
+    padding: 17px 32px; border-radius: 50px;
     font-weight: 800; font-size: 15.5px;
     display:inline-flex; align-items:center; gap:8px;
     transition: transform .2s, box-shadow .2s;
   }
-  .btn-hero-primary:hover{ transform: translateY(-3px); box-shadow: 0 16px 40px rgba(220,38,38,0.4); }
+  .btn-hero-primary:hover{ transform: translateY(-3px); box-shadow: 0 16px 40px rgba(249,115,22,0.35); }
   .btn-hero-secondary{
     border: 1.5px solid var(--line); color: var(--white); text-decoration:none;
-    padding: 17px 26px; border-radius: 10px; font-weight:600; font-size:14.5px;
+    padding: 17px 28px; border-radius: 50px; font-weight:700; font-size:14.5px;
   }
 
   .hero-mockup{
@@ -138,9 +136,9 @@
     max-width: 640px;
     aspect-ratio: 1536/1024;
     border-radius: 20px;
-    background: linear-gradient(160deg, var(--panel-2), #000 75%);
+    background: var(--panel-2);
     position: relative;
-    box-shadow: 0 50px 100px rgba(220,38,38,0.15), 0 30px 60px rgba(0,0,0,0.6);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
     border: 1px solid rgba(255,255,255,0.06);
     overflow:hidden;
   }
@@ -187,7 +185,7 @@
   .gallery-card{
     flex-shrink:0; width: 200px; aspect-ratio: 4/5;
     border-radius:18px; scroll-snap-align:start;
-    background: linear-gradient(155deg, var(--panel-2), #000 70%);
+    background: var(--panel-2);
     position:relative; overflow:hidden;
     border: 1px solid var(--line);
   }
@@ -223,7 +221,7 @@
   .testi-visual{
     aspect-ratio: 4/5;
     border-radius: 24px;
-    background: linear-gradient(150deg, var(--panel-2), #000 70%);
+    background: var(--panel-2);
     position:relative; overflow:hidden;
     border:1px solid var(--line);
   }
@@ -245,7 +243,7 @@
     transition: stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1);
   }
   .metric .pct{
-    position:absolute; font-family:'Anton',sans-serif; font-size:16px;
+    position:absolute; font-family:'Plus Jakarta Sans',sans-serif; font-weight:900; font-size:16px;
   }
   .metric .ring-wrap{ position:relative; width:64px; height:64px; display:flex; align-items:center; justify-content:center; }
   .metric .label{ font-size:13px; color:var(--gray); line-height:1.4; }
@@ -265,7 +263,7 @@
     padding: 26px 0; border-top:1px solid var(--line);
   }
   .why-row:last-child{ border-bottom:1px solid var(--line); }
-  .why-row .n{ font-family:'Anton',sans-serif; font-size: 26px; color: var(--red); }
+  .why-row .n{ font-family:'Plus Jakarta Sans',sans-serif; font-weight:900; font-size: 26px; color: var(--red); }
   .why-row h4{ font-size: 18px; font-weight:700; margin-bottom:4px; }
   .why-row p{ color: var(--gray); font-size:14px; }
 
@@ -287,14 +285,14 @@
     color: var(--gray);
     white-space:nowrap;
   }
-  .model-pill.hot{ border-color: var(--red); color: var(--white); background: rgba(220,38,38,0.08); }
+  .model-pill.hot{ border-color: var(--red); color: var(--white); background: rgba(249,115,22,0.10); }
 
   /* ============ FINAL CTA ============ */
   .final-section{
     padding: 110px 20px 90px;
     text-align:center;
     border-top:1px solid var(--line);
-    background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(220,38,38,0.22), transparent 65%);
+    background: var(--ink);
   }
   .final-section h2{ font-size: clamp(34px,8vw,68px); line-height:1.0; }
   .final-section p{ margin: 18px auto 0; max-width:420px; color:var(--gray); font-size:15.5px; }
@@ -659,7 +657,7 @@
 <!-- ============ 1. HERO ============ -->
 <section class="hero">
   <div class="hero-badge"><span class="dot"></span> EDITOR EN VIVO — VISUALIZÁ ANTES DE COMPRAR</div>
-  <h1 class="display">CREÁ TU FUNDA<br><span class="accent">PERSONALIZADA</span><br>EN MINUTOS</h1>
+  <h1 class="display" style="text-transform:none; letter-spacing:-0.03em;">Creá tu funda <span class="accent">personalizada</span><br>en minutos</h1>
   <p>Subí tu foto, diseño, moto, auto, mascota o imagen favorita. Ajustala en el mockup, dejala perfecta y recibí una funda única hecha especialmente para vos.</p>
   <div class="hero-ctas">
     <a href="#armar" class="btn-hero-primary">Hacer mi funda ahora →</a>
@@ -689,7 +687,7 @@
     </div>
     <div>
       <div class="testi-head reveal">
-        <h2 class="display">LO QUE DICEN<br>NUESTROS CLIENTES</h2>
+        <h2 class="display" style="text-transform:none; letter-spacing:-0.02em;">Lo que dicen<br>nuestros clientes</h2>
       </div>
       <div class="metrics reveal-stagger" id="metricsGrid"></div>
     </div>
