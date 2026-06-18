@@ -332,6 +332,67 @@
     .hero-mockup{ width: 280px; }
   }
 
+  /* ============ MODAL DE CONFIRMACION ============ */
+  .confirm-overlay{
+    position: fixed; inset:0; z-index:200;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    display:none;
+    align-items:center; justify-content:center;
+    padding: 20px;
+    opacity:0;
+    transition: opacity .25s ease;
+  }
+  .confirm-overlay.show{ display:flex; opacity:1; }
+  .confirm-modal{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 32px 28px;
+    max-width: 380px;
+    width:100%;
+    text-align:center;
+    transform: scale(0.92);
+    transition: transform .25s cubic-bezier(.2,.7,.2,1);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .confirm-overlay.show .confirm-modal{ transform: scale(1); }
+  .confirm-check{
+    width:52px; height:52px; border-radius:50%;
+    background: linear-gradient(135deg, var(--red), var(--orange));
+    color:var(--white); font-size:26px; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+    margin: 0 auto 18px;
+  }
+  .confirm-modal h3{ font-size:20px; font-weight:800; margin-bottom:18px; }
+  .confirm-preview-img{
+    width: 100%;
+    max-width: 220px;
+    border-radius: 16px;
+    margin: 0 auto 18px;
+    display:block;
+    border: 1px solid var(--line);
+  }
+  .confirm-text{ font-size:13.5px; color:var(--gray); line-height:1.55; margin-bottom:22px; }
+  .confirm-text strong{ color:var(--white); }
+  .confirm-btn{
+    width:100%;
+    background: linear-gradient(135deg, var(--red), var(--orange));
+    color:var(--white); border:none;
+    padding:15px; border-radius:10px;
+    font-weight:800; font-size:14.5px;
+    cursor:pointer;
+    margin-bottom:10px;
+  }
+  .confirm-btn:hover{ filter:brightness(1.1); }
+  .confirm-close{
+    width:100%;
+    background:none; border:none;
+    color: var(--gray); font-size:13px;
+    padding:8px; cursor:pointer;
+  }
+
   /* ============ CONFIGURADOR (embebido) ============ */
 
   .wrap{
@@ -576,6 +637,18 @@
 </style>
 </head>
 <body>
+
+<!-- ============ MODAL: confirmación con vista previa visual ============ -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-modal">
+    <div class="confirm-check">✓</div>
+    <h3>¡Tu diseño está listo!</h3>
+    <img id="confirmPreviewImg" class="confirm-preview-img" alt="Vista previa de tu funda personalizada">
+    <p class="confirm-text">Ya subimos tu diseño. Te vamos a llevar a nuestra tienda en una pestaña nueva — pegá el link que copiamos en <strong>"Notas del pedido"</strong> antes de pagar.</p>
+    <button class="confirm-btn" id="confirmGoBtn">Ir a comprar →</button>
+    <button class="confirm-close" id="confirmCloseBtn">Cerrar</button>
+  </div>
+</div>
 
 <nav class="nav">
   <div class="mark display" style="font-size:13px;">RS <span>DESIGN</span></div>
@@ -1122,30 +1195,101 @@ centerBtn.addEventListener('click', () => {
   render();
 });
 
-// ---- Arrastrar la imagen directo en el canvas ----
+// ---- Arrastrar la imagen directo en el canvas (1 dedo) + Pinch-to-zoom (2 dedos) ----
 let dragging = false;
 let dragStart = {x:0, y:0};
 let panStart = {x:0, y:0};
 
+// Registro de punteros activos para detectar gestos de 2 dedos (pinch)
+const activePointers = new Map();
+let pinchStartDist = 0;
+let pinchStartZoom = 1;
+
+function getPointerDistance(){
+  const pts = [...activePointers.values()];
+  if(pts.length < 2) return 0;
+  const dx = pts[0].x - pts[1].x;
+  const dy = pts[0].y - pts[1].y;
+  return Math.sqrt(dx*dx + dy*dy);
+}
+
 canvas.addEventListener('pointerdown', (e) => {
   if(!userImg) return;
-  dragging = true;
-  dragStart = {x: e.clientX, y: e.clientY};
-  panStart = {x: state.panX, y: state.panY};
-  dragHint.classList.add('fade');
+  activePointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
+
+  if(activePointers.size === 2){
+    // Empieza un gesto de pinch: dejamos de arrastrar con 1 dedo
+    dragging = false;
+    pinchStartDist = getPointerDistance();
+    pinchStartZoom = state.zoom;
+  } else if(activePointers.size === 1){
+    dragging = true;
+    dragStart = {x: e.clientX, y: e.clientY};
+    panStart = {x: state.panX, y: state.panY};
+    dragHint.classList.add('fade');
+  }
 });
+
 window.addEventListener('pointermove', (e) => {
-  if(!dragging) return;
-  const scaleFactor = canvas.width / canvas.getBoundingClientRect().width;
-  const dx = (e.clientX - dragStart.x) * scaleFactor;
-  const dy = (e.clientY - dragStart.y) * scaleFactor;
-  state.panX = Math.max(-panLimits.x, Math.min(panLimits.x, panStart.x + dx));
-  state.panY = Math.max(-panLimits.y, Math.min(panLimits.y, panStart.y + dy));
-  panXRange.value = Math.round(state.panX);
-  panYRange.value = Math.round(state.panY);
-  render();
+  if(!activePointers.has(e.pointerId)) {
+    if(dragging){
+      // Compatibilidad: mouse drag (sin registro previo en activePointers)
+      const scaleFactor = canvas.width / canvas.getBoundingClientRect().width;
+      const dx = (e.clientX - dragStart.x) * scaleFactor;
+      const dy = (e.clientY - dragStart.y) * scaleFactor;
+      state.panX = Math.max(-panLimits.x, Math.min(panLimits.x, panStart.x + dx));
+      state.panY = Math.max(-panLimits.y, Math.min(panLimits.y, panStart.y + dy));
+      panXRange.value = Math.round(state.panX);
+      panYRange.value = Math.round(state.panY);
+      render();
+    }
+    return;
+  }
+
+  activePointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
+
+  if(activePointers.size === 2){
+    // Gesto de pinch activo: traducimos el cambio de distancia entre
+    // los dos dedos a un cambio de zoom relativo al zoom inicial del gesto.
+    const newDist = getPointerDistance();
+    if(pinchStartDist > 0){
+      const ratio = newDist / pinchStartDist;
+      let newZoom = pinchStartZoom * ratio;
+      newZoom = Math.max(1, Math.min(4, newZoom)); // mismo rango que el slider (100%-400%)
+      state.zoom = newZoom;
+      zoomRange.value = Math.round(newZoom * 100);
+      updatePanLimits();
+      render();
+    }
+  } else if(activePointers.size === 1 && dragging){
+    const scaleFactor = canvas.width / canvas.getBoundingClientRect().width;
+    const dx = (e.clientX - dragStart.x) * scaleFactor;
+    const dy = (e.clientY - dragStart.y) * scaleFactor;
+    state.panX = Math.max(-panLimits.x, Math.min(panLimits.x, panStart.x + dx));
+    state.panY = Math.max(-panLimits.y, Math.min(panLimits.y, panStart.y + dy));
+    panXRange.value = Math.round(state.panX);
+    panYRange.value = Math.round(state.panY);
+    render();
+  }
 });
-window.addEventListener('pointerup', () => dragging = false);
+
+function releasePointer(e){
+  activePointers.delete(e.pointerId);
+  if(activePointers.size === 0){
+    dragging = false;
+  } else if(activePointers.size === 1){
+    // Quedo un solo dedo: retomamos drag normal desde la posicion actual
+    const remaining = [...activePointers.values()][0];
+    dragging = true;
+    dragStart = {x: remaining.x, y: remaining.y};
+    panStart = {x: state.panX, y: state.panY};
+  }
+}
+window.addEventListener('pointerup', releasePointer);
+window.addEventListener('pointercancel', releasePointer);
+
+// Evita que el navegador interprete el pinch como zoom de la pagina entera
+canvas.style.touchAction = 'none';
 
 // Canvas offscreen reutilizable para el recorte (clip) de la foto del usuario
 const clipCanvas = document.createElement('canvas');
@@ -1304,6 +1448,28 @@ function setSendBtnLoading(isLoading, text){
   sendBtn.textContent = isLoading ? (text || 'Subiendo tu diseño...') : 'Enviar pedido por WhatsApp';
 }
 
+// ---- Modal de confirmacion ----
+const confirmOverlay = document.getElementById('confirmOverlay');
+const confirmPreviewImg = document.getElementById('confirmPreviewImg');
+const confirmGoBtn = document.getElementById('confirmGoBtn');
+const confirmCloseBtn = document.getElementById('confirmCloseBtn');
+
+function showConfirmModal(previewDataUrl){
+  confirmPreviewImg.src = previewDataUrl;
+  confirmOverlay.classList.add('show');
+}
+function hideConfirmModal(){
+  confirmOverlay.classList.remove('show');
+}
+confirmCloseBtn.addEventListener('click', hideConfirmModal);
+confirmOverlay.addEventListener('click', (e) => {
+  if(e.target === confirmOverlay) hideConfirmModal();
+});
+confirmGoBtn.addEventListener('click', () => {
+  window.open(TIENDANUBE_PRODUCT_URL, '_blank');
+  hideConfirmModal();
+});
+
 // ---- Envio del pedido ----
 sendBtn.addEventListener('click', async () => {
   if(!currentModel || !userImg) return;
@@ -1327,6 +1493,10 @@ sendBtn.addEventListener('click', async () => {
   try {
     setSendBtnLoading(true, 'Subiendo tu diseño...');
 
+    // Vista previa visual: usamos directamente lo que ya se ve en el canvas
+    // (con el mockup y la foto recortada), no el archivo de impresion sin marco.
+    const previewForModal = canvas.toDataURL('image/png');
+
     const printDataUrl = renderPrintFile();
     const imageUrl = await uploadToCloudinary(printDataUrl, modelLabel, name);
 
@@ -1339,23 +1509,14 @@ sendBtn.addEventListener('click', async () => {
 
     // Copiamos automaticamente al portapapeles para minimizar el trabajo
     // del cliente: solo tiene que pegar (Ctrl+V) en el campo de notas.
-    let copied = false;
     try {
       await navigator.clipboard.writeText(note);
-      copied = true;
     } catch(clipErr){
       debugLog('No se pudo copiar al portapapeles automaticamente: ' + clipErr.message);
     }
 
     setSendBtnLoading(false);
-
-    if(copied){
-      alert('¡Listo! Ya copiamos el link de tu diseño.\n\nAhora te llevamos al producto: pegá ese link (mantené presionado y elegí "Pegar") en el campo de "Notas del pedido" antes de pagar.');
-    } else {
-      alert('¡Listo! Copiá este link y pegalo en "Notas del pedido" al pagar:\n\n' + note);
-    }
-
-    window.location.href = TIENDANUBE_PRODUCT_URL;
+    showConfirmModal(previewForModal);
 
   } catch(err){
     setSendBtnLoading(false);
