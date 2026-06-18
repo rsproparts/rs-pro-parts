@@ -581,6 +581,75 @@ var(--ink);
     transition: opacity .3s;
   }
   .drag-hint.fade{ opacity: 0; }
+  /* ---- Floating controls sobre el canvas ---- */
+  .float-controls{
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 10;
+  }
+  .float-controls.show{ display: flex; }
+
+  .fc-btn{
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(20,20,20,0.85);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(6px);
+    color: var(--white);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .fc-btn:hover{ background: rgba(249,115,22,0.75); }
+  .fc-btn:active{ transform: scale(0.92); }
+  .fc-btn.active{
+    background: var(--red);
+    border-color: var(--orange);
+  }
+  .fc-sep{
+    width: 1px;
+    height: 8px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.1);
+  }
+  .fc-mode-badge{
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(249,115,22,0.9);
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 20px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .25s;
+    white-space: nowrap;
+  }
+  .fc-mode-badge.show{ opacity: 1; }
+
+  /* Ocultar las filas de sliders (siguen en DOM pero escondidas) */
+  .control-row,
+  #centerBtn,
+  .controls input[type="range"],
+  .controls .step-label:first-of-type {
+    display: none !important;
+  }
+
 
   .price-tag{
     text-align:center;
@@ -753,6 +822,38 @@ var(--ink);
     <div class="panel">
       <span class="step-label">Vista previa</span>
       <div class="preview-stage" id="previewStage">
+
+        <!-- Botones flotantes -->
+        <div class="float-controls" id="floatControls">
+          <button type="button" class="fc-btn" id="fcZoomIn" title="Acercar">＋</button>
+          <button type="button" class="fc-btn" id="fcZoomOut" title="Alejar">－</button>
+          <div class="fc-sep"></div>
+          <button type="button" class="fc-btn active" id="fcMove" title="Mover imagen">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/>
+            </svg>
+          </button>
+          <button type="button" class="fc-btn" id="fcRotate" title="Girar imagen">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6"/>
+              <path d="M21.34 15.57a10 10 0 1 1-.57-8.38"/>
+            </svg>
+          </button>
+          <div class="fc-sep"></div>
+          <button type="button" class="fc-btn" id="fcCenter" title="Centrar y resetear">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M3 12h3M18 12h3M12 3v3M12 18v3"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Badge modo activo -->
+        <div class="fc-mode-badge" id="fcModeBadge">MOVER</div>
+
         <div class="preview-empty" id="previewEmpty">
           Elegí un modelo<br>y subí tu foto
         </div>
@@ -1005,7 +1106,7 @@ let clipImg = null;
 let userImg = null;
 let userImgNaturalSize = {w:0, h:0};
 
-let state = { zoom: 1, panX: 0, panY: 0 };
+let state = { zoom: 1, panX: 0, panY: 0, rotation: 0 };
 
 // Limites de pan en px de canvas, recalculados cada vez que cambia zoom o imagen
 let panLimits = { x: 0, y: 0 };
@@ -1137,13 +1238,14 @@ function handleFile(file){
       debugLog('Foto del usuario cargada: ' + userImg.naturalWidth + 'x' + userImg.naturalHeight);
       userImgNaturalSize = {w: userImg.naturalWidth, h: userImg.naturalHeight};
       checkImageSize();
-      state = { zoom: 1, panX: 0, panY: 0 };
+      state = { zoom: 1, panX: 0, panY: 0, rotation: 0 };
       zoomRange.value = 100;
       updatePanLimits();
       controls.classList.add('active');
       canvas.style.display = 'block';
       previewEmpty.style.display = 'none';
       sendBtn.disabled = !currentModel;
+      floatControls.classList.add('show');
       debugLog('currentModel actual: ' + currentModel + ' | mockupImg listo: ' + (!!mockupImg) + ' | clipImg listo: ' + (!!clipImg));
       showDragHint();
       render();
@@ -1195,99 +1297,123 @@ centerBtn.addEventListener('click', () => {
 });
 
 // ---- Arrastrar la imagen directo en el canvas (1 dedo) + Pinch-to-zoom (2 dedos) ----
-let dragging = false;
-let dragStart = {x:0, y:0};
-let panStart = {x:0, y:0};
+/* ---- Modo de interaccion ---- */
+let interactionMode = 'move';
 
-// Registro de punteros activos para detectar gestos de 2 dedos (pinch)
+const floatControls = document.getElementById('floatControls');
+const fcZoomIn      = document.getElementById('fcZoomIn');
+const fcZoomOut     = document.getElementById('fcZoomOut');
+const fcMove        = document.getElementById('fcMove');
+const fcRotate      = document.getElementById('fcRotate');
+const fcCenter      = document.getElementById('fcCenter');
+const fcModeBadge   = document.getElementById('fcModeBadge');
+
+function setMode(mode){
+  interactionMode = mode;
+  fcMove.classList.toggle('active',   mode === 'move');
+  fcRotate.classList.toggle('active', mode === 'rotate');
+  fcModeBadge.textContent = mode === 'move' ? 'MODO: MOVER' : 'MODO: GIRAR';
+  fcModeBadge.classList.add('show');
+  clearTimeout(setMode._t);
+  setMode._t = setTimeout(() => fcModeBadge.classList.remove('show'), 1800);
+}
+
+fcZoomIn.addEventListener('click', () => {
+  state.zoom = Math.min(4, state.zoom + 0.15);
+  zoomRange.value = Math.round(state.zoom * 100);
+  updatePanLimits(); render();
+});
+fcZoomOut.addEventListener('click', () => {
+  state.zoom = Math.max(1, state.zoom - 0.15);
+  zoomRange.value = Math.round(state.zoom * 100);
+  updatePanLimits(); render();
+});
+fcMove.addEventListener('click',   () => setMode('move'));
+fcRotate.addEventListener('click', () => setMode('rotate'));
+fcCenter.addEventListener('click', () => {
+  state = { zoom: 1, panX: 0, panY: 0, rotation: 0 };
+  zoomRange.value = 100; panXRange.value = 0; panYRange.value = 0;
+  updatePanLimits(); render();
+  fcModeBadge.textContent = 'Imagen centrada ✓';
+  fcModeBadge.classList.add('show');
+  clearTimeout(fcCenter._t);
+  fcCenter._t = setTimeout(() => fcModeBadge.classList.remove('show'), 1800);
+});
+
+/* ---- Drag + Pinch ---- */
+let dragging = false, dragStart = {x:0,y:0}, panStart = {x:0,y:0}, rotationStart = 0;
 const activePointers = new Map();
-let pinchStartDist = 0;
-let pinchStartZoom = 1;
+let pinchStartDist = 0, pinchStartZoom = 1;
 
 function getPointerDistance(){
   const pts = [...activePointers.values()];
   if(pts.length < 2) return 0;
-  const dx = pts[0].x - pts[1].x;
-  const dy = pts[0].y - pts[1].y;
-  return Math.sqrt(dx*dx + dy*dy);
+  return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
 }
 
 canvas.addEventListener('pointerdown', (e) => {
   if(!userImg) return;
   activePointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
-
   if(activePointers.size === 2){
-    // Empieza un gesto de pinch: dejamos de arrastrar con 1 dedo
     dragging = false;
     pinchStartDist = getPointerDistance();
     pinchStartZoom = state.zoom;
-  } else if(activePointers.size === 1){
+  } else {
     dragging = true;
     dragStart = {x: e.clientX, y: e.clientY};
-    panStart = {x: state.panX, y: state.panY};
+    panStart  = {x: state.panX, y: state.panY};
+    rotationStart = state.rotation || 0;
     dragHint.classList.add('fade');
   }
+  canvas.setPointerCapture(e.pointerId);
 });
 
-window.addEventListener('pointermove', (e) => {
-  if(!activePointers.has(e.pointerId)) {
-    if(dragging){
-      // Compatibilidad: mouse drag (sin registro previo en activePointers)
-      const scaleFactor = canvas.width / canvas.getBoundingClientRect().width;
-      const dx = (e.clientX - dragStart.x) * scaleFactor;
-      const dy = (e.clientY - dragStart.y) * scaleFactor;
-      state.panX = Math.max(-panLimits.x, Math.min(panLimits.x, panStart.x + dx));
-      state.panY = Math.max(-panLimits.y, Math.min(panLimits.y, panStart.y + dy));
-      panXRange.value = Math.round(state.panX);
-      panYRange.value = Math.round(state.panY);
-      render();
-    }
-    return;
-  }
-
-  activePointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
-
-  if(activePointers.size === 2){
-    // Gesto de pinch activo: traducimos el cambio de distancia entre
-    // los dos dedos a un cambio de zoom relativo al zoom inicial del gesto.
-    const newDist = getPointerDistance();
-    if(pinchStartDist > 0){
-      const ratio = newDist / pinchStartDist;
-      let newZoom = pinchStartZoom * ratio;
-      newZoom = Math.max(1, Math.min(4, newZoom)); // mismo rango que el slider (100%-400%)
-      state.zoom = newZoom;
-      zoomRange.value = Math.round(newZoom * 100);
-      updatePanLimits();
-      render();
-    }
-  } else if(activePointers.size === 1 && dragging){
-    const scaleFactor = canvas.width / canvas.getBoundingClientRect().width;
-    const dx = (e.clientX - dragStart.x) * scaleFactor;
-    const dy = (e.clientY - dragStart.y) * scaleFactor;
+function handleDragMove(cx, cy){
+  const scale = canvas.width / canvas.getBoundingClientRect().width;
+  const dx = (cx - dragStart.x) * scale;
+  const dy = (cy - dragStart.y) * scale;
+  if(interactionMode === 'rotate'){
+    state.rotation = (rotationStart + dx * 0.3) % 360;
+  } else {
     state.panX = Math.max(-panLimits.x, Math.min(panLimits.x, panStart.x + dx));
     state.panY = Math.max(-panLimits.y, Math.min(panLimits.y, panStart.y + dy));
     panXRange.value = Math.round(state.panX);
     panYRange.value = Math.round(state.panY);
-    render();
+  }
+  render();
+}
+
+window.addEventListener('pointermove', (e) => {
+  if(!activePointers.has(e.pointerId)){
+    if(dragging) handleDragMove(e.clientX, e.clientY);
+    return;
+  }
+  activePointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
+  if(activePointers.size === 2){
+    const newDist = getPointerDistance();
+    if(pinchStartDist > 0){
+      let z = Math.max(1, Math.min(4, pinchStartZoom * (newDist / pinchStartDist)));
+      state.zoom = z; zoomRange.value = Math.round(z * 100);
+      updatePanLimits(); render();
+    }
+  } else if(activePointers.size === 1 && dragging){
+    handleDragMove(e.clientX, e.clientY);
   }
 });
 
 function releasePointer(e){
   activePointers.delete(e.pointerId);
-  if(activePointers.size === 0){
-    dragging = false;
-  } else if(activePointers.size === 1){
-    // Quedo un solo dedo: retomamos drag normal desde la posicion actual
-    const remaining = [...activePointers.values()][0];
+  if(activePointers.size === 0){ dragging = false; }
+  else if(activePointers.size === 1){
+    const r = [...activePointers.values()][0];
     dragging = true;
-    dragStart = {x: remaining.x, y: remaining.y};
-    panStart = {x: state.panX, y: state.panY};
+    dragStart = {x: r.x, y: r.y};
+    panStart  = {x: state.panX, y: state.panY};
+    rotationStart = state.rotation || 0;
   }
 }
-window.addEventListener('pointerup', releasePointer);
+window.addEventListener('pointerup',     releasePointer);
 window.addEventListener('pointercancel', releasePointer);
-
-// Evita que el navegador interprete el pinch como zoom de la pagina entera
 canvas.style.touchAction = 'none';
 
 // Canvas offscreen reutilizable para el recorte (clip) de la foto del usuario
@@ -1302,24 +1428,22 @@ function render(){
   if(userImg && clipImg){
     const cw = canvas.width, ch = canvas.height;
     const {drawW, drawH} = computeDrawSize(state.zoom);
-    const dx = (cw - drawW)/2 + state.panX;
-    const dy = (ch - drawH)/2 + state.panY;
 
-    // 1) Dibujamos la foto del usuario en un canvas aparte, del mismo
-    //    tamaño que el mockup.
-    clipCanvas.width = cw;
+    clipCanvas.width  = cw;
     clipCanvas.height = ch;
     clipCtx.clearRect(0,0,cw,ch);
-    clipCtx.drawImage(userImg, dx, dy, drawW, drawH);
 
-    // 2) Recortamos ese resultado a la silueta EXACTA de la funda (esquinas
-    //    redondeadas reales), usando destination-in: solo queda visible lo
-    //    que cae dentro del area blanca de la mascara de clip.
+    // Dibuja con rotacion centrada en el punto de encuadre
+    clipCtx.save();
+    clipCtx.translate(cw/2 + state.panX, ch/2 + state.panY);
+    clipCtx.rotate((state.rotation || 0) * Math.PI / 180);
+    clipCtx.drawImage(userImg, -drawW/2, -drawH/2, drawW, drawH);
+    clipCtx.restore();
+
     clipCtx.globalCompositeOperation = 'destination-in';
     clipCtx.drawImage(clipImg, 0, 0, cw, ch);
     clipCtx.globalCompositeOperation = 'source-over';
 
-    // 3) Pegamos el resultado ya recortado en el canvas principal.
     ctx.drawImage(clipCanvas, 0, 0);
   } else {
     debugLog('render: solo mockup, falta userImg=' + (!!userImg) + ' o clipImg=' + (!!clipImg));
@@ -1382,12 +1506,16 @@ function renderPrintFile(){
   const scalePanX = printW / canvas.width;
   const scalePanY = printH / canvas.height;
 
-  const dx = (printW - drawW)/2 + state.panX * scalePanX;
-  const dy = (printH - drawH)/2 + state.panY * scalePanY;
-
   pctx.imageSmoothingEnabled = true;
   pctx.imageSmoothingQuality = 'high';
-  pctx.drawImage(userImg, dx, dy, drawW, drawH);
+  pctx.save();
+  pctx.translate(
+    printW/2 + state.panX * scalePanX,
+    printH/2 + state.panY * scalePanY
+  );
+  pctx.rotate((state.rotation || 0) * Math.PI / 180);
+  pctx.drawImage(userImg, -drawW/2, -drawH/2, drawW, drawH);
+  pctx.restore();
 
   return printCanvas.toDataURL('image/png', 1.0);
 }
