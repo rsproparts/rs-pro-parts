@@ -213,6 +213,19 @@
     margin-bottom:10px;
   }
   .confirm-btn:hover{ filter:brightness(1.1); }
+  .confirm-btn-secondary{
+    width:100%;
+    background: transparent;
+    border: 1.5px solid var(--line);
+    color: var(--white);
+    padding:14px; border-radius:10px;
+    font-weight:700; font-size:13.5px;
+    cursor:pointer;
+    margin-bottom:10px;
+    text-decoration:none;
+    display:block;
+  }
+  .confirm-btn-secondary:hover{ border-color: var(--red); }
   .confirm-close{
     width:100%;
     background:none; border:none;
@@ -463,6 +476,7 @@
     <h3>¡TU FUNDA ESTÁ LISTA!</h3>
     <img id="confirmPreviewImg" class="confirm-preview-img" alt="Vista previa de tu funda personalizada">
     <p class="confirm-text">Te vamos a llevar a Tiendanube. Una vez ahí, poné <strong>"Agregar al carrito"</strong> y seguí el proceso de compra. Recordá poner el mismo nombre acá y en la página de pago, para que podamos ubicarte.<br><br>¡Gracias por elegirnos!</p>
+    <a href="#" id="confirmDownloadBtn" class="confirm-btn-secondary" download="funda-rs-design.png" target="_blank" rel="noopener">⬇ Descargar imagen</a>
     <button class="confirm-btn" id="confirmGoBtn">Ir a comprar →</button>
     <button class="confirm-close" id="confirmCloseBtn">Cerrar</button>
   </div>
@@ -1138,9 +1152,11 @@ const confirmOverlay = document.getElementById('confirmOverlay');
 const confirmPreviewImg = document.getElementById('confirmPreviewImg');
 const confirmGoBtn = document.getElementById('confirmGoBtn');
 const confirmCloseBtn = document.getElementById('confirmCloseBtn');
+const confirmDownloadBtn = document.getElementById('confirmDownloadBtn');
 
 function showConfirmModal(previewDataUrl){
   confirmPreviewImg.src = previewDataUrl;
+  confirmDownloadBtn.href = previewDataUrl;
   confirmOverlay.classList.add('show');
 }
 function hideConfirmModal(){
