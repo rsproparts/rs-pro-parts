@@ -321,6 +321,47 @@
     margin-top: 6px;
   }
 
+  .collage-options{
+    display:flex; gap:8px; margin-top:14px; margin-bottom:14px;
+  }
+  .collage-btn{
+    flex:1; background:var(--ink); border:1px solid var(--line); color:var(--gray);
+    padding:10px 8px; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer;
+    font-family:inherit;
+  }
+  .collage-btn:hover{ border-color:var(--red); color:var(--white); }
+  .collage-btn.active{ background:linear-gradient(135deg, var(--red), var(--orange)); border:none; color:#fff; }
+
+  .slots-container{
+    display:grid; grid-template-columns:1fr; gap:8px;
+  }
+  .slot-tile{
+    position:relative;
+    border:2px dashed var(--line); border-radius:14px;
+    background:var(--ink);
+    aspect-ratio: 1.4 / 1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; overflow:hidden;
+    transition: border-color .2s;
+  }
+  .slot-tile:hover{ border-color:var(--red); }
+  .slot-tile.active{ border-style:solid; border-color:var(--red); }
+  .slot-tile.filled{ border-style:solid; }
+  .slot-tile img{ width:100%; height:100%; object-fit:cover; }
+  .slot-plus{ font-size:24px; color:#555; }
+  .slot-label{
+    position:absolute; bottom:4px; left:6px;
+    font-size:10px; letter-spacing:0.5px; text-transform:uppercase;
+    color:rgba(255,255,255,0.85); text-shadow:0 1px 3px rgba(0,0,0,0.8);
+  }
+  .slot-replace{
+    position:absolute; top:4px; right:4px;
+    width:24px; height:24px; border-radius:50%;
+    background:rgba(0,0,0,0.6); border:none; color:#fff;
+    font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .slot-replace:hover{ background:var(--red); }
+
   .controls{
     margin-top: 20px;
     display:none;
@@ -555,12 +596,16 @@
       </select>
 
       <span class="step-label" style="margin-top:24px;">02 — Tu imagen</span>
-      <div class="upload-zone" id="uploadZone">
-        <input type="file" id="fileInput" accept="image/*">
-        <div class="icon">📷</div>
-        <div class="main-text">Tocá para subir tu foto</div>
-        <div class="sub-text">JPG o PNG — mínimo 960×1080px</div>
+      <div class="hint" style="margin-top:0; margin-bottom:0;">¿Cuántas fotos querés combinar en tu funda?</div>
+      <div class="collage-options">
+        <button type="button" class="collage-btn active" data-n="1">1 foto</button>
+        <button type="button" class="collage-btn" data-n="2">2 fotos</button>
+        <button type="button" class="collage-btn" data-n="3">3 fotos</button>
+        <button type="button" class="collage-btn" data-n="4">4 fotos</button>
       </div>
+      <div class="slots-container" id="slotsContainer"></div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none;">
+      <div class="hint" id="sizeHint" style="margin-top:10px;"></div>
 
       <div class="controls" id="controls">
         <span class="step-label" style="margin-top:24px;">03 — Ajustá la imagen</span>
@@ -587,8 +632,6 @@
         <input type="text" class="name-input" id="customerName" placeholder="Nombre y apellido (obligatorio)" required>
         <input type="email" class="name-input" id="customerEmail" placeholder="Email (obligatorio)" required>
         <input type="tel" class="name-input" id="customerPhone" placeholder="Teléfono (obligatorio)" required>
-
-        <div class="hint" id="sizeHint"></div>
       </div>
     </div>
 
@@ -597,7 +640,7 @@
       <span class="step-label">Vista previa</span>
       <div class="preview-stage" id="previewStage">
         <div class="preview-empty" id="previewEmpty">
-          Elegí un modelo<br>y subí tu foto
+          Elegí un modelo<br>y subí tus fotos
         </div>
         <canvas id="canvas" style="display:none;"></canvas>
         <div class="drag-hint" id="dragHint" style="display:none;">↕ Arrastrá para ajustar ↔</div>
@@ -765,6 +808,7 @@ function registrarLeadCompleto(datos){
     telefono: datos.telefono,
     modelo: datos.modelo,
     imageUrl: datos.imageUrl,
+    cantidadFotos: datos.cantidadFotos || 1,
   }, { merge: true }).then(() => {
     debugLog('Lead completo registrado en el panel.');
   }).catch((err) => {
@@ -772,7 +816,21 @@ function registrarLeadCompleto(datos){
   });
 }
 
+// "Latido": mientras la página esté abierta, le avisamos al panel cada
+// 20 segundos que esta visita sigue activa. Así el panel puede mostrar
+// cuánta gente hay "en vivo" en este momento.
+function enviarLatido(){
+  if(!trackingEnabled) return;
+  trackingDb.collection(TRACKING_COLLECTION).doc(trackingSessionId).set({
+    ultimaActividad: firebase.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true }).catch(() => {});
+}
+
 initTracking();
+if(trackingEnabled){
+  enviarLatido();
+  setInterval(enviarLatido, 20000);
+}
 
 debugLog('Script iniciado correctamente.');
 debugLog('MOCKUP_DATA existe: ' + (typeof MOCKUP_DATA !== 'undefined'));
@@ -787,7 +845,8 @@ if(typeof MOCKUP_DATA !== 'undefined'){
 
 const modelSelect = document.getElementById('modelSelect');
 const fileInput = document.getElementById('fileInput');
-const uploadZone = document.getElementById('uploadZone');
+const slotsContainer = document.getElementById('slotsContainer');
+const collageButtons = document.querySelectorAll('.collage-btn');
 const controls = document.getElementById('controls');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -807,48 +866,176 @@ const previewStage = document.getElementById('previewStage');
 let currentModel = null;
 let mockupImg = null;
 let clipImg = null;
-let userImg = null;
-let userImgNaturalSize = {w:0, h:0};
 
-let state = { zoom: 1, panX: 0, panY: 0 };
+// ---- Collage: cada foto que sube el cliente es una "capa" independiente,
+// con su propio zoom/posición, que vive dentro de un sector del recorte.
+let cantidadFotos = 1;
+let capas = [];
+let activeSlot = 0;
+let slotFileTarget = null;
 
-// Limites de pan en px de canvas, recalculados cada vez que cambia zoom o imagen
-let panLimits = { x: 0, y: 0 };
+function crearCapaVacia(){
+  return { img: null, naturalSize: {w:0, h:0}, state: {zoom:1, panX:0, panY:0}, panLimits: {x:0, y:0} };
+}
 
-function computeDrawSize(zoom){
-  const cw = canvas.width, ch = canvas.height;
-  const imgRatio = userImgNaturalSize.w / userImgNaturalSize.h;
-  const canvasRatio = cw / ch;
+function inicializarCapas(n){
+  cantidadFotos = n;
+  capas = [];
+  for(let i=0; i<n; i++) capas.push(crearCapaVacia());
+  activeSlot = 0;
+  renderSlotsUI();
+  actualizarSizeHint();
+  actualizarSendBtnEstado();
+  render();
+}
+
+// Divide el área de la funda en N sectores (con un margen blanco entre
+// fotos, como un collage). Soporta 1, 2, 3 o 4 fotos.
+function getSlotRects(width, height, n){
+  const gap = Math.max(2, Math.round(Math.min(width, height) * 0.015));
+  const half = gap / 2;
+  if(n <= 1) return [{x:0, y:0, w:width, h:height}];
+  if(n === 2) return [
+    {x:0, y:0, w:width/2 - half, h:height},
+    {x:width/2 + half, y:0, w:width/2 - half, h:height}
+  ];
+  if(n === 3) return [
+    {x:0, y:0, w:width, h:height/2 - half},
+    {x:0, y:height/2 + half, w:width/2 - half, h:height/2 - half},
+    {x:width/2 + half, y:height/2 + half, w:width/2 - half, h:height/2 - half}
+  ];
+  return [
+    {x:0, y:0, w:width/2 - half, h:height/2 - half},
+    {x:width/2 + half, y:0, w:width/2 - half, h:height/2 - half},
+    {x:0, y:height/2 + half, w:width/2 - half, h:height/2 - half},
+    {x:width/2 + half, y:height/2 + half, w:width/2 - half, h:height/2 - half}
+  ];
+}
+
+function computeDrawSizeForSlot(capa, slotW, slotH){
+  const imgRatio = capa.naturalSize.w / capa.naturalSize.h;
+  const slotRatio = slotW / slotH;
   let drawW, drawH;
-  if(imgRatio > canvasRatio){
-    drawH = ch * zoom;
+  if(imgRatio > slotRatio){
+    drawH = slotH * capa.state.zoom;
     drawW = drawH * imgRatio;
   } else {
-    drawW = cw * zoom;
+    drawW = slotW * capa.state.zoom;
     drawH = drawW / imgRatio;
   }
   return {drawW, drawH};
 }
 
-function updatePanLimits(){
-  if(!userImg) { panLimits = {x:0, y:0}; return; }
-  const {drawW, drawH} = computeDrawSize(state.zoom);
-  // Cuanto "sobra" de imagen respecto al canvas, a cada lado, es el limite de pan
-  panLimits.x = Math.max(0, (drawW - canvas.width) / 2);
-  panLimits.y = Math.max(0, (drawH - canvas.height) / 2);
-
-  // Sincronizamos los sliders con los limites reales en px de canvas
-  panXRange.min = -Math.round(panLimits.x);
-  panXRange.max = Math.round(panLimits.x);
-  panYRange.min = -Math.round(panLimits.y);
-  panYRange.max = Math.round(panLimits.y);
-
-  // Re-clampeamos el estado actual por si el nuevo limite quedo mas chico
-  state.panX = Math.max(-panLimits.x, Math.min(panLimits.x, state.panX));
-  state.panY = Math.max(-panLimits.y, Math.min(panLimits.y, state.panY));
-  panXRange.value = state.panX;
-  panYRange.value = state.panY;
+function updatePanLimitsForSlot(capa, slotW, slotH){
+  if(!capa.img){ capa.panLimits = {x:0, y:0}; return; }
+  const {drawW, drawH} = computeDrawSizeForSlot(capa, slotW, slotH);
+  capa.panLimits.x = Math.max(0, (drawW - slotW) / 2);
+  capa.panLimits.y = Math.max(0, (drawH - slotH) / 2);
+  capa.state.panX = Math.max(-capa.panLimits.x, Math.min(capa.panLimits.x, capa.state.panX));
+  capa.state.panY = Math.max(-capa.panLimits.y, Math.min(capa.panLimits.y, capa.state.panY));
 }
+
+function updateSlidersForActiveSlot(){
+  const capa = capas[activeSlot];
+  if(!capa || !canvas.width) return;
+  const rects = getSlotRects(canvas.width, canvas.height, cantidadFotos);
+  const rect = rects[activeSlot];
+  updatePanLimitsForSlot(capa, rect.w, rect.h);
+  zoomRange.value = Math.round(capa.state.zoom * 100);
+  panXRange.min = -Math.round(capa.panLimits.x);
+  panXRange.max = Math.round(capa.panLimits.x);
+  panYRange.min = -Math.round(capa.panLimits.y);
+  panYRange.max = Math.round(capa.panLimits.y);
+  panXRange.value = Math.round(capa.state.panX);
+  panYRange.value = Math.round(capa.state.panY);
+}
+
+function actualizarSizeHint(){
+  const cargadas = capas.filter(c => c.img).length;
+  if(cantidadFotos === 1){
+    sizeHint.textContent = cargadas === 1 ? 'Foto cargada ✓' : 'Subí tu foto para continuar (mínimo 960×1080px recomendado).';
+  } else {
+    sizeHint.textContent = `Fotos cargadas: ${cargadas}/${cantidadFotos}` + (cargadas === cantidadFotos ? ' ✓' : '');
+  }
+  sizeHint.classList.toggle('warn', cargadas < cantidadFotos);
+}
+
+function actualizarSendBtnEstado(){
+  sendBtn.disabled = !(currentModel && capas.length > 0 && capas.every(c => c.img));
+}
+
+// ---- Selector de cantidad de fotos (collage) ----
+collageButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const n = parseInt(btn.dataset.n, 10);
+    if(n === cantidadFotos) return;
+    const hayFotos = capas.some(c => c.img);
+    if(hayFotos && !confirm('Si cambiás la cantidad de fotos vas a perder las que ya subiste para este diseño. ¿Continuar?')){
+      return;
+    }
+    collageButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    inicializarCapas(n);
+    registrarProgreso('cantidadFotosElegida', n);
+  });
+});
+
+function renderSlotsUI(){
+  slotsContainer.style.gridTemplateColumns = cantidadFotos === 1 ? '1fr' : (cantidadFotos === 3 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)');
+  slotsContainer.innerHTML = '';
+  capas.forEach((capa, i) => {
+    const tile = document.createElement('div');
+    tile.className = 'slot-tile' + (i === activeSlot ? ' active' : '') + (capa.img ? ' filled' : '');
+
+    if(capa.img){
+      const img = document.createElement('img');
+      img.src = capa.img.src;
+      tile.appendChild(img);
+      const replaceBtn = document.createElement('button');
+      replaceBtn.type = 'button';
+      replaceBtn.className = 'slot-replace';
+      replaceBtn.title = 'Cambiar esta foto';
+      replaceBtn.textContent = '↺';
+      replaceBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        abrirSelectorDeArchivo(i);
+      });
+      tile.appendChild(replaceBtn);
+    } else {
+      const plus = document.createElement('div');
+      plus.className = 'slot-plus';
+      plus.textContent = '+';
+      tile.appendChild(plus);
+    }
+
+    if(cantidadFotos > 1){
+      const label = document.createElement('div');
+      label.className = 'slot-label';
+      label.textContent = `Foto ${i + 1}`;
+      tile.appendChild(label);
+    }
+
+    tile.addEventListener('click', () => {
+      if(capa.img){
+        activeSlot = i;
+        renderSlotsUI();
+        updateSlidersForActiveSlot();
+        render();
+      } else {
+        abrirSelectorDeArchivo(i);
+      }
+    });
+
+    slotsContainer.appendChild(tile);
+  });
+}
+
+function abrirSelectorDeArchivo(i){
+  slotFileTarget = i;
+  fileInput.click();
+}
+
+inicializarCapas(1);
 
 // ---- Poblar select de modelos ----
 Object.keys(MOCKUP_DATA).forEach(key => {
@@ -861,6 +1048,7 @@ Object.keys(MOCKUP_DATA).forEach(key => {
 modelSelect.addEventListener('change', () => {
   currentModel = modelSelect.value;
   loadMockup(currentModel);
+  actualizarSendBtnEstado();
   registrarProgreso('modeloElegido', MODEL_LABELS[currentModel] || currentModel);
 });
 
@@ -885,7 +1073,11 @@ function loadMockup(modelKey){
     canvas.style.display = 'block';
     previewEmpty.style.display = 'none';
     debugLog('Canvas configurado: ' + data.width + 'x' + data.height + '. Renderizando...');
-    if(userImg){ updatePanLimits(); }
+    const rects = getSlotRects(canvas.width, canvas.height, cantidadFotos);
+    capas.forEach((capa, i) => {
+      if(capa.img) updatePanLimitsForSlot(capa, rects[i].w, rects[i].h);
+    });
+    updateSlidersForActiveSlot();
     render();
     debugLog('Render completado.');
   };
@@ -908,55 +1100,45 @@ function loadMockup(modelKey){
   clipImg.src = data.clip_src;
 }
 
-// ---- Upload de imagen ----
-uploadZone.addEventListener('click', () => fileInput.click());
-
-uploadZone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  uploadZone.classList.add('dragover');
-});
-uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-uploadZone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  uploadZone.classList.remove('dragover');
-  if(e.dataTransfer.files && e.dataTransfer.files[0]){
-    handleFile(e.dataTransfer.files[0]);
-  }
-});
-
+// ---- Upload de imagen (por slot del collage) ----
 fileInput.addEventListener('change', (e) => {
-  if(e.target.files && e.target.files[0]){
-    handleFile(e.target.files[0]);
+  if(e.target.files && e.target.files[0] && slotFileTarget !== null){
+    handleFile(e.target.files[0], slotFileTarget);
   }
+  fileInput.value = ''; // permite volver a elegir el mismo archivo si hace falta
 });
 
-function handleFile(file){
-  debugLog('handleFile llamado. Tipo: ' + file.type + ' Tamaño: ' + file.size);
+function handleFile(file, slotIndex){
+  debugLog('handleFile llamado. Slot: ' + slotIndex + ' Tipo: ' + file.type + ' Tamaño: ' + file.size);
   if(!file.type.startsWith('image/')) { debugLog('ERROR: tipo de archivo no es imagen'); return; }
   const reader = new FileReader();
   reader.onerror = () => debugLog('ERROR: FileReader fallo al leer el archivo');
   reader.onload = (e) => {
     debugLog('Archivo leido por FileReader, creando Image()...');
-    userImg = new Image();
-    userImg.onerror = () => debugLog('ERROR: la imagen del usuario no pudo decodificarse');
-    userImg.onload = () => {
-      debugLog('Foto del usuario cargada: ' + userImg.naturalWidth + 'x' + userImg.naturalHeight);
-      userImgNaturalSize = {w: userImg.naturalWidth, h: userImg.naturalHeight};
-      checkImageSize();
-      state = { zoom: 1, panX: 0, panY: 0 };
-      zoomRange.value = 100;
-      updatePanLimits();
+    const img = new Image();
+    img.onerror = () => debugLog('ERROR: la imagen del usuario no pudo decodificarse');
+    img.onload = () => {
+      debugLog('Foto del usuario cargada: ' + img.naturalWidth + 'x' + img.naturalHeight);
+      const capa = capas[slotIndex];
+      capa.img = img;
+      capa.naturalSize = {w: img.naturalWidth, h: img.naturalHeight};
+      capa.state = {zoom: 1, panX: 0, panY: 0};
+      activeSlot = slotIndex;
+
+      actualizarSizeHint();
       controls.classList.add('active');
       canvas.style.display = 'block';
       previewEmpty.style.display = 'none';
-      sendBtn.disabled = !currentModel;
+      renderSlotsUI();
+      updateSlidersForActiveSlot();
+      actualizarSendBtnEstado();
       debugLog('currentModel actual: ' + currentModel + ' | mockupImg listo: ' + (!!mockupImg) + ' | clipImg listo: ' + (!!clipImg));
       showDragHint();
       render();
       debugLog('Render llamado desde handleFile.');
       registrarProgreso('subioFoto', true);
     };
-    userImg.src = e.target.result;
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -968,36 +1150,44 @@ function showDragHint(){
   showDragHint._t = setTimeout(() => dragHint.classList.add('fade'), 2500);
 }
 
-function checkImageSize(){
-  const minW = 960, minH = 1080;
-  if(userImgNaturalSize.w < minW || userImgNaturalSize.h < minH){
-    sizeHint.textContent = `⚠ Tu imagen es de ${userImgNaturalSize.w}x${userImgNaturalSize.h}px. Recomendamos mínimo ${minW}x${minH}px para que la impresión salga nítida.`;
-    sizeHint.classList.add('warn');
-  } else {
-    sizeHint.textContent = `Imagen cargada: ${userImgNaturalSize.w}x${userImgNaturalSize.h}px ✓`;
-    sizeHint.classList.remove('warn');
-  }
-}
-
-// ---- Controles de zoom/pan ----
+// ---- Controles de zoom/pan (sobre la capa/foto activa) ----
 zoomRange.addEventListener('input', () => {
-  state.zoom = zoomRange.value / 100;
-  updatePanLimits();
+  const capa = capas[activeSlot];
+  if(!capa || !capa.img) return;
+  capa.state.zoom = zoomRange.value / 100;
+  const rects = getSlotRects(canvas.width, canvas.height, cantidadFotos);
+  updatePanLimitsForSlot(capa, rects[activeSlot].w, rects[activeSlot].h);
+  updateSlidersForActiveSlot();
   render();
 });
 panXRange.addEventListener('input', () => {
-  state.panX = parseInt(panXRange.value);
+  const capa = capas[activeSlot];
+  if(!capa || !capa.img) return;
+  capa.state.panX = parseInt(panXRange.value);
   render();
 });
 panYRange.addEventListener('input', () => {
-  state.panY = parseInt(panYRange.value);
+  const capa = capas[activeSlot];
+  if(!capa || !capa.img) return;
+  capa.state.panY = parseInt(panYRange.value);
   render();
 });
+customerName.addEventListener('blur', () => {
+  if(customerName.value.trim()) registrarProgreso('nombre', customerName.value.trim());
+});
+customerEmail.addEventListener('blur', () => {
+  if(customerEmail.value.trim()) registrarProgreso('email', customerEmail.value.trim());
+});
+customerPhone.addEventListener('blur', () => {
+  if(customerPhone.value.trim()) registrarProgreso('telefono', customerPhone.value.trim());
+});
+
 centerBtn.addEventListener('click', () => {
-  state.panX = 0;
-  state.panY = 0;
-  panXRange.value = 0;
-  panYRange.value = 0;
+  const capa = capas[activeSlot];
+  if(!capa || !capa.img) return;
+  capa.state.panX = 0;
+  capa.state.panY = 0;
+  updateSlidersForActiveSlot();
   render();
 });
 
@@ -1019,34 +1209,65 @@ function getPointerDistance(){
   return Math.sqrt(dx*dx + dy*dy);
 }
 
+function getCanvasCoordsFromEvent(e){
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+}
+
+function slotIndexInCoords(x, y){
+  const rects = getSlotRects(canvas.width, canvas.height, cantidadFotos);
+  for(let i = 0; i < rects.length; i++){
+    const r = rects[i];
+    if(x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return i;
+  }
+  return -1;
+}
+
 canvas.addEventListener('pointerdown', (e) => {
-  if(!userImg) return;
+  if(!capas.some(c => c.img)) return;
   activePointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
+
+  if(activePointers.size === 1){
+    // Con 1 dedo: si toca una foto distinta de la activa, la seleccionamos
+    const coords = getCanvasCoordsFromEvent(e);
+    const idx = slotIndexInCoords(coords.x, coords.y);
+    if(idx !== -1 && capas[idx] && capas[idx].img && idx !== activeSlot){
+      activeSlot = idx;
+      renderSlotsUI();
+      updateSlidersForActiveSlot();
+      render();
+    }
+  }
+
+  const capa = capas[activeSlot];
 
   if(activePointers.size === 2){
     // Empieza un gesto de pinch: dejamos de arrastrar con 1 dedo
     dragging = false;
     pinchStartDist = getPointerDistance();
-    pinchStartZoom = state.zoom;
-  } else if(activePointers.size === 1){
+    pinchStartZoom = capa ? capa.state.zoom : 1;
+  } else if(activePointers.size === 1 && capa && capa.img){
     dragging = true;
     dragStart = {x: e.clientX, y: e.clientY};
-    panStart = {x: state.panX, y: state.panY};
+    panStart = {x: capa.state.panX, y: capa.state.panY};
     dragHint.classList.add('fade');
   }
 });
 
 window.addEventListener('pointermove', (e) => {
+  const capa = capas[activeSlot];
+
   if(!activePointers.has(e.pointerId)) {
-    if(dragging){
+    if(dragging && capa){
       // Compatibilidad: mouse drag (sin registro previo en activePointers)
       const scaleFactor = canvas.width / canvas.getBoundingClientRect().width;
       const dx = (e.clientX - dragStart.x) * scaleFactor;
       const dy = (e.clientY - dragStart.y) * scaleFactor;
-      state.panX = Math.max(-panLimits.x, Math.min(panLimits.x, panStart.x + dx));
-      state.panY = Math.max(-panLimits.y, Math.min(panLimits.y, panStart.y + dy));
-      panXRange.value = Math.round(state.panX);
-      panYRange.value = Math.round(state.panY);
+      capa.state.panX = Math.max(-capa.panLimits.x, Math.min(capa.panLimits.x, panStart.x + dx));
+      capa.state.panY = Math.max(-capa.panLimits.y, Math.min(capa.panLimits.y, panStart.y + dy));
+      updateSlidersForActiveSlot();
       render();
     }
     return;
@@ -1054,7 +1275,7 @@ window.addEventListener('pointermove', (e) => {
 
   activePointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
 
-  if(activePointers.size === 2){
+  if(activePointers.size === 2 && capa){
     // Gesto de pinch activo: traducimos el cambio de distancia entre
     // los dos dedos a un cambio de zoom relativo al zoom inicial del gesto.
     const newDist = getPointerDistance();
@@ -1062,33 +1283,34 @@ window.addEventListener('pointermove', (e) => {
       const ratio = newDist / pinchStartDist;
       let newZoom = pinchStartZoom * ratio;
       newZoom = Math.max(1, Math.min(4, newZoom)); // mismo rango que el slider (100%-400%)
-      state.zoom = newZoom;
-      zoomRange.value = Math.round(newZoom * 100);
-      updatePanLimits();
+      capa.state.zoom = newZoom;
+      const rects = getSlotRects(canvas.width, canvas.height, cantidadFotos);
+      updatePanLimitsForSlot(capa, rects[activeSlot].w, rects[activeSlot].h);
+      updateSlidersForActiveSlot();
       render();
     }
-  } else if(activePointers.size === 1 && dragging){
+  } else if(activePointers.size === 1 && dragging && capa){
     const scaleFactor = canvas.width / canvas.getBoundingClientRect().width;
     const dx = (e.clientX - dragStart.x) * scaleFactor;
     const dy = (e.clientY - dragStart.y) * scaleFactor;
-    state.panX = Math.max(-panLimits.x, Math.min(panLimits.x, panStart.x + dx));
-    state.panY = Math.max(-panLimits.y, Math.min(panLimits.y, panStart.y + dy));
-    panXRange.value = Math.round(state.panX);
-    panYRange.value = Math.round(state.panY);
+    capa.state.panX = Math.max(-capa.panLimits.x, Math.min(capa.panLimits.x, panStart.x + dx));
+    capa.state.panY = Math.max(-capa.panLimits.y, Math.min(capa.panLimits.y, panStart.y + dy));
+    updateSlidersForActiveSlot();
     render();
   }
 });
 
 function releasePointer(e){
   activePointers.delete(e.pointerId);
+  const capa = capas[activeSlot];
   if(activePointers.size === 0){
     dragging = false;
-  } else if(activePointers.size === 1){
+  } else if(activePointers.size === 1 && capa && capa.img){
     // Quedo un solo dedo: retomamos drag normal desde la posicion actual
     const remaining = [...activePointers.values()][0];
     dragging = true;
     dragStart = {x: remaining.x, y: remaining.y};
-    panStart = {x: state.panX, y: state.panY};
+    panStart = {x: capa.state.panX, y: capa.state.panY};
   }
 }
 window.addEventListener('pointerup', releasePointer);
@@ -1097,7 +1319,7 @@ window.addEventListener('pointercancel', releasePointer);
 // Evita que el navegador interprete el pinch como zoom de la pagina entera
 canvas.style.touchAction = 'none';
 
-// Canvas offscreen reutilizable para el recorte (clip) de la foto del usuario
+// Canvas offscreen reutilizable para el recorte (clip) del collage
 const clipCanvas = document.createElement('canvas');
 const clipCtx = clipCanvas.getContext('2d');
 
@@ -1106,30 +1328,50 @@ function render(){
   if(!mockupImg) { debugLog('render: abortado, no hay mockupImg'); return; }
   ctx.clearRect(0,0,canvas.width, canvas.height);
 
-  if(userImg && clipImg){
+  if(clipImg){
     const cw = canvas.width, ch = canvas.height;
-    const {drawW, drawH} = computeDrawSize(state.zoom);
-    const dx = (cw - drawW)/2 + state.panX;
-    const dy = (ch - drawH)/2 + state.panY;
+    const rects = getSlotRects(cw, ch, cantidadFotos);
 
-    // 1) Dibujamos la foto del usuario en un canvas aparte, del mismo
-    //    tamaño que el mockup.
     clipCanvas.width = cw;
     clipCanvas.height = ch;
     clipCtx.clearRect(0,0,cw,ch);
-    clipCtx.drawImage(userImg, dx, dy, drawW, drawH);
 
-    // 2) Recortamos ese resultado a la silueta EXACTA de la funda (esquinas
-    //    redondeadas reales), usando destination-in: solo queda visible lo
-    //    que cae dentro del area blanca de la mascara de clip.
+    // Fondo blanco: se ve como una línea fina de collage entre fotos,
+    // y como espacio en blanco en los sectores que todavía no se llenaron.
+    clipCtx.fillStyle = '#ffffff';
+    clipCtx.fillRect(0,0,cw,ch);
+
+    capas.forEach((capa, i) => {
+      if(!capa.img) return;
+      const rect = rects[i];
+      const {drawW, drawH} = computeDrawSizeForSlot(capa, rect.w, rect.h);
+      const dx = rect.x + (rect.w - drawW) / 2 + capa.state.panX;
+      const dy = rect.y + (rect.h - drawH) / 2 + capa.state.panY;
+
+      clipCtx.save();
+      clipCtx.beginPath();
+      clipCtx.rect(rect.x, rect.y, rect.w, rect.h);
+      clipCtx.clip();
+      clipCtx.drawImage(capa.img, dx, dy, drawW, drawH);
+      clipCtx.restore();
+
+      // Resaltamos sutilmente la foto seleccionada cuando hay más de una
+      if(cantidadFotos > 1 && i === activeSlot){
+        clipCtx.strokeStyle = 'rgba(192,38,211,0.9)';
+        clipCtx.lineWidth = Math.max(2, cw * 0.004);
+        clipCtx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+      }
+    });
+
+    // Recortamos todo el collage a la silueta EXACTA de la funda (esquinas
+    // redondeadas reales), usando destination-in.
     clipCtx.globalCompositeOperation = 'destination-in';
     clipCtx.drawImage(clipImg, 0, 0, cw, ch);
     clipCtx.globalCompositeOperation = 'source-over';
 
-    // 3) Pegamos el resultado ya recortado en el canvas principal.
     ctx.drawImage(clipCanvas, 0, 0);
   } else {
-    debugLog('render: solo mockup, falta userImg=' + (!!userImg) + ' o clipImg=' + (!!clipImg));
+    debugLog('render: falta clipImg');
   }
 
   // Mockup (borde + zona de camara en negro) siempre arriba
@@ -1169,32 +1411,35 @@ function renderPrintFile(){
   printCanvas.width = printW;
   printCanvas.height = printH;
   const pctx = printCanvas.getContext('2d');
+  pctx.imageSmoothingEnabled = true;
+  pctx.imageSmoothingQuality = 'high';
 
-  // Mismo encuadre que el preview (mismo zoom/pan), pero a resolucion de impresion,
-  // y SIN dibujar el mockup (sin marco negro, sin hueco de camara).
-  const imgRatio = userImgNaturalSize.w / userImgNaturalSize.h;
-  const canvasRatio = printW / printH;
+  // Mismo fondo blanco que en el preview, para que las líneas del collage
+  // (y cualquier sector vacío) queden consistentes en la impresión.
+  pctx.fillStyle = '#ffffff';
+  pctx.fillRect(0, 0, printW, printH);
 
-  let drawW, drawH;
-  if(imgRatio > canvasRatio){
-    drawH = printH * state.zoom;
-    drawW = drawH * imgRatio;
-  } else {
-    drawW = printW * state.zoom;
-    drawH = drawW / imgRatio;
-  }
-
-  // Escalamos el pan proporcionalmente, porque el pan se definio en
-  // coordenadas del canvas de preview (canvas.width/height), no de impresion.
+  // Mismo encuadre que el preview (mismo zoom/pan por foto), pero a
+  // resolucion de impresion, y SIN dibujar el mockup (sin marco negro,
+  // sin hueco de camara).
+  const rects = getSlotRects(printW, printH, cantidadFotos);
   const scalePanX = printW / canvas.width;
   const scalePanY = printH / canvas.height;
 
-  const dx = (printW - drawW)/2 + state.panX * scalePanX;
-  const dy = (printH - drawH)/2 + state.panY * scalePanY;
+  capas.forEach((capa, i) => {
+    if(!capa.img) return;
+    const rect = rects[i];
+    const {drawW, drawH} = computeDrawSizeForSlot(capa, rect.w, rect.h);
+    const dx = rect.x + (rect.w - drawW) / 2 + capa.state.panX * scalePanX;
+    const dy = rect.y + (rect.h - drawH) / 2 + capa.state.panY * scalePanY;
 
-  pctx.imageSmoothingEnabled = true;
-  pctx.imageSmoothingQuality = 'high';
-  pctx.drawImage(userImg, dx, dy, drawW, drawH);
+    pctx.save();
+    pctx.beginPath();
+    pctx.rect(rect.x, rect.y, rect.w, rect.h);
+    pctx.clip();
+    pctx.drawImage(capa.img, dx, dy, drawW, drawH);
+    pctx.restore();
+  });
 
   return printCanvas.toDataURL('image/png', 1.0);
 }
@@ -1280,7 +1525,7 @@ confirmGoBtn.addEventListener('click', () => {
 
 // ---- Envio del pedido ----
 sendBtn.addEventListener('click', async () => {
-  if(!currentModel || !userImg) return;
+  if(!currentModel || !capas.every(c => c.img)) return;
 
   if(!CLOUDINARY_UPLOAD_PRESET){
     debugLog('ERROR: falta configurar CLOUDINARY_UPLOAD_PRESET en el codigo.');
@@ -1335,7 +1580,8 @@ sendBtn.addEventListener('click', async () => {
       email: email,
       telefono: phone,
       modelo: modelLabel,
-      imageUrl: imageUrl
+      imageUrl: imageUrl,
+      cantidadFotos: cantidadFotos
     });
 
     // Armamos el texto que el cliente va a pegar en "Notas del pedido"
