@@ -192,7 +192,7 @@
 <!-- ============ MODAL NUEVO ENVÍO ============ -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-box">
-    <h3 class="display">Nuevo envío</h3>
+    <h3 class="display" id="modalTitle">Nuevo envío</h3>
 
     <div class="form-row">
       <div class="form-group">
@@ -211,7 +211,7 @@
         <input type="number" id="fEnvioImpuestos" placeholder="0" step="0.01">
       </div>
       <div class="form-group">
-        <label>Flete pagado (ARS, total del envío)</label>
+        <label>Flete pagado (USD, total del envío)</label>
         <input type="number" id="fEnvioFlete" placeholder="0" step="0.01">
       </div>
     </div>
@@ -361,8 +361,12 @@ function leerProductosDelModal(){
    MODAL: abrir / cerrar / guardar
    ==================================================== */
 const modalOverlay = document.getElementById('modalOverlay');
+let editingEnvioId = null;
 
-function abrirModal(){
+function abrirModalNuevo(){
+  editingEnvioId = null;
+  document.getElementById('modalTitle').textContent = 'Nuevo envío';
+  document.getElementById('modalSaveBtn').textContent = 'Guardar envío';
   document.getElementById('fEnvioFecha').value = new Date().toISOString().slice(0,10);
   document.getElementById('fEnvioCodigo').value = '';
   document.getElementById('fEnvioImpuestos').value = '';
@@ -372,9 +376,29 @@ function abrirModal(){
   agregarFilaProducto();
   modalOverlay.classList.add('show');
 }
-function cerrarModal(){ modalOverlay.classList.remove('show'); }
 
-document.getElementById('nuevoEnvioBtn').addEventListener('click', abrirModal);
+function abrirModalEditar(envio){
+  editingEnvioId = envio.id;
+  document.getElementById('modalTitle').textContent = 'Editar envío';
+  document.getElementById('modalSaveBtn').textContent = 'Guardar cambios';
+  document.getElementById('fEnvioFecha').value = envio.fecha || '';
+  document.getElementById('fEnvioCodigo').value = envio.codigo || '';
+  document.getElementById('fEnvioImpuestos').value = envio.impuestosARS || '';
+  // Compatibilidad: envíos viejos tenían el flete en ARS directo.
+  const fleteUSDMostrar = envio.fleteUSD !== undefined
+    ? envio.fleteUSD
+    : (envio.fleteARS && envio.dolarAlPago ? (envio.fleteARS / envio.dolarAlPago).toFixed(2) : '');
+  document.getElementById('fEnvioFlete').value = fleteUSDMostrar;
+  document.getElementById('fEnvioDolar').value = envio.dolarAlPago || '';
+  productosList.innerHTML = '';
+  (envio.productos || []).forEach(p => agregarFilaProducto(p));
+  if((envio.productos || []).length === 0) agregarFilaProducto();
+  modalOverlay.classList.add('show');
+}
+
+function cerrarModal(){ modalOverlay.classList.remove('show'); editingEnvioId = null; }
+
+document.getElementById('nuevoEnvioBtn').addEventListener('click', abrirModalNuevo);
 document.getElementById('modalCancelBtn').addEventListener('click', cerrarModal);
 modalOverlay.addEventListener('click', (e) => { if(e.target === modalOverlay) cerrarModal(); });
 
@@ -382,7 +406,7 @@ document.getElementById('modalSaveBtn').addEventListener('click', async () => {
   const fecha = document.getElementById('fEnvioFecha').value;
   const codigo = document.getElementById('fEnvioCodigo').value.trim();
   const impuestosARS = parseFloat(document.getElementById('fEnvioImpuestos').value) || 0;
-  const fleteARS = parseFloat(document.getElementById('fEnvioFlete').value) || 0;
+  const fleteUSD = parseFloat(document.getElementById('fEnvioFlete').value) || 0;
   const dolarAlPago = parseFloat(document.getElementById('fEnvioDolar').value) || 0;
   const productos = leerProductosDelModal();
 
@@ -391,16 +415,22 @@ document.getElementById('modalSaveBtn').addEventListener('click', async () => {
     return;
   }
 
+  const datos = {
+    fecha,
+    codigo,
+    impuestosARS,
+    fleteUSD,
+    dolarAlPago,
+    productos
+  };
+
   try {
-    await db.collection(COLLECTION).add({
-      fecha,
-      codigo,
-      impuestosARS,
-      fleteARS,
-      dolarAlPago,
-      productos,
-      creadoEn: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    if(editingEnvioId){
+      await db.collection(COLLECTION).doc(editingEnvioId).update(datos);
+    } else {
+      datos.creadoEn = firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection(COLLECTION).add(datos);
+    }
     cerrarModal();
   } catch(err){
     alert('No se pudo guardar: ' + err.message);
@@ -420,6 +450,17 @@ function calcularEnvio(envio){
   const valorTotalUSD = envio.productos.reduce((acc, p) => acc + (p.precioUnitarioUSD * p.cantidad), 0);
   const pesoTotalKg = envio.productos.reduce((acc, p) => acc + (p.pesoUnitarioKg * p.cantidad), 0);
 
+  // Flete: ahora se carga en USD y se convierte. Los envíos viejos que
+  // tenían "fleteARS" cargado directo en pesos siguen funcionando igual.
+  let fleteARS_hist, fleteARS_hoy;
+  if(envio.fleteUSD !== undefined && envio.fleteUSD !== null){
+    fleteARS_hist = envio.fleteUSD * envio.dolarAlPago;
+    fleteARS_hoy = dolarHoy ? envio.fleteUSD * dolarHoy : null;
+  } else {
+    fleteARS_hist = envio.fleteARS || 0;
+    fleteARS_hoy = envio.fleteARS || 0;
+  }
+
   const productosCalc = envio.productos.map(p => {
     const valorUSD = p.precioUnitarioUSD * p.cantidad;
     const pesoTotal = p.pesoUnitarioKg * p.cantidad;
@@ -427,25 +468,28 @@ function calcularEnvio(envio){
     const propPeso = pesoTotalKg > 0 ? pesoTotal / pesoTotalKg : (1 / envio.productos.length);
 
     const impuestosAsignados = envio.impuestosARS * propValor;
-    const fleteAsignado = envio.fleteARS * propPeso;
+    const fleteAsignado_hist = fleteARS_hist * propPeso;
+    const fleteAsignado_hoy = fleteARS_hoy !== null ? fleteARS_hoy * propPeso : null;
 
     const costoProductoARS_hist = valorUSD * envio.dolarAlPago;
     const costoProductoARS_hoy = dolarHoy ? valorUSD * dolarHoy : null;
 
-    const costoTotalARS_hist = costoProductoARS_hist + impuestosAsignados + fleteAsignado;
-    const costoTotalARS_hoy = costoProductoARS_hoy !== null ? costoProductoARS_hoy + impuestosAsignados + fleteAsignado : null;
+    const costoTotalARS_hist = costoProductoARS_hist + impuestosAsignados + fleteAsignado_hist;
+    const costoTotalARS_hoy = (costoProductoARS_hoy !== null && fleteAsignado_hoy !== null)
+      ? costoProductoARS_hoy + impuestosAsignados + fleteAsignado_hoy
+      : null;
 
     return {
       ...p,
       valorUSD, pesoTotal,
-      impuestosAsignados, fleteAsignado,
+      impuestosAsignados, fleteAsignado: fleteAsignado_hist,
       costoUnitarioARS_hist: costoTotalARS_hist / p.cantidad,
       costoUnitarioARS_hoy: costoTotalARS_hoy !== null ? costoTotalARS_hoy / p.cantidad : null,
       costoTotalARS_hist
     };
   });
 
-  return { valorTotalUSD, pesoTotalKg, productosCalc };
+  return { valorTotalUSD, pesoTotalKg, productosCalc, fleteARS_hist };
 }
 
 function fmtARS(n){
@@ -542,9 +586,12 @@ function renderEnvios(){
           <tbody>${filasProductos}</tbody>
         </table>
         <div style="margin-top:10px; font-size:11.5px; color:var(--gray);">
-          Dólar al pagar: $${envio.dolarAlPago.toLocaleString('es-AR')} · Valor total productos: US$ ${valorTotalUSD.toLocaleString('es-AR')} · Peso total: ${pesoTotalKg.toLocaleString('es-AR')} kg
+          Dólar al pagar: $${envio.dolarAlPago.toLocaleString('es-AR')} · Valor total productos: US$ ${valorTotalUSD.toLocaleString('es-AR')} · Flete: US$ ${(envio.fleteUSD ?? 0).toLocaleString('es-AR')} · Peso total: ${pesoTotalKg.toLocaleString('es-AR')} kg
         </div>
-        <button class="delete-envio" data-id="${envio.id}">🗑 Eliminar este envío</button>
+        <div style="display:flex; gap:14px; margin-top:6px;">
+          <button class="delete-envio btn-editar-envio" data-id="${envio.id}">✏️ Editar este envío</button>
+          <button class="delete-envio btn-eliminar-envio" data-id="${envio.id}">🗑 Eliminar este envío</button>
+        </div>
       </div>
     `;
 
@@ -555,7 +602,12 @@ function renderEnvios(){
       body.classList.toggle('open');
     });
 
-    card.querySelector('.delete-envio').addEventListener('click', async (e) => {
+    card.querySelector('.btn-editar-envio').addEventListener('click', (e) => {
+      e.stopPropagation();
+      abrirModalEditar(envio);
+    });
+
+    card.querySelector('.btn-eliminar-envio').addEventListener('click', async (e) => {
       e.stopPropagation();
       if(confirm('¿Eliminar este envío? No se puede deshacer.')){
         await db.collection(COLLECTION).doc(envio.id).delete();
