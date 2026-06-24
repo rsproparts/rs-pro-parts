@@ -112,6 +112,14 @@
   .resumen-detail-row td{ padding:0 !important; background:rgba(0,0,0,0.15); }
   .resumen-detail-row table{ margin:0; }
   .resumen-detail-row th, .resumen-detail-row td{ padding:8px 16px; font-size:12px; }
+  .warn-chip{
+    display:inline-flex; align-items:center; gap:4px;
+    background:rgba(251,191,36,0.15); color:var(--yellow);
+    padding:3px 10px; border-radius:20px; font-size:10.5px; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.4px; white-space:nowrap;
+  }
+  .envio-productos-nombres{ font-size:13px; color:var(--white); font-weight:600; }
+  .envio-productos-nombres .extra{ color:var(--gray); font-weight:400; }
 
   .empty-state{ padding:40px 20px; text-align:center; color:var(--gray); font-size:13.5px; }
 
@@ -544,6 +552,12 @@ function renderEnvios(){
     const totalARS = productosCalc.reduce((a,p) => a + p.costoTotalARS_hist, 0);
     const unidades = productosCalc.reduce((a,p) => a + p.cantidad, 0);
     const dhl = linkDHL(envio.codigo);
+    const faltaImpuestos = !envio.impuestosARS || envio.impuestosARS <= 0;
+
+    const nombresProductos = productosCalc.map(p => p.nombre);
+    const nombresHtml = nombresProductos.length > 1
+      ? `${escapeHtml(nombresProductos[0])} <span class="extra">+${nombresProductos.length - 1} más</span>`
+      : escapeHtml(nombresProductos[0] || '');
 
     const card = document.createElement('div');
     card.className = 'envio-card';
@@ -553,7 +567,7 @@ function renderEnvios(){
         <td>${escapeHtml(p.nombre)}</td>
         <td class="num">${p.cantidad}</td>
         <td class="num">US$ ${p.precioUnitarioUSD.toLocaleString('es-AR')}</td>
-        <td class="num">${fmtARS(p.impuestosAsignados)}</td>
+        <td class="num">${faltaImpuestos ? '<span class="warn-chip">⚠ Sin impuestos</span>' : fmtARS(p.impuestosAsignados)}</td>
         <td class="num">${fmtARS(p.fleteAsignado)}</td>
         <td class="num highlight">${fmtARS(p.costoUnitarioARS_hist)}</td>
         <td class="num">${fmtARS(p.costoUnitarioARS_hoy)}</td>
@@ -564,7 +578,9 @@ function renderEnvios(){
       <div class="envio-head">
         <div class="envio-head-left">
           <span class="envio-fecha">${envio.fecha}</span>
-          <span class="envio-codigo">${dhl ? `<a href="${dhl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📦 ${escapeHtml(envio.codigo)} ↗</a>` : 'Sin código'}</span>
+          <span class="envio-productos-nombres">${nombresHtml}</span>
+          <span class="envio-codigo">${dhl ? `<a href="${dhl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📦 ${escapeHtml(envio.codigo)} ↗</a>` : '<span class="warn-chip">⚠ Falta código</span>'}</span>
+          ${faltaImpuestos ? '<span class="warn-chip">⚠ Falta cargar impuestos</span>' : ''}
         </div>
         <div class="envio-resumen">
           <span>Productos: <strong>${productosCalc.length}</strong></span>
