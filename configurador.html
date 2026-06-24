@@ -907,13 +907,12 @@ function inicializarCapas(n){
   render();
 }
 
-// Divide el área de la funda en N sectores (con un margen blanco entre
-// fotos, como un collage). Grilla de 2 columnas; si la última fila queda
-// con un solo sector (cantidad impar), ese sector ocupa el ancho completo.
+// Divide el área de la funda en N sectores, pegados entre sí (sin
+// separación blanca), como un collage de foto a foto.
 function getSlotRects(width, height, n){
   if(n <= 1) return [{x:0, y:0, w:width, h:height}];
 
-  const gap = Math.max(2, Math.round(Math.min(width, height) * 0.015));
+  const gap = 0;
   const cols = 2;
   const rows = Math.ceil(n / cols);
   const rowH = (height - gap * (rows - 1)) / rows;
