@@ -321,20 +321,36 @@
     margin-top: 6px;
   }
 
-  .collage-options{
-    display:flex; gap:8px; margin-top:14px; margin-bottom:14px;
+  .modo-foto-options{
+    display:flex; gap:8px; margin-top:14px; margin-bottom:12px;
   }
-  .collage-btn{
+  .modo-foto-btn{
     flex:1; background:var(--ink); border:1px solid var(--line); color:var(--gray);
-    padding:10px 8px; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer;
+    padding:12px 8px; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer;
     font-family:inherit;
   }
-  .collage-btn:hover{ border-color:var(--red); color:var(--white); }
-  .collage-btn.active{ background:linear-gradient(135deg, var(--red), var(--orange)); border:none; color:#fff; }
+  .modo-foto-btn:hover{ border-color:var(--red); color:var(--white); }
+  .modo-foto-btn.active{ background:linear-gradient(135deg, var(--red), var(--orange)); border:none; color:#fff; }
+
+  .collage-stepper{
+    display:flex; align-items:center; justify-content:center; gap:16px;
+    margin-bottom:14px; padding:8px; background:var(--ink); border:1px solid var(--line); border-radius:10px;
+  }
+  .stepper-btn{
+    width:32px; height:32px; border-radius:8px;
+    background:var(--panel-2); border:1px solid var(--line); color:var(--white);
+    font-size:18px; font-weight:700; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .stepper-btn:hover{ border-color:var(--red); }
+  .stepper-btn:disabled{ opacity:0.3; cursor:not-allowed; }
+  .stepper-value{ font-size:13px; font-weight:700; min-width:60px; text-align:center; }
 
   .slots-container{
     display:grid; grid-template-columns:1fr; gap:8px;
   }
+  .slots-container.cols-2{ grid-template-columns:repeat(2, 1fr); }
+  .slots-container.cols-3{ grid-template-columns:repeat(3, 1fr); }
   .slot-tile{
     position:relative;
     border:2px dashed var(--line); border-radius:14px;
@@ -596,12 +612,15 @@
       </select>
 
       <span class="step-label" style="margin-top:24px;">02 — Tu imagen</span>
-      <div class="hint" style="margin-top:0; margin-bottom:0;">¿Cuántas fotos querés combinar en tu funda?</div>
-      <div class="collage-options">
-        <button type="button" class="collage-btn active" data-n="1">1 foto</button>
-        <button type="button" class="collage-btn" data-n="2">2 fotos</button>
-        <button type="button" class="collage-btn" data-n="3">3 fotos</button>
-        <button type="button" class="collage-btn" data-n="4">4 fotos</button>
+      <div class="hint" style="margin-top:0; margin-bottom:0;">¿Querés una funda con una sola foto o armar un collage?</div>
+      <div class="modo-foto-options">
+        <button type="button" class="modo-foto-btn active" data-modo="1">📷 Una foto</button>
+        <button type="button" class="modo-foto-btn" data-modo="collage">🧩 Collage (varias fotos)</button>
+      </div>
+      <div class="collage-stepper" id="collageStepper" style="display:none;">
+        <button type="button" class="stepper-btn" id="stepperMenos">−</button>
+        <span class="stepper-value"><span id="stepperValue">2</span> fotos</span>
+        <button type="button" class="stepper-btn" id="stepperMas">+</button>
       </div>
       <div class="slots-container" id="slotsContainer"></div>
       <input type="file" id="fileInput" accept="image/*" style="display:none;">
@@ -846,7 +865,6 @@ if(typeof MOCKUP_DATA !== 'undefined'){
 const modelSelect = document.getElementById('modelSelect');
 const fileInput = document.getElementById('fileInput');
 const slotsContainer = document.getElementById('slotsContainer');
-const collageButtons = document.querySelectorAll('.collage-btn');
 const controls = document.getElementById('controls');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -890,26 +908,31 @@ function inicializarCapas(n){
 }
 
 // Divide el área de la funda en N sectores (con un margen blanco entre
-// fotos, como un collage). Soporta 1, 2, 3 o 4 fotos.
+// fotos, como un collage). Grilla de 2 columnas; si la última fila queda
+// con un solo sector (cantidad impar), ese sector ocupa el ancho completo.
 function getSlotRects(width, height, n){
-  const gap = Math.max(2, Math.round(Math.min(width, height) * 0.015));
-  const half = gap / 2;
   if(n <= 1) return [{x:0, y:0, w:width, h:height}];
-  if(n === 2) return [
-    {x:0, y:0, w:width/2 - half, h:height},
-    {x:width/2 + half, y:0, w:width/2 - half, h:height}
-  ];
-  if(n === 3) return [
-    {x:0, y:0, w:width, h:height/2 - half},
-    {x:0, y:height/2 + half, w:width/2 - half, h:height/2 - half},
-    {x:width/2 + half, y:height/2 + half, w:width/2 - half, h:height/2 - half}
-  ];
-  return [
-    {x:0, y:0, w:width/2 - half, h:height/2 - half},
-    {x:width/2 + half, y:0, w:width/2 - half, h:height/2 - half},
-    {x:0, y:height/2 + half, w:width/2 - half, h:height/2 - half},
-    {x:width/2 + half, y:height/2 + half, w:width/2 - half, h:height/2 - half}
-  ];
+
+  const gap = Math.max(2, Math.round(Math.min(width, height) * 0.015));
+  const cols = 2;
+  const rows = Math.ceil(n / cols);
+  const rowH = (height - gap * (rows - 1)) / rows;
+  const colW = (width - gap) / cols;
+
+  const rects = [];
+  for(let i = 0; i < n; i++){
+    const row = Math.floor(i / cols);
+    const enUltimaFilaImpar = (row === rows - 1) && (n - row * cols === 1);
+    const y = row * (rowH + gap);
+    if(enUltimaFilaImpar){
+      rects.push({x: 0, y, w: width, h: rowH});
+    } else {
+      const col = i % cols;
+      const x = col * (colW + gap);
+      rects.push({x, y, w: colW, h: rowH});
+    }
+  }
+  return rects;
 }
 
 function computeDrawSizeForSlot(capa, slotW, slotH){
@@ -964,24 +987,85 @@ function actualizarSendBtnEstado(){
   sendBtn.disabled = !(currentModel && capas.length > 0 && capas.every(c => c.img));
 }
 
-// ---- Selector de cantidad de fotos (collage) ----
-collageButtons.forEach(btn => {
+// ---- Selector de modo: 1 foto o collage (2 a 6 fotos) ----
+const MIN_FOTOS_COLLAGE = 2;
+const MAX_FOTOS_COLLAGE = 6;
+
+const modoFotoButtons = document.querySelectorAll('.modo-foto-btn');
+const collageStepper = document.getElementById('collageStepper');
+const stepperValue = document.getElementById('stepperValue');
+const stepperMenos = document.getElementById('stepperMenos');
+const stepperMas = document.getElementById('stepperMas');
+
+modoFotoButtons.forEach(btn => {
   btn.addEventListener('click', () => {
-    const n = parseInt(btn.dataset.n, 10);
-    if(n === cantidadFotos) return;
+    const modo = btn.dataset.modo; // "1" o "collage"
+    const yaEnEseModo = (modo === '1' && cantidadFotos === 1) || (modo === 'collage' && cantidadFotos > 1);
+    if(yaEnEseModo) return;
+
     const hayFotos = capas.some(c => c.img);
-    if(hayFotos && !confirm('Si cambiás la cantidad de fotos vas a perder las que ya subiste para este diseño. ¿Continuar?')){
+    if(hayFotos && !confirm('Si cambiás el modo vas a perder las fotos que ya subiste para este diseño. ¿Continuar?')){
       return;
     }
-    collageButtons.forEach(b => b.classList.remove('active'));
+
+    modoFotoButtons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+
+    const n = modo === '1' ? 1 : MIN_FOTOS_COLLAGE;
+    collageStepper.style.display = modo === 'collage' ? 'flex' : 'none';
+    stepperValue.textContent = n;
+    actualizarBotonesStepper(n);
+
     inicializarCapas(n);
     registrarProgreso('cantidadFotosElegida', n);
   });
 });
 
+stepperMenos.addEventListener('click', () => cambiarCantidadCollage(cantidadFotos - 1));
+stepperMas.addEventListener('click', () => cambiarCantidadCollage(cantidadFotos + 1));
+
+function actualizarBotonesStepper(n){
+  stepperMenos.disabled = n <= MIN_FOTOS_COLLAGE;
+  stepperMas.disabled = n >= MAX_FOTOS_COLLAGE;
+}
+
+function cambiarCantidadCollage(nuevoN){
+  nuevoN = Math.max(MIN_FOTOS_COLLAGE, Math.min(MAX_FOTOS_COLLAGE, nuevoN));
+  if(nuevoN === cantidadFotos) return;
+
+  // Si se achica y alguno de los espacios que se eliminan ya tenía foto, avisamos
+  const seVanAPerderFotos = nuevoN < cantidadFotos && capas.slice(nuevoN).some(c => c.img);
+  if(seVanAPerderFotos && !confirm('Vas a quitar espacios que ya tenían foto cargada. ¿Continuar?')){
+    return;
+  }
+
+  if(nuevoN > cantidadFotos){
+    // Agregamos espacios vacíos al final, sin perder lo que ya había
+    while(capas.length < nuevoN) capas.push(crearCapaVacia());
+  } else {
+    capas = capas.slice(0, nuevoN);
+  }
+  cantidadFotos = nuevoN;
+  if(activeSlot >= cantidadFotos) activeSlot = cantidadFotos - 1;
+
+  stepperValue.textContent = cantidadFotos;
+  actualizarBotonesStepper(cantidadFotos);
+
+  renderSlotsUI();
+  actualizarSizeHint();
+  actualizarSendBtnEstado();
+
+  if(canvas.width){
+    const rects = getSlotRects(canvas.width, canvas.height, cantidadFotos);
+    capas.forEach((capa, i) => { if(capa.img) updatePanLimitsForSlot(capa, rects[i].w, rects[i].h); });
+    updateSlidersForActiveSlot();
+  }
+  render();
+  registrarProgreso('cantidadFotosElegida', cantidadFotos);
+}
+
 function renderSlotsUI(){
-  slotsContainer.style.gridTemplateColumns = cantidadFotos === 1 ? '1fr' : (cantidadFotos === 3 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)');
+  slotsContainer.style.gridTemplateColumns = cantidadFotos === 1 ? '1fr' : 'repeat(2, 1fr)';
   slotsContainer.innerHTML = '';
   capas.forEach((capa, i) => {
     const tile = document.createElement('div');
