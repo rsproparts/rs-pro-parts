@@ -629,6 +629,10 @@ const io = new IntersectionObserver((entries) => {
 revealEls.forEach(el => io.observe(el));
 </script>
 
+<!-- ============ FIREBASE: registro de visitas y leads (panel de control) ============ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <!-- ============ CONFIGURADOR EMBEBIDO: datos y lógica ============ -->
 <script src="mockup-data.js"></script>
 <script>
@@ -663,6 +667,112 @@ function debugLog(msg){
 window.addEventListener('error', (e) => {
   debugLog('ERROR JS: ' + e.message + ' (linea ' + e.lineno + ')');
 });
+
+/* ====================================================
+   TRACKING — Panel de control (Firebase Firestore)
+   ====================================================
+   Registra cada visita al configurador y, si la persona
+   completa el pedido, actualiza ese mismo registro con
+   sus datos de contacto y el diseño. Así el panel admin
+   puede mostrar: visitas totales, cuántos completaron,
+   % de conversión, y la lista de leads con sus datos.
+
+   TODO RAMIRO: completar estos datos con los de tu proyecto
+   NUEVO de Firebase (Firebase Console -> ⚙️ Configuración del
+   proyecto -> "Tus apps" -> ícono Web </> -> Config). Tienen
+   que ser IDÉNTICOS a los que pegues en panel-fundas.html.
+*/
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB9ijMoFzLhgtsWJ6OjV964ZI9EJ1t5HY4",
+  authDomain: "web-fundas.firebaseapp.com",
+  projectId: "web-fundas",
+  storageBucket: "web-fundas.firebasestorage.app",
+  messagingSenderId: "451427162225",
+  appId: "1:451427162225:web:84f2c992e0e542e9a4e3d0"
+};
+
+const TRACKING_COLLECTION = "rsdesign_fundas_sessions";
+
+let trackingDb = null;
+let trackingSessionId = null;
+let trackingEnabled = false;
+
+function initTracking(){
+  try {
+    if(FIREBASE_CONFIG.apiKey.startsWith('TODO_')){
+      debugLog('Tracking desactivado: falta completar FIREBASE_CONFIG.');
+      return;
+    }
+    firebase.initializeApp(FIREBASE_CONFIG);
+    trackingDb = firebase.firestore();
+    trackingEnabled = true;
+
+    // Un sessionId por pestaña/visita (se mantiene si recarga la misma página)
+    trackingSessionId = sessionStorage.getItem('rsdesign_session_id');
+    if(!trackingSessionId){
+      trackingSessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+      sessionStorage.setItem('rsdesign_session_id', trackingSessionId);
+    }
+
+    registrarVisita();
+  } catch(err){
+    debugLog('ERROR inicializando tracking: ' + err.message);
+  }
+}
+
+function registrarVisita(){
+  if(!trackingEnabled) return;
+  const params = new URLSearchParams(window.location.search);
+  trackingDb.collection(TRACKING_COLLECTION).doc(trackingSessionId).set({
+    creadoEn: firebase.firestore.FieldValue.serverTimestamp(),
+    actualizadoEn: firebase.firestore.FieldValue.serverTimestamp(),
+    completado: false,
+    referrer: document.referrer || null,
+    userAgent: navigator.userAgent,
+    paginaUrl: window.location.href,
+    utm_source: params.get('utm_source') || null,
+    utm_medium: params.get('utm_medium') || null,
+    utm_campaign: params.get('utm_campaign') || null,
+  }, { merge: true }).then(() => {
+    debugLog('Visita registrada en el panel: ' + trackingSessionId);
+  }).catch((err) => {
+    debugLog('No se pudo registrar la visita: ' + err.message);
+  });
+}
+
+// Se llama cuando elige un modelo o sube foto, para saber en qué paso se
+// quedó la gente que no termina el pedido.
+function registrarProgreso(campo, valor){
+  if(!trackingEnabled) return;
+  trackingDb.collection(TRACKING_COLLECTION).doc(trackingSessionId).set({
+    actualizadoEn: firebase.firestore.FieldValue.serverTimestamp(),
+    [campo]: valor,
+  }, { merge: true }).catch((err) => {
+    debugLog('No se pudo registrar progreso (' + campo + '): ' + err.message);
+  });
+}
+
+// Se llama cuando el pedido se sube a Cloudinary con éxito: ahí pasa de
+// "visita" a "lead completo" con todos sus datos de contacto.
+function registrarLeadCompleto(datos){
+  if(!trackingEnabled) return Promise.resolve();
+  return trackingDb.collection(TRACKING_COLLECTION).doc(trackingSessionId).set({
+    actualizadoEn: firebase.firestore.FieldValue.serverTimestamp(),
+    completadoEn: firebase.firestore.FieldValue.serverTimestamp(),
+    completado: true,
+    nombre: datos.nombre,
+    email: datos.email,
+    telefono: datos.telefono,
+    modelo: datos.modelo,
+    imageUrl: datos.imageUrl,
+  }, { merge: true }).then(() => {
+    debugLog('Lead completo registrado en el panel.');
+  }).catch((err) => {
+    debugLog('No se pudo registrar el lead completo: ' + err.message);
+  });
+}
+
+initTracking();
 
 debugLog('Script iniciado correctamente.');
 debugLog('MOCKUP_DATA existe: ' + (typeof MOCKUP_DATA !== 'undefined'));
@@ -751,6 +861,7 @@ Object.keys(MOCKUP_DATA).forEach(key => {
 modelSelect.addEventListener('change', () => {
   currentModel = modelSelect.value;
   loadMockup(currentModel);
+  registrarProgreso('modeloElegido', MODEL_LABELS[currentModel] || currentModel);
 });
 
 let loadMockupToken = 0;
@@ -843,6 +954,7 @@ function handleFile(file){
       showDragHint();
       render();
       debugLog('Render llamado desde handleFile.');
+      registrarProgreso('subioFoto', true);
     };
     userImg.src = e.target.result;
   };
@@ -1217,6 +1329,14 @@ sendBtn.addEventListener('click', async () => {
     const imageUrl = await uploadToCloudinary(printDataUrl, modelLabel, name, email, phone);
 
     debugLog('Imagen subida a Cloudinary: ' + imageUrl);
+
+    await registrarLeadCompleto({
+      nombre: name,
+      email: email,
+      telefono: phone,
+      modelo: modelLabel,
+      imageUrl: imageUrl
+    });
 
     // Armamos el texto que el cliente va a pegar en "Notas del pedido"
     let note = `Funda personalizada RS Design — Modelo: ${modelLabel}`;
