@@ -225,12 +225,12 @@
    este panel pueda leer lo que el configurador escribe.
    ==================================================== */
 const FIREBASE_CONFIG = {
-  apiKey: "TODO_API_KEY",
-  authDomain: "TODO_PROJECT.firebaseapp.com",
-  projectId: "TODO_PROJECT_ID",
-  storageBucket: "TODO_PROJECT.appspot.com",
-  messagingSenderId: "TODO_SENDER_ID",
-  appId: "TODO_APP_ID"
+  apiKey: "AIzaSyB9ijMoFzLhgtsWJ6OjV964ZI9EJ1t5HY4",
+  authDomain: "web-fundas.firebaseapp.com",
+  projectId: "web-fundas",
+  storageBucket: "web-fundas.firebasestorage.app",
+  messagingSenderId: "451427162225",
+  appId: "1:451427162225:web:84f2c992e0e542e9a4e3d0"
 };
 
 const TRACKING_COLLECTION = "rsdesign_fundas_sessions";
