@@ -200,10 +200,11 @@
         <thead>
           <tr>
             <th>Fecha</th>
+            <th>Nombre</th>
+            <th>Teléfono</th>
             <th>Modelo elegido</th>
             <th>Subió foto</th>
             <th>Origen</th>
-            <th>Referencia</th>
           </tr>
         </thead>
         <tbody id="pendientesBody"></tbody>
@@ -296,6 +297,28 @@ function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// Convierte un teléfono escrito de cualquier forma (con 0, con 15, con
+// espacios, con o sin +54) en el formato que necesita wa.me para Argentina.
+// Es una conversión heurística: revisá el link antes de mandar si el
+// número te resulta raro.
+function telefonoAWhatsapp(raw){
+  let d = (raw || '').replace(/\D/g, '');
+  if(!d) return null;
+  if(d.startsWith('0')) d = d.substring(1);
+  if(d.startsWith('54') && !d.startsWith('549')){
+    d = '549' + d.substring(2);
+  } else if(!d.startsWith('54')){
+    d = '549' + d;
+  }
+  return d;
+}
+
+function linkWhatsapp(telefono, mensaje){
+  const numero = telefonoAWhatsapp(telefono);
+  if(!numero) return null;
+  return `https://wa.me/${numero}?text=${encodeURIComponent(mensaje || '')}`;
+}
+
 function renderTodo(){
   const completados = allDocs.filter(d => d.completado === true);
   const pendientes = allDocs.filter(d => d.completado !== true);
@@ -333,12 +356,13 @@ function renderLeads(completados){
   empty.style.display = 'none';
 
   filtrados.forEach(d => {
+    const wa = linkWhatsapp(d.telefono, `Hola ${d.nombre || ''}! Te escribimos de RS Design por tu funda personalizada (${d.modelo || ''}) 📱`);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="muted">${fmtFecha(d.completadoEn || d.actualizadoEn)}</td>
       <td>${escapeHtml(d.nombre) || '—'}</td>
       <td>${escapeHtml(d.email) || '—'}</td>
-      <td>${escapeHtml(d.telefono) || '—'}</td>
+      <td>${escapeHtml(d.telefono) || '—'}${wa ? ` <a href="${wa}" target="_blank" rel="noopener" title="Escribir por WhatsApp">💬</a>` : ''}</td>
       <td>${escapeHtml(d.modelo) || '—'}</td>
       <td>${d.imageUrl ? `<a href="${escapeHtml(d.imageUrl)}" target="_blank" rel="noopener">Ver diseño →</a>` : '—'}</td>
     `;
@@ -359,13 +383,15 @@ function renderPendientes(pendientes){
 
   pendientes.forEach(d => {
     const origen = d.utm_source ? `${d.utm_source}${d.utm_campaign ? ' / ' + d.utm_campaign : ''}` : (d.referrer ? 'Tráfico directo/referido' : 'Directo');
+    const wa = linkWhatsapp(d.telefono, `Hola${d.nombre ? ' ' + d.nombre : ''}! Vimos que empezaste a armar tu funda personalizada en RS Design y no llegaste a terminarla 📱 ¿Te ayudamos a completarla?`);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="muted">${fmtFecha(d.creadoEn)}</td>
+      <td>${escapeHtml(d.nombre) || '<span class="muted">—</span>'}</td>
+      <td>${escapeHtml(d.telefono) || '<span class="muted">—</span>'}${wa ? ` <a href="${wa}" target="_blank" rel="noopener" title="Escribir por WhatsApp">💬</a>` : ''}</td>
       <td>${escapeHtml(d.modeloElegido) || '<span class="muted">No eligió</span>'}</td>
       <td>${d.subioFoto ? '✅' : '—'}</td>
-      <td>${escapeHtml(origen)}</td>
-      <td class="muted" style="max-width:280px; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(d.referrer) || '—'}</td>
+      <td class="muted">${escapeHtml(origen)}</td>
     `;
     body.appendChild(tr);
   });
