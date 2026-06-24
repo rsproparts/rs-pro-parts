@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RS Design — Panel de Fundas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #120417;
+    --panel: #1a0a1f;
+    --panel-2: #22082a;
+    --line: #2a1430;
+    --white: #ffffff;
+    --gray: #a3a3a3;
+    --red: #c026d3;
+    --orange: #ec4899;
+    --green: #34d399;
+    --yellow: #fbbf24;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{
+    background: var(--ink); color: var(--white);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+  }
+  .display{ font-family:'Plus Jakarta Sans', sans-serif; font-weight:800; }
+
+  /* ---- Login ---- */
+  #loginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .login-box{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:36px 32px; max-width:360px; width:100%;
+  }
+  .login-box h1{ font-size:20px; margin-bottom:6px; }
+  .login-box p{ font-size:13px; color:var(--gray); margin-bottom:22px; }
+  .login-box input{
+    width:100%; background:var(--ink); border:1px solid var(--line); color:var(--white);
+    padding:13px 14px; border-radius:10px; font-size:14px; margin-bottom:12px; font-family:inherit;
+  }
+  .login-box input:focus{ outline:2px solid var(--red); }
+  .login-box button{
+    width:100%; background:linear-gradient(135deg, var(--red), var(--orange)); color:#fff;
+    border:none; padding:14px; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .login-box button:hover{ filter:brightness(1.1); }
+  .login-error{ color:#f87171; font-size:12.5px; margin-top:10px; min-height:16px; }
+
+  /* ---- App ---- */
+  #app{ display:none; max-width:1180px; margin:0 auto; padding:28px 20px 60px; }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px;
+  }
+  .topbar .mark{ font-size:16px; }
+  .topbar .mark span{ color:var(--red); }
+  .topbar-actions{ display:flex; gap:10px; align-items:center; }
+  .btn-small{
+    background:var(--panel); border:1px solid var(--line); color:var(--white);
+    padding:9px 16px; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;
+  }
+  .btn-small:hover{ border-color:var(--red); }
+  .btn-small.primary{ background:linear-gradient(135deg, var(--red), var(--orange)); border:none; }
+
+  .cards{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:30px;
+  }
+  @media (max-width:780px){ .cards{ grid-template-columns:repeat(2, 1fr); } }
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 20px;
+    position:relative; overflow:hidden;
+  }
+  .card::before{ content:''; position:absolute; top:0; left:0; width:32px; height:3px; background:var(--red); }
+  .card .label{ font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--gray); margin-bottom:8px; }
+  .card .value{ font-size:30px; font-weight:800; font-family:'Plus Jakarta Sans', sans-serif; }
+  .card .sub{ font-size:11.5px; color:var(--gray); margin-top:4px; }
+  .card.green .value{ color:var(--green); }
+  .card.yellow .value{ color:var(--yellow); }
+
+  .section{ margin-bottom:36px; }
+  .section-head{
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px;
+  }
+  .section-head h2{ font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+  .section-head .count{ color:var(--gray); font-size:12.5px; font-weight:400; text-transform:none; letter-spacing:0; }
+
+  .filters{ display:flex; gap:8px; flex-wrap:wrap; }
+  .filters input{
+    background:var(--panel); border:1px solid var(--line); color:var(--white);
+    padding:8px 12px; border-radius:8px; font-size:13px; font-family:inherit; min-width:180px;
+  }
+
+  .table-wrap{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:auto;
+  }
+  table{ width:100%; border-collapse:collapse; font-size:13px; min-width:760px; }
+  th{
+    text-align:left; padding:12px 16px; color:var(--gray); font-weight:600;
+    text-transform:uppercase; font-size:10.5px; letter-spacing:0.6px;
+    border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  td{ padding:12px 16px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:last-child td{ border-bottom:none; }
+  tr:hover td{ background:rgba(192,38,211,0.05); }
+  td.muted{ color:var(--gray); }
+  td a{ color:var(--orange); text-decoration:none; }
+  td a:hover{ text-decoration:underline; }
+  .badge{
+    display:inline-block; padding:3px 9px; border-radius:20px; font-size:10.5px; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.4px;
+  }
+  .badge.completo{ background:rgba(52,211,153,0.15); color:var(--green); }
+  .badge.pendiente{ background:rgba(251,191,36,0.15); color:var(--yellow); }
+
+  .empty-state{ padding:40px 20px; text-align:center; color:var(--gray); font-size:13.5px; }
+  .loading{ padding:40px 20px; text-align:center; color:var(--gray); font-size:13.5px; }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h1 class="display">RS Design</h1>
+    <p>Panel de control · Fundas personalizadas</p>
+    <input type="email" id="loginEmail" placeholder="Email" autocomplete="username">
+    <input type="password" id="loginPassword" placeholder="Contraseña" autocomplete="current-password">
+    <button id="loginBtn">Entrar</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <div class="topbar">
+    <div class="mark display">RS <span>DESIGN</span> · Panel de Fundas</div>
+    <div class="topbar-actions">
+      <button class="btn-small" id="exportBtn">⬇ Exportar CSV</button>
+      <button class="btn-small" id="logoutBtn">Salir</button>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="label">Visitas totales</div>
+      <div class="value" id="statVisitas">—</div>
+      <div class="sub">Personas que entraron a la página</div>
+    </div>
+    <div class="card green">
+      <div class="label">Fundas creadas</div>
+      <div class="value" id="statCompletados">—</div>
+      <div class="sub">Llegaron hasta el final con sus datos</div>
+    </div>
+    <div class="card yellow">
+      <div class="label">Sin completar</div>
+      <div class="value" id="statPendientes">—</div>
+      <div class="sub">Entraron pero no terminaron</div>
+    </div>
+    <div class="card">
+      <div class="label">Tasa de conversión</div>
+      <div class="value" id="statConversion">—</div>
+      <div class="sub">Fundas creadas / visitas totales</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Leads completos <span class="count" id="leadsCount"></span></h2>
+      <div class="filters">
+        <input type="text" id="leadsFilter" placeholder="Buscar por nombre, email o teléfono...">
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>Modelo</th>
+            <th>Diseño</th>
+          </tr>
+        </thead>
+        <tbody id="leadsBody"></tbody>
+      </table>
+      <div class="empty-state" id="leadsEmpty" style="display:none;">Todavía no hay fundas completadas.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Visitas sin completar <span class="count" id="pendientesCount"></span></h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Modelo elegido</th>
+            <th>Subió foto</th>
+            <th>Origen</th>
+            <th>Referencia</th>
+          </tr>
+        </thead>
+        <tbody id="pendientesBody"></tbody>
+      </table>
+      <div class="empty-state" id="pendientesEmpty" style="display:none;">No hay visitas pendientes registradas.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FIREBASE ============ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ====================================================
+   TODO RAMIRO: pegar acá los MISMOS datos de Firebase
+   que pusiste en configurador.html (FIREBASE_CONFIG).
+   Tienen que ser idénticos en los dos archivos para que
+   este panel pueda leer lo que el configurador escribe.
+   ==================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "TODO_API_KEY",
+  authDomain: "TODO_PROJECT.firebaseapp.com",
+  projectId: "TODO_PROJECT_ID",
+  storageBucket: "TODO_PROJECT.appspot.com",
+  messagingSenderId: "TODO_SENDER_ID",
+  appId: "TODO_APP_ID"
+};
+
+const TRACKING_COLLECTION = "rsdesign_fundas_sessions";
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const loginScreen = document.getElementById('loginScreen');
+const appEl = document.getElementById('app');
+const loginEmail = document.getElementById('loginEmail');
+const loginPassword = document.getElementById('loginPassword');
+const loginBtn = document.getElementById('loginBtn');
+const loginError = document.getElementById('loginError');
+const logoutBtn = document.getElementById('logoutBtn');
+const exportBtn = document.getElementById('exportBtn');
+const leadsFilter = document.getElementById('leadsFilter');
+
+let allDocs = [];
+
+loginBtn.addEventListener('click', () => {
+  loginError.textContent = '';
+  auth.signInWithEmailAndPassword(loginEmail.value.trim(), loginPassword.value)
+    .catch((err) => {
+      loginError.textContent = 'No se pudo entrar: revisá el email y la contraseña.';
+      console.error(err);
+    });
+});
+loginPassword.addEventListener('keydown', (e) => { if(e.key === 'Enter') loginBtn.click(); });
+
+logoutBtn.addEventListener('click', () => auth.signOut());
+
+auth.onAuthStateChanged((user) => {
+  if(user){
+    loginScreen.style.display = 'none';
+    appEl.style.display = 'block';
+    suscribirseADatos();
+  } else {
+    loginScreen.style.display = 'flex';
+    appEl.style.display = 'none';
+  }
+});
+
+function suscribirseADatos(){
+  db.collection(TRACKING_COLLECTION).orderBy('creadoEn', 'desc').onSnapshot((snapshot) => {
+    allDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTodo();
+  }, (err) => {
+    console.error('Error leyendo datos:', err);
+    document.getElementById('leadsEmpty').style.display = 'block';
+    document.getElementById('leadsEmpty').textContent = 'Error leyendo los datos: ' + err.message;
+  });
+}
+
+function fmtFecha(ts){
+  if(!ts || !ts.toDate) return '—';
+  const d = ts.toDate();
+  return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+}
+
+function escapeHtml(str){
+  if(str === undefined || str === null) return '';
+  return String(str).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderTodo(){
+  const completados = allDocs.filter(d => d.completado === true);
+  const pendientes = allDocs.filter(d => d.completado !== true);
+
+  document.getElementById('statVisitas').textContent = allDocs.length;
+  document.getElementById('statCompletados').textContent = completados.length;
+  document.getElementById('statPendientes').textContent = pendientes.length;
+  const conv = allDocs.length ? ((completados.length / allDocs.length) * 100).toFixed(1) + '%' : '0%';
+  document.getElementById('statConversion').textContent = conv;
+
+  document.getElementById('leadsCount').textContent = '(' + completados.length + ')';
+  document.getElementById('pendientesCount').textContent = '(' + pendientes.length + ')';
+
+  renderLeads(completados);
+  renderPendientes(pendientes);
+}
+
+function renderLeads(completados){
+  const filtro = leadsFilter.value.trim().toLowerCase();
+  const filtrados = !filtro ? completados : completados.filter(d => {
+    return (d.nombre || '').toLowerCase().includes(filtro)
+      || (d.email || '').toLowerCase().includes(filtro)
+      || (d.telefono || '').toLowerCase().includes(filtro);
+  });
+
+  const body = document.getElementById('leadsBody');
+  const empty = document.getElementById('leadsEmpty');
+  body.innerHTML = '';
+
+  if(filtrados.length === 0){
+    empty.style.display = 'block';
+    empty.textContent = completados.length === 0 ? 'Todavía no hay fundas completadas.' : 'No hay resultados para esa búsqueda.';
+    return;
+  }
+  empty.style.display = 'none';
+
+  filtrados.forEach(d => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="muted">${fmtFecha(d.completadoEn || d.actualizadoEn)}</td>
+      <td>${escapeHtml(d.nombre) || '—'}</td>
+      <td>${escapeHtml(d.email) || '—'}</td>
+      <td>${escapeHtml(d.telefono) || '—'}</td>
+      <td>${escapeHtml(d.modelo) || '—'}</td>
+      <td>${d.imageUrl ? `<a href="${escapeHtml(d.imageUrl)}" target="_blank" rel="noopener">Ver diseño →</a>` : '—'}</td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+function renderPendientes(pendientes){
+  const body = document.getElementById('pendientesBody');
+  const empty = document.getElementById('pendientesEmpty');
+  body.innerHTML = '';
+
+  if(pendientes.length === 0){
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  pendientes.forEach(d => {
+    const origen = d.utm_source ? `${d.utm_source}${d.utm_campaign ? ' / ' + d.utm_campaign : ''}` : (d.referrer ? 'Tráfico directo/referido' : 'Directo');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="muted">${fmtFecha(d.creadoEn)}</td>
+      <td>${escapeHtml(d.modeloElegido) || '<span class="muted">No eligió</span>'}</td>
+      <td>${d.subioFoto ? '✅' : '—'}</td>
+      <td>${escapeHtml(origen)}</td>
+      <td class="muted" style="max-width:280px; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(d.referrer) || '—'}</td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+leadsFilter.addEventListener('input', () => renderTodo());
+
+// ---- Exportar CSV (solo leads completos) ----
+exportBtn.addEventListener('click', () => {
+  const completados = allDocs.filter(d => d.completado === true);
+  if(completados.length === 0){ alert('No hay leads completos para exportar todavía.'); return; }
+
+  const headers = ['Fecha', 'Nombre', 'Email', 'Telefono', 'Modelo', 'Diseño (URL)'];
+  const rows = completados.map(d => [
+    fmtFecha(d.completadoEn || d.actualizadoEn),
+    d.nombre || '',
+    d.email || '',
+    d.telefono || '',
+    d.modelo || '',
+    d.imageUrl || ''
+  ]);
+
+  const csvLines = [headers, ...rows].map(row =>
+    row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+  );
+  const csvContent = csvLines.join('\n');
+
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `leads_fundas_rsdesign_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+</script>
+
+</body>
+</html>
