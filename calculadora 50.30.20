@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora — El Método Ahorro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #FAF6EE;
+  --cream-deep: #F0E8D4;
+  --cream-card: #FFFDF8;
+  --ink: #362919;
+  --ink-soft: #6E5D48;
+  --ink-faint: #A69A85;
+  --gold: #A9773B;
+  --gold-deep: #8A5F28;
+  --gold-pale: #F1E4C8;
+  --sage: #5E7F5E;
+  --sage-pale: #DEE9DC;
+  --sage-deep: #3F5940;
+  --rose: #C97C6D;
+  --rose-pale: #F3E1DC;
+  --line: #E4D9BF;
+  --shadow: 0 20px 45px -20px rgba(58, 41, 20, 0.35);
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--cream); color: var(--ink);
+  font-family: 'Poppins', sans-serif; -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, .serif { font-family: 'Lora', serif; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 40px 22px 70px 22px; }
+
+/* Header */
+.header { text-align: center; margin-bottom: 34px; }
+.brand { font-family: 'Lora', serif; font-weight: 700; font-size: 17px; margin-bottom: 18px; }
+.brand span { color: var(--gold); }
+.eyebrow { font-size: 11.5px; letter-spacing: 3px; text-transform: uppercase; color: var(--sage-deep); font-weight: 600; margin-bottom: 12px; display: inline-block; }
+.header h1 { font-size: 32px; line-height: 1.2; margin: 0 0 12px 0; }
+.header p { font-size: 14px; color: var(--ink-soft); max-width: 480px; margin: 0 auto; line-height: 1.55; }
+
+/* Card */
+.card {
+  background: var(--cream-card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 28px 26px; margin-bottom: 20px; box-shadow: var(--shadow);
+}
+.card h2 { font-size: 18px; margin: 0 0 4px 0; }
+.card .sub { font-size: 12.5px; color: var(--ink-soft); margin: 0 0 20px 0; line-height: 1.5; }
+
+/* Income field */
+.income-field { margin-bottom: 6px; }
+.income-field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+.income-input-wrap { position: relative; }
+.income-input-wrap span { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); font-weight: 600; font-size: 18px; }
+.income-input-wrap input {
+  width: 100%; padding: 15px 16px 15px 34px; border: 1.5px solid var(--line); border-radius: 10px;
+  font-family: 'Lora', serif; font-size: 22px; font-weight: 700; color: var(--ink); background: var(--cream);
+}
+.income-input-wrap input:focus { outline: none; border-color: var(--gold); }
+
+/* Expense grid */
+.exp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+.exp-item label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
+.exp-item .ic { font-size: 14px; }
+.exp-item .tag { font-size: 9.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 2px 7px; border-radius: 20px; margin-left: auto; }
+.tag.nec { background: var(--sage-pale); color: var(--sage-deep); }
+.tag.des { background: var(--gold-pale); color: var(--gold-deep); }
+.exp-item input {
+  width: 100%; padding: 11px 12px; border: 1.5px solid var(--line); border-radius: 8px;
+  font-family: 'Poppins', sans-serif; font-size: 14px; color: var(--ink); background: var(--cream);
+}
+.exp-item input:focus { outline: none; border-color: var(--gold); }
+@media (max-width: 560px) { .exp-grid { grid-template-columns: 1fr; } }
+
+/* Results */
+.result-head { text-align: center; margin-bottom: 22px; }
+.result-head .eyebrow { color: var(--gold-pale); }
+.balance-box { text-align: center; background: var(--ink); color: var(--cream); border-radius: var(--radius); padding: 26px; margin-bottom: 22px; }
+.balance-box .lab { font-size: 11.5px; letter-spacing: 2px; text-transform: uppercase; color: #D8CCB6; margin-bottom: 8px; }
+.balance-box .amt { font-family: 'Lora', serif; font-size: 40px; font-weight: 700; color: var(--gold-pale); }
+.balance-box .amt.neg { color: #E8998A; }
+.balance-box .msg { font-size: 12.5px; color: #D8CCB6; margin-top: 8px; }
+
+.bar-block { margin-bottom: 20px; }
+.bar-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.bar-top .name { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.bar-top .vals { font-size: 12px; color: var(--ink-soft); }
+.bar-track { position: relative; height: 26px; background: var(--cream-deep); border-radius: 20px; overflow: hidden; }
+.bar-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 20px; transition: width .5s ease; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; }
+.bar-fill span { font-size: 10.5px; font-weight: 700; color: #fff; }
+.bar-fill.nec { background: var(--sage); }
+.bar-fill.des { background: var(--gold); }
+.bar-fill.aho { background: var(--rose); }
+.bar-target { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); opacity: .45; }
+.bar-target::after { content: attr(data-label); position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--ink-soft); white-space: nowrap; font-weight: 600; }
+
+.insight-box {
+  background: var(--ink); color: var(--cream); border-radius: var(--radius); padding: 24px 26px;
+  font-family: 'Lora', serif; font-size: 15px; line-height: 1.6; font-style: italic; text-align: center; margin-top: 24px;
+}
+.insight-box strong { color: var(--gold-pale); font-style: normal; }
+
+.legend { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 22px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-soft); font-weight: 500; }
+.legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+.legend-dot.nec { background: var(--sage); }
+.legend-dot.des { background: var(--gold); }
+.legend-dot.aho { background: var(--rose); }
+.legend-dot.target { background: var(--ink); opacity: .5; }
+
+.footer-note { text-align: center; font-size: 11.5px; color: var(--ink-faint); margin-top: 30px; line-height: 1.6; }
+.footer-note strong { color: var(--ink-soft); }
+
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <div class="brand">El Método <span>Ahorro</span></div>
+    <span class="eyebrow">Bonus exclusivo de la guía</span>
+    <h1>Calculadora 50/30/20</h1>
+    <p>Cargá tu ingreso y tus gastos del mes para ver cómo estás repartiendo tu plata hoy, comparado con el reparto ideal del Capítulo 4.</p>
+  </div>
+
+  <div class="card">
+    <h2>1. Tu ingreso mensual</h2>
+    <p class="sub">Lo que te entra al bolsillo, después de impuestos.</p>
+    <div class="income-field">
+      <label for="ingreso">Ingreso mensual</label>
+      <div class="income-input-wrap">
+        <span>$</span>
+        <input type="number" id="ingreso" placeholder="0" inputmode="numeric">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. Tus gastos del mes</h2>
+    <p class="sub">Cargá lo que gastás aproximadamente en cada categoría. No hace falta que sea exacto.</p>
+    <div class="exp-grid">
+      <div class="exp-item">
+        <label><span class="ic">🏠</span> Vivienda y servicios <span class="tag nec">Necesidad</span></label>
+        <input type="number" data-cat="nec" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="exp-item">
+        <label><span class="ic">🛒</span> Alimentación <span class="tag nec">Necesidad</span></label>
+        <input type="number" data-cat="nec" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="exp-item">
+        <label><span class="ic">🚗</span> Transporte <span class="tag nec">Necesidad</span></label>
+        <input type="number" data-cat="nec" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="exp-item">
+        <label><span class="ic">💳</span> Deudas y tarjetas <span class="tag nec">Necesidad</span></label>
+        <input type="number" data-cat="nec" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="exp-item">
+        <label><span class="ic">🍔</span> Salidas y delivery <span class="tag des">Deseo</span></label>
+        <input type="number" data-cat="des" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="exp-item">
+        <label><span class="ic">📱</span> Suscripciones <span class="tag des">Deseo</span></label>
+        <input type="number" data-cat="des" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="exp-item">
+        <label><span class="ic">🛍️</span> Compras y gustos <span class="tag des">Deseo</span></label>
+        <input type="number" data-cat="des" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="exp-item">
+        <label><span class="ic">📦</span> Otros gastos <span class="tag des">Deseo</span></label>
+        <input type="number" data-cat="des" placeholder="0" inputmode="numeric">
+      </div>
+    </div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="result-head">
+      <span class="eyebrow" style="color:var(--sage-deep);">Resultado</span>
+      <h2 style="font-size:22px; margin:0;">Así está repartida tu plata hoy</h2>
+    </div>
+
+    <div class="balance-box">
+      <div class="lab">Saldo disponible después de gastos</div>
+      <div class="amt" id="saldoAmt">$0</div>
+      <div class="msg" id="saldoMsg"></div>
+    </div>
+
+    <div class="card">
+      <div class="bar-block">
+        <div class="bar-top">
+          <span class="name">🏠 Necesidades</span>
+          <span class="vals" id="necVals">$0 · 0%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-target" style="left:50%;" data-label="Ideal 50%"></div>
+          <div class="bar-fill nec" id="necBar" style="width:0%;"><span id="necPct"></span></div>
+        </div>
+      </div>
+
+      <div class="bar-block">
+        <div class="bar-top">
+          <span class="name">🎉 Deseos</span>
+          <span class="vals" id="desVals">$0 · 0%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-target" style="left:30%;" data-label="Ideal 30%"></div>
+          <div class="bar-fill des" id="desBar" style="width:0%;"><span id="desPct"></span></div>
+        </div>
+      </div>
+
+      <div class="bar-block" style="margin-bottom:0;">
+        <div class="bar-top">
+          <span class="name">🐷 Ahorro</span>
+          <span class="vals" id="ahoVals">$0 · 0%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-target" style="left:20%;" data-label="Ideal 20%"></div>
+          <div class="bar-fill aho" id="ahoBar" style="width:0%;"><span id="ahoPct"></span></div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot nec"></span>Necesidades</div>
+        <div class="legend-item"><span class="legend-dot des"></span>Deseos</div>
+        <div class="legend-item"><span class="legend-dot aho"></span>Ahorro</div>
+        <div class="legend-item"><span class="legend-dot target"></span>Línea = reparto ideal</div>
+      </div>
+    </div>
+
+    <div class="insight-box" id="insightBox"></div>
+  </div>
+
+  <p class="footer-note">Herramienta de apoyo para aplicar el <strong>Capítulo 4 — El presupuesto que sí funciona</strong> de El Método Ahorro. Los porcentajes son una guía, no una regla rígida: adaptalos a tu realidad.</p>
+</div>
+
+<script>
+const ingresoInput = document.getElementById('ingreso');
+const expInputs = document.querySelectorAll('.exp-item input');
+const results = document.getElementById('results');
+
+function fmt(n) {
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+
+function calculate() {
+  const ingreso = parseFloat(ingresoInput.value) || 0;
+
+  if (ingreso <= 0) {
+    results.classList.add('hidden');
+    return;
+  }
+  results.classList.remove('hidden');
+
+  let nec = 0, des = 0;
+  expInputs.forEach(inp => {
+    const val = parseFloat(inp.value) || 0;
+    if (inp.dataset.cat === 'nec') nec += val;
+    else des += val;
+  });
+
+  const totalGastos = nec + des;
+  const saldo = ingreso - totalGastos;
+  const ahorro = Math.max(saldo, 0);
+
+  const necPct = ingreso > 0 ? (nec / ingreso) * 100 : 0;
+  const desPct = ingreso > 0 ? (des / ingreso) * 100 : 0;
+  const ahoPct = ingreso > 0 ? (ahorro / ingreso) * 100 : 0;
+
+  document.getElementById('saldoAmt').textContent = fmt(saldo);
+  document.getElementById('saldoAmt').className = 'amt' + (saldo < 0 ? ' neg' : '');
+
+  document.getElementById('necVals').textContent = fmt(nec) + ' · ' + necPct.toFixed(0) + '%';
+  document.getElementById('desVals').textContent = fmt(des) + ' · ' + desPct.toFixed(0) + '%';
+  document.getElementById('ahoVals').textContent = fmt(ahorro) + ' · ' + ahoPct.toFixed(0) + '%';
+
+  document.getElementById('necBar').style.width = Math.min(necPct, 100) + '%';
+  document.getElementById('desBar').style.width = Math.min(desPct, 100) + '%';
+  document.getElementById('ahoBar').style.width = Math.min(ahoPct, 100) + '%';
+
+  document.getElementById('necPct').textContent = necPct >= 12 ? necPct.toFixed(0) + '%' : '';
+  document.getElementById('desPct').textContent = desPct >= 12 ? desPct.toFixed(0) + '%' : '';
+  document.getElementById('ahoPct').textContent = ahoPct >= 12 ? ahoPct.toFixed(0) + '%' : '';
+
+  const idealAhorro = ingreso * 0.20;
+  const gap = idealAhorro - ahorro;
+
+  let saldoMsg = '';
+  let insight = '';
+
+  if (saldo < 0) {
+    saldoMsg = 'Estás gastando más de lo que ganás este mes.';
+    insight = `Con estos números, estás gastando <strong>${fmt(Math.abs(saldo))}</strong> más de lo que ganás. Antes de pensar en ahorrar, el primer paso es frenar ese déficit — revisá el Capítulo 6 sobre gastos hormiga y compras impulsivas.`;
+  } else if (gap > 0) {
+    saldoMsg = 'Te queda margen, pero todavía no llegás al 20% ideal de ahorro.';
+    insight = `Hoy estás ahorrando el <strong>${ahoPct.toFixed(0)}%</strong> de tu ingreso. Para llegar al 20% que propone el método, te faltarían <strong>${fmt(gap)}</strong> más por mes — un buen punto de partida para el Desafío de 30 Días.`;
+  } else {
+    saldoMsg = '¡Estás ahorrando igual o más que el 20% ideal!';
+    insight = `Estás ahorrando el <strong>${ahoPct.toFixed(0)}%</strong> de tu ingreso, en línea con el método 50/30/20. El siguiente paso es hacer que ese ahorro trabaje para vos — revisá el Capítulo 9.`;
+  }
+
+  document.getElementById('saldoMsg').textContent = saldoMsg;
+  document.getElementById('insightBox').innerHTML = insight;
+}
+
+ingresoInput.addEventListener('input', calculate);
+expInputs.forEach(inp => inp.addEventListener('input', calculate));
+</script>
+
+</body>
+</html>
