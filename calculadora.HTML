@@ -187,27 +187,9 @@
             <div class="form-hint">3% es el valor general vigente para régimen formal (con tope en algunos casos).</div>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>IVA (%)</label>
-            <input type="number" id="fIva" step="0.1" value="21">
-          </div>
-          <div class="form-group">
-            <label>Percepción IVA adicional (%)</label>
-            <input type="number" id="fPercIva" step="0.1" value="20">
-            <div class="form-hint">RG 2937: 20% (bienes alícuota general) o 10% (bienes con IVA reducido 10,5%).</div>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Percepción Ganancias (%)</label>
-            <input type="number" id="fPercGan" step="0.1" value="6">
-            <div class="form-hint">Referencia habitual: 6% inscripto en Ganancias, más alta si no lo estás. Confirmar con despachante.</div>
-          </div>
-          <div class="form-group">
-            <label>&nbsp;</label>
-            <div class="form-hint" style="margin-top:10px;">Estos porcentajes se autocompletan según el régimen y la condición fiscal elegidos arriba, pero podés editarlos manualmente si tu caso puntual es distinto.</div>
-          </div>
+        <div class="form-group">
+          <label>IVA (%)</label>
+          <input type="number" id="fIva" step="0.1" value="21">
         </div>
       </div>
 
@@ -256,8 +238,6 @@
         <div class="result-line"><span class="k">Derechos de importación</span><span class="v" id="rDerechos">—</span></div>
         <div class="result-line"><span class="k">Tasa de estadística</span><span class="v" id="rTasaEst">—</span></div>
         <div class="result-line"><span class="k">IVA</span><span class="v" id="rIva">—</span></div>
-        <div class="result-line"><span class="k">Percepción IVA adicional</span><span class="v" id="rPercIva">—</span></div>
-        <div class="result-line"><span class="k">Percepción Ganancias</span><span class="v" id="rPercGan">—</span></div>
         <div class="result-line total"><span class="k">Total impuestos aduaneros</span><span class="v" id="rTotalImpuestos">—</span></div>
 
         <div class="result-section-title">Por producto</div>
@@ -339,11 +319,6 @@ function dolarActivo(){ return dolarManualVal || dolarHoy || 0; }
 let regimen = 'formal';
 let condicion = 'ri';
 
-const ALICUOTAS_DEFAULT = {
-  formal_ri:   { percIva: 20, percGan: 6 },
-  formal_mono: { percIva: 20, percGan: 11 },
-};
-
 function setToggle(groupId, val, cb){
   const group = document.getElementById(groupId);
   [...group.children].forEach(opt => opt.classList.toggle('active', opt.dataset.val === val));
@@ -364,19 +339,9 @@ document.getElementById('toggleCondicion').addEventListener('click', (e) => {
   if(!opt) return;
   condicion = opt.dataset.val;
   setToggle('toggleCondicion', condicion, () => {});
-  aplicarDefaultsFiscales();
   actualizarHints();
   recalcular();
 });
-
-function aplicarDefaultsFiscales(){
-  const key = 'formal_' + condicion;
-  const d = ALICUOTAS_DEFAULT[key];
-  if(d){
-    document.getElementById('fPercIva').value = d.percIva;
-    document.getElementById('fPercGan').value = d.percGan;
-  }
-}
 
 function actualizarHints(){
   document.getElementById('warnSimplificado').style.display = regimen === 'simplificado' ? 'flex' : 'none';
@@ -442,8 +407,11 @@ function fmtUSD(n){
   return 'US$ ' + n.toLocaleString('es-AR', { maximumFractionDigits: 2 });
 }
 
-['fFlete','fSeguro','fArancel','fTasaEst','fIva','fPercIva','fPercGan','fDespachante','fHandling','fOtros','fMarkup']
-  .forEach(id => document.getElementById(id).addEventListener('input', recalcular));
+// Listener global: cualquier campo editable de la página (presente o futuro)
+// dispara el recálculo, sin depender de mantener una lista de IDs a mano.
+document.addEventListener('input', (e) => {
+  if(e.target.matches('input, select')) recalcular();
+});
 
 function recalcular(){
   const productos = leerProductos();
@@ -454,8 +422,6 @@ function recalcular(){
   const arancelPct = parseFloat(document.getElementById('fArancel').value) || 0;
   const tasaEstPct = parseFloat(document.getElementById('fTasaEst').value) || 0;
   const ivaPct = parseFloat(document.getElementById('fIva').value) || 0;
-  const percIvaPct = parseFloat(document.getElementById('fPercIva').value) || 0;
-  const percGanPct = parseFloat(document.getElementById('fPercGan').value) || 0;
   const despachanteUSD = parseFloat(document.getElementById('fDespachante').value) || 0;
   const handlingARS = parseFloat(document.getElementById('fHandling').value) || 0;
   const otrosARS = parseFloat(document.getElementById('fOtros').value) || 0;
@@ -469,9 +435,7 @@ function recalcular(){
   const tasaEst = esFormal ? (tasaEstPct/100) * cif : 0;
   const baseIva = cif + derechos + tasaEst;
   const iva = (ivaPct/100) * baseIva;
-  const percIva = esFormal ? (percIvaPct/100) * baseIva : 0;
-  const percGan = esFormal ? (percGanPct/100) * baseIva : 0;
-  const totalImpuestos = derechos + tasaEst + iva + percIva + percGan;
+  const totalImpuestos = derechos + tasaEst + iva;
 
   const costoTotalUSD = cif + totalImpuestos + despachanteUSD;
   const costoTotalARS = costoTotalUSD * dolar + handlingARS + otrosARS;
@@ -483,8 +447,6 @@ function recalcular(){
   document.getElementById('rDerechos').textContent = fmtUSD(derechos);
   document.getElementById('rTasaEst').textContent = fmtUSD(tasaEst);
   document.getElementById('rIva').textContent = fmtUSD(iva);
-  document.getElementById('rPercIva').textContent = fmtUSD(percIva);
-  document.getElementById('rPercGan').textContent = fmtUSD(percGan);
   document.getElementById('rTotalImpuestos').textContent = fmtUSD(totalImpuestos);
 
   const precioVentaARS = costoTotalARS * (1 + markupPct/100);
