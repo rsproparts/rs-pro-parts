@@ -146,7 +146,41 @@
 
   .empty-state{ padding:40px 20px; text-align:center; color:var(--gray); font-size:13.5px; }
 
-  /* ---- Resumen por producto ---- */
+  /* ---- Catálogo de productos ---- */
+  .catalogo-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px; }
+  .producto-card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 20px; cursor:pointer; transition:border-color .15s; }
+  .producto-card:hover{ border-color:var(--green); }
+  .producto-card-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  .producto-card h4{ font-size:15px; font-weight:800; color:var(--navy); }
+  .producto-card .codigo{ font-size:11px; color:var(--gray); font-family:monospace; margin-top:2px; }
+  .producto-card-stats{ display:flex; gap:16px; flex-wrap:wrap; }
+  .producto-card-stat{ font-size:11.5px; color:var(--gray); }
+  .producto-card-stat strong{ display:block; font-size:15px; color:var(--navy); font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; }
+  .producto-card-stat.destacado strong{ color:var(--green-dark); }
+  .producto-card-chevron{ color:var(--gray); font-size:12px; transition:transform .2s; }
+  .producto-card.open .producto-card-chevron{ transform:rotate(180deg); }
+  .producto-card-historial{ display:none; margin-top:16px; padding-top:14px; border-top:1px solid var(--line); }
+  .producto-card.open .producto-card-historial{ display:block; }
+  .historial-item{ display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-size:12.5px; gap:10px; flex-wrap:wrap; }
+  .historial-item:last-child{ border-bottom:none; }
+  .historial-fecha{ color:var(--gray); min-width:78px; }
+  .historial-cant{ color:var(--navy); font-weight:600; }
+  .historial-costo{ font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; color:var(--navy); }
+  .historial-var{ font-size:11px; font-weight:700; padding:2px 8px; border-radius:100px; }
+  .historial-var.mejor{ color:var(--green-dark); background:rgba(16,185,129,0.1); }
+  .historial-var.peor-var{ color:var(--red); background:rgba(239,68,68,0.08); }
+  .producto-card-actions{ display:flex; gap:12px; margin-top:14px; }
+  .producto-card-actions button{ background:none; border:none; color:var(--gray); font-size:11.5px; cursor:pointer; font-family:inherit; padding:0; }
+  .producto-card-actions button:hover{ color:var(--navy); }
+  .producto-card-actions button.danger:hover{ color:var(--red); }
+  .catalogo-empty{ background:#fff; border:1px dashed var(--line); border-radius:14px; padding:32px 20px; text-align:center; color:var(--gray); font-size:13.5px; }
+  .catalogo-empty strong{ color:var(--navy); }
+
+  .select-producto{ width:100%; background:#fff; border:1px solid var(--line); color:var(--navy); padding:10px 11px; border-radius:8px; font-size:13px; font-family:inherit; }
+  .select-producto:focus{ outline:2px solid var(--green); border-color:transparent; }
+  .link-nuevo-producto{ font-size:11.5px; color:var(--green-dark); font-weight:700; cursor:pointer; text-decoration:none; display:inline-block; margin-bottom:14px; }
+  .link-nuevo-producto:hover{ text-decoration:underline; }
+
   .table-wrap{ background:#fff; border:1px solid var(--line); border-radius:14px; overflow:auto; }
   .table-wrap table{ margin-top:0; min-width:640px; }
   .table-wrap th, .table-wrap td{ padding:12px 16px; }
@@ -213,28 +247,40 @@
   </div>
 
   <div class="section">
+    <div class="section-head">
+      <h2>Catálogo de productos</h2>
+      <button class="btn-small primary" id="nuevoProductoBtn">+ Nuevo producto</button>
+    </div>
+    <div class="catalogo-grid" id="catalogoContainer"></div>
+    <div class="catalogo-empty" id="catalogoEmpty" style="display:none;">
+      <strong>Todavía no cargaste ningún producto.</strong><br>
+      Creá tu primer producto (nombre y, si querés, un código) para poder empezar a cargar envíos.
+    </div>
+  </div>
+
+  <div class="section">
     <div class="section-head"><h2>Tus envíos</h2></div>
     <div id="enviosContainer"></div>
     <div class="empty-state" id="enviosEmpty" style="display:none;">Todavía no cargaste ningún envío. Tocá "+ Nuevo envío" para empezar.</div>
   </div>
+</div>
 
-  <div class="section">
-    <div class="section-head"><h2>Resumen por producto</h2></div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Unidades totales</th>
-            <th>Costo unitario promedio</th>
-            <th>Total invertido</th>
-          </tr>
-        </thead>
-        <tbody id="resumenBody"></tbody>
-      </table>
-      <div class="empty-state" id="resumenEmpty" style="display:none;">Sin datos todavía.</div>
+<!-- ============ MODAL NUEVO PRODUCTO ============ -->
+<div class="modal-overlay" id="modalProductoOverlay">
+  <div class="modal-box" style="max-width:420px;">
+    <h3 class="display" id="modalProductoTitle">Nuevo producto</h3>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Nombre del producto</label>
+      <input type="text" id="fProductoNombre" placeholder="Ej: Funda iPhone 15">
     </div>
-    <div style="font-size:11.5px; color:var(--gray); margin-top:8px;">💡 Tocá un producto para ver el historial de compras y cuánto más barato (o más caro) te salió cada vez, según la cantidad que pediste.</div>
+    <div class="form-group" style="margin-bottom:18px;">
+      <label>Código de producto (opcional)</label>
+      <input type="text" id="fProductoCodigo" placeholder="Ej: FN-IP15">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modalProductoCancelBtn">Cancelar</button>
+      <button class="btn-save" id="modalProductoSaveBtn">Guardar producto</button>
+    </div>
   </div>
 </div>
 
@@ -302,6 +348,7 @@ const FIREBASE_CONFIG = {
 };
 
 const COLLECTION = "guia_importar_envios";
+const COLLECTION_PRODUCTOS = "guia_importar_productos";
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
@@ -419,6 +466,17 @@ async function cargarDolarHoy(){
 const productosList = document.getElementById('productosList');
 let productoRowCount = 0;
 
+function opcionesProductosHtml(selectedId){
+  if(allProductos.length === 0){
+    return '<option value="">— Sin productos en el catálogo —</option>';
+  }
+  return allProductos.map(p => {
+    const label = p.codigo ? `${p.nombre} (${p.codigo})` : p.nombre;
+    const sel = p.id === selectedId ? 'selected' : '';
+    return `<option value="${p.id}" ${sel}>${escapeHtml(label)}</option>`;
+  }).join('');
+}
+
 function agregarFilaProducto(valores){
   valores = valores || {};
   const id = 'p' + (productoRowCount++);
@@ -428,7 +486,7 @@ function agregarFilaProducto(valores){
   row.innerHTML = `
     <div>
       <span class="mini-label">Producto</span>
-      <input type="text" class="p-nombre" placeholder="Ej: Funda iPhone 15" value="${valores.nombre || ''}">
+      <select class="p-producto select-producto">${opcionesProductosHtml(valores.productoId)}</select>
     </div>
     <div>
       <span class="mini-label">Cant.</span>
@@ -444,20 +502,93 @@ function agregarFilaProducto(valores){
   productosList.appendChild(row);
 }
 
-document.getElementById('addProductoBtn').addEventListener('click', () => agregarFilaProducto());
+function refrescarSelectsDeProducto(){
+  productosList.querySelectorAll('.producto-row').forEach(row => {
+    const select = row.querySelector('.p-producto');
+    const valorActual = select.value;
+    select.innerHTML = opcionesProductosHtml(valorActual);
+  });
+}
+
+document.getElementById('addProductoBtn').addEventListener('click', () => {
+  if(allProductos.length === 0){
+    alert('Primero tenés que cargar al menos un producto en el catálogo.');
+    abrirModalProducto();
+    return;
+  }
+  agregarFilaProducto();
+});
 
 function leerProductosDelModal(){
   const filas = productosList.querySelectorAll('.producto-row');
   const productos = [];
   filas.forEach(row => {
-    const nombre = row.querySelector('.p-nombre').value.trim();
+    const productoId = row.querySelector('.p-producto').value;
     const cantidad = parseFloat(row.querySelector('.p-cantidad').value) || 0;
     const precioUnitarioUSD = parseFloat(row.querySelector('.p-precio').value) || 0;
-    if(nombre && cantidad > 0){
-      productos.push({ nombre, cantidad, precioUnitarioUSD });
+    const producto = allProductos.find(p => p.id === productoId);
+    if(productoId && producto && cantidad > 0){
+      productos.push({
+        productoId,
+        nombre: producto.nombre,
+        codigo: producto.codigo || '',
+        cantidad,
+        precioUnitarioUSD
+      });
     }
   });
   return productos;
+}
+
+/* ====================================================
+   MODAL DE PRODUCTO: abrir / cerrar / guardar
+   ==================================================== */
+const modalProductoOverlay = document.getElementById('modalProductoOverlay');
+let editingProductoId = null;
+
+function abrirModalProducto(producto){
+  editingProductoId = producto ? producto.id : null;
+  document.getElementById('modalProductoTitle').textContent = producto ? 'Editar producto' : 'Nuevo producto';
+  document.getElementById('modalProductoSaveBtn').textContent = producto ? 'Guardar cambios' : 'Guardar producto';
+  document.getElementById('fProductoNombre').value = producto ? producto.nombre : '';
+  document.getElementById('fProductoCodigo').value = producto ? (producto.codigo || '') : '';
+  modalProductoOverlay.classList.add('show');
+  document.getElementById('fProductoNombre').focus();
+}
+function cerrarModalProducto(){ modalProductoOverlay.classList.remove('show'); editingProductoId = null; }
+
+document.getElementById('nuevoProductoBtn').addEventListener('click', () => abrirModalProducto());
+document.getElementById('modalProductoCancelBtn').addEventListener('click', cerrarModalProducto);
+modalProductoOverlay.addEventListener('click', (e) => { if(e.target === modalProductoOverlay) cerrarModalProducto(); });
+
+document.getElementById('modalProductoSaveBtn').addEventListener('click', async () => {
+  const nombre = document.getElementById('fProductoNombre').value.trim();
+  const codigo = document.getElementById('fProductoCodigo').value.trim();
+  if(!nombre){ alert('Poné al menos el nombre del producto.'); return; }
+
+  try {
+    if(editingProductoId){
+      await db.collection(COLLECTION_PRODUCTOS).doc(editingProductoId).update({ nombre, codigo });
+    } else {
+      await db.collection(COLLECTION_PRODUCTOS).add({
+        nombre, codigo, userId: currentUserId,
+        creadoEn: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    cerrarModalProducto();
+  } catch(err){
+    alert('No se pudo guardar el producto: ' + err.message);
+    console.error(err);
+  }
+});
+
+async function eliminarProducto(id){
+  if(!confirm('¿Eliminar este producto del catálogo? Los envíos ya cargados con este producto no se borran, pero no vas a poder elegirlo de nuevo para envíos nuevos.')) return;
+  try {
+    await db.collection(COLLECTION_PRODUCTOS).doc(id).delete();
+  } catch(err){
+    alert('No se pudo eliminar: ' + err.message);
+  }
 }
 
 /* ====================================================
@@ -498,7 +629,14 @@ function abrirModalEditar(envio){
 
 function cerrarModal(){ modalOverlay.classList.remove('show'); editingEnvioId = null; }
 
-document.getElementById('nuevoEnvioBtn').addEventListener('click', abrirModalNuevo);
+document.getElementById('nuevoEnvioBtn').addEventListener('click', () => {
+  if(allProductos.length === 0){
+    alert('Primero tenés que cargar al menos un producto en el catálogo (ahí arriba, "+ Nuevo producto").');
+    abrirModalProducto();
+    return;
+  }
+  abrirModalNuevo();
+});
 document.getElementById('modalCancelBtn').addEventListener('click', cerrarModal);
 modalOverlay.addEventListener('click', (e) => { if(e.target === modalOverlay) cerrarModal(); });
 
@@ -592,9 +730,28 @@ function fmtARS(n){
 let allEnvios = [];
 let unsubscribeEnvios = null;
 
+let allProductos = [];
+let unsubscribeProductos = null;
+
 function init(uid){
   currentUserId = uid;
   cargarDolarHoy();
+
+  if(unsubscribeProductos) unsubscribeProductos();
+  unsubscribeProductos = db.collection(COLLECTION_PRODUCTOS)
+    .where('userId', '==', uid)
+    .onSnapshot((snapshot) => {
+      allProductos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      allProductos.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+      refrescarSelectsDeProducto();
+      renderCatalogo();
+      renderTodo();
+    }, (err) => {
+      console.error('Error leyendo catálogo:', err);
+      document.getElementById('catalogoContainer').innerHTML =
+        '<div class="catalogo-empty" style="color:#DC2626;">No se pudo cargar el catálogo: ' + escapeHtml(err.message) + '</div>';
+    });
+
   if(unsubscribeEnvios) unsubscribeEnvios();
   unsubscribeEnvios = db.collection(COLLECTION)
     .where('userId', '==', uid)
@@ -617,7 +774,7 @@ function init(uid){
 function renderTodo(){
   renderStats();
   renderEnvios();
-  renderResumenProductos();
+  renderCatalogo();
 }
 
 function renderStats(){
@@ -736,68 +893,80 @@ function renderEnvios(){
   });
 }
 
-function renderResumenProductos(){
+function renderCatalogo(){
+  const container = document.getElementById('catalogoContainer');
+  const empty = document.getElementById('catalogoEmpty');
+  container.innerHTML = '';
+
+  if(allProductos.length === 0){ empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  // Acumulamos compras por producto. Unimos por productoId; para envíos viejos
+  // (cargados antes de que existiera el catálogo) hacemos fallback por nombre.
   const acumulado = {};
+  allProductos.forEach(p => { acumulado[p.id] = { unidades: 0, totalARS: 0, compras: [] }; });
+
   allEnvios.forEach(envio => {
     const { productosCalc } = calcularEnvio(envio);
     productosCalc.forEach(p => {
-      if(!acumulado[p.nombre]) acumulado[p.nombre] = { unidades: 0, totalARS: 0, compras: [] };
-      acumulado[p.nombre].unidades += p.cantidad;
-      acumulado[p.nombre].totalARS += p.costoTotalARS_hist;
-      acumulado[p.nombre].compras.push({ fecha: envio.fecha, cantidad: p.cantidad, costoUnitario: p.costoUnitarioARS_hist });
+      let key = p.productoId;
+      if(!key || !acumulado[key]){
+        const match = allProductos.find(cat => cat.nombre === p.nombre);
+        key = match ? match.id : null;
+      }
+      if(!key) return; // producto viejo que ya no existe en el catálogo
+      acumulado[key].unidades += p.cantidad;
+      acumulado[key].totalARS += p.costoTotalARS_hist;
+      acumulado[key].compras.push({ fecha: envio.fecha, cantidad: p.cantidad, costoUnitario: p.costoUnitarioARS_hist });
     });
   });
 
-  const body = document.getElementById('resumenBody');
-  const empty = document.getElementById('resumenEmpty');
-  const nombres = Object.keys(acumulado);
-  body.innerHTML = '';
+  allProductos.forEach(producto => {
+    const d = acumulado[producto.id];
+    const compras = [...d.compras].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+    const promedio = d.unidades > 0 ? d.totalARS / d.unidades : null;
+    const ultimo = compras[0] || null;
 
-  if(nombres.length === 0){ empty.style.display = 'block'; return; }
-  empty.style.display = 'none';
-
-  nombres.sort((a,b) => acumulado[b].totalARS - acumulado[a].totalARS).forEach(nombre => {
-    const d = acumulado[nombre];
-    const promedio = d.totalARS / d.unidades;
-
-    const tr = document.createElement('tr');
-    tr.className = 'resumen-row';
-    tr.innerHTML = `
-      <td>${escapeHtml(nombre)} <span class="chevron-mini">▾</span></td>
-      <td>${d.unidades}</td>
-      <td>${fmtARS(promedio)}</td>
-      <td>${fmtARS(d.totalARS)}</td>
+    const card = document.createElement('div');
+    card.className = 'producto-card';
+    card.innerHTML = `
+      <div class="producto-card-top">
+        <div>
+          <h4>${escapeHtml(producto.nombre)}</h4>
+          ${producto.codigo ? `<div class="codigo">${escapeHtml(producto.codigo)}</div>` : ''}
+        </div>
+        <span class="producto-card-chevron">▾</span>
+      </div>
+      <div class="producto-card-stats">
+        <div class="producto-card-stat"><strong>${d.unidades}</strong>Unidades compradas</div>
+        <div class="producto-card-stat destacado"><strong>${ultimo ? fmtARS(ultimo.costoUnitario) : '—'}</strong>Último costo unit.</div>
+        <div class="producto-card-stat"><strong>${promedio !== null ? fmtARS(promedio) : '—'}</strong>Costo promedio</div>
+      </div>
+      <div class="producto-card-historial">
+        ${compras.length === 0
+          ? '<div style="font-size:12.5px;color:var(--gray);">Todavía no compraste este producto en ningún envío.</div>'
+          : compras.map(c => {
+              const variacion = promedio ? ((c.costoUnitario - promedio) / promedio) * 100 : 0;
+              const esMasBarato = variacion <= 0;
+              return `<div class="historial-item">
+                <span class="historial-fecha">${c.fecha}</span>
+                <span class="historial-cant">${c.cantidad} u.</span>
+                <span class="historial-costo">${fmtARS(c.costoUnitario)}</span>
+                <span class="historial-var ${esMasBarato ? 'mejor' : 'peor-var'}">${esMasBarato ? '↓' : '↑'} ${Math.abs(variacion).toFixed(1)}% vs. promedio</span>
+              </div>`;
+            }).join('')}
+        <div class="producto-card-actions">
+          <button class="btn-editar-producto">✏️ Editar producto</button>
+          <button class="danger btn-eliminar-producto">🗑 Eliminar producto</button>
+        </div>
+      </div>
     `;
-    body.appendChild(tr);
 
-    const trDetail = document.createElement('tr');
-    trDetail.className = 'resumen-detail-row';
-    trDetail.style.display = 'none';
+    card.querySelector('.producto-card-top').addEventListener('click', () => card.classList.toggle('open'));
+    card.querySelector('.btn-editar-producto').addEventListener('click', (e) => { e.stopPropagation(); abrirModalProducto(producto); });
+    card.querySelector('.btn-eliminar-producto').addEventListener('click', (e) => { e.stopPropagation(); eliminarProducto(producto.id); });
 
-    const comprasOrdenadas = [...d.compras].sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
-    const filasCompras = comprasOrdenadas.map(c => {
-      const variacion = ((c.costoUnitario - promedio) / promedio) * 100;
-      const esMasBarato = variacion <= 0;
-      const texto = (esMasBarato ? '↓ ' : '↑ ') + Math.abs(variacion).toFixed(1) + '% vs. promedio';
-      return `<tr>
-        <td class="muted">${c.fecha}</td>
-        <td class="num">${c.cantidad} u.</td>
-        <td class="num">${fmtARS(c.costoUnitario)}</td>
-        <td class="num ${esMasBarato ? 'highlight' : 'peor'}">${texto}</td>
-      </tr>`;
-    }).join('');
-
-    trDetail.innerHTML = `<td colspan="4">
-      <table>
-        <thead><tr><th>Fecha de compra</th><th>Cantidad pedida</th><th>Costo unitario</th><th>Variación</th></tr></thead>
-        <tbody>${filasCompras}</tbody>
-      </table>
-    </td>`;
-    body.appendChild(trDetail);
-
-    tr.addEventListener('click', () => {
-      trDetail.style.display = trDetail.style.display === 'none' ? 'table-row' : 'none';
-    });
+    container.appendChild(card);
   });
 }
 
