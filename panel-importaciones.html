@@ -3,164 +3,183 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RS — Panel de Importaciones</title>
+<title>Mi Importación — Seguimiento de Envíos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#120417; --panel:#1a0a1f; --line:#2a1430; --white:#fff; --gray:#a3a3a3;
-    --red:#c026d3; --orange:#ec4899; --green:#34d399; --yellow:#fbbf24; --blue:#60a5fa;
+    --navy:#0F172A; --panel:#F8FAFC; --line:#E2E8F0; --white:#FFFFFF; --gray:#64748B;
+    --green:#10B981; --green-dark:#0EA271; --gold:#F59E0B; --red:#EF4444; --blue:#3B82F6;
   }
   *{ margin:0; padding:0; box-sizing:border-box; }
-  body{ background:var(--ink); color:var(--white); font-family:'Inter', sans-serif; min-height:100vh; }
+  body{ background:var(--panel); color:var(--navy); font-family:'Manrope', sans-serif; min-height:100vh; }
   .display{ font-family:'Plus Jakarta Sans', sans-serif; font-weight:800; }
 
-  /* ---- Login ---- */
-  #loginScreen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
-  .login-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:36px 32px; max-width:360px; width:100%; }
-  .login-box h1{ font-size:20px; margin-bottom:6px; }
-  .login-box p{ font-size:13px; color:var(--gray); margin-bottom:22px; }
-  .login-box input{ width:100%; background:var(--ink); border:1px solid var(--line); color:var(--white); padding:13px 14px; border-radius:10px; font-size:14px; margin-bottom:12px; font-family:inherit; }
-  .login-box input:focus{ outline:2px solid var(--red); }
-  .login-box button{ width:100%; background:linear-gradient(135deg, var(--red), var(--orange)); color:#fff; border:none; padding:14px; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; }
-  .login-box button:hover{ filter:brightness(1.1); }
-  .login-error{ color:#f87171; font-size:12.5px; margin-top:10px; min-height:16px; }
+  /* ---- Auth ---- */
+  #authScreen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+    background:radial-gradient(900px 500px at 100% 0%, rgba(16,185,129,0.08), transparent 60%), #F8FAFC; }
+  .auth-box{ background:#fff; border:1px solid var(--line); border-radius:18px; padding:38px 34px; max-width:380px; width:100%; box-shadow:0 20px 50px -30px rgba(15,23,42,0.25); }
+  .auth-logo{ display:flex; align-items:center; gap:8px; margin-bottom:22px; font-size:15px; font-weight:800; }
+  .auth-logo .dot{ width:9px; height:9px; border-radius:3px; background:var(--green); }
+  .auth-box h1{ font-size:21px; margin-bottom:6px; }
+  .auth-box p{ font-size:13.5px; color:var(--gray); margin-bottom:24px; }
+  .auth-tabs{ display:flex; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:4px; margin-bottom:20px; }
+  .auth-tab{ flex:1; text-align:center; padding:9px; border-radius:7px; font-size:13px; font-weight:700; cursor:pointer; color:var(--gray); }
+  .auth-tab.active{ background:var(--navy); color:#fff; }
+  .auth-box input{ width:100%; background:#fff; border:1px solid var(--line); color:var(--navy); padding:13px 14px; border-radius:10px; font-size:14px; margin-bottom:12px; font-family:inherit; }
+  .auth-box input:focus{ outline:2px solid var(--green); border-color:transparent; }
+  .auth-box button.submit{ width:100%; background:var(--green); color:#fff; border:none; padding:14px; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; }
+  .auth-box button.submit:hover{ background:var(--green-dark); }
+  .auth-error{ color:#DC2626; font-size:12.5px; margin-top:10px; min-height:16px; }
+  .auth-hint{ font-size:11.5px; color:var(--gray); margin-top:14px; text-align:center; }
 
   /* ---- App ---- */
   #app{ display:none; max-width:1180px; margin:0 auto; padding:28px 20px 60px; }
   .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:12px; }
-  .topbar .mark{ font-size:16px; }
-  .topbar .mark span{ color:var(--red); }
+  .topbar .mark{ font-size:16px; display:flex; align-items:center; gap:8px; }
+  .topbar .mark .dot{ width:9px; height:9px; border-radius:3px; background:var(--green); }
   .topbar-actions{ display:flex; gap:10px; align-items:center; }
-  .btn-small{ background:var(--panel); border:1px solid var(--line); color:var(--white); padding:9px 16px; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; }
-  .btn-small:hover{ border-color:var(--red); }
-  .btn-small.primary{ background:linear-gradient(135deg, var(--red), var(--orange)); border:none; }
+  .topbar-email{ font-size:12px; color:var(--gray); margin-right:6px; }
+  .btn-small{ background:#fff; border:1px solid var(--line); color:var(--navy); padding:9px 16px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .btn-small:hover{ border-color:var(--green); }
+  .btn-small.primary{ background:var(--green); border:none; color:#fff; }
+  .btn-small.primary:hover{ background:var(--green-dark); }
 
   .dolar-strip{
     display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--gray);
-    margin-bottom:24px; padding:10px 14px; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    margin-bottom:24px; padding:10px 14px; background:#fff; border:1px solid var(--line); border-radius:10px;
   }
-  .dolar-strip strong{ color:var(--green); font-size:14px; }
+  .dolar-strip strong{ color:var(--green-dark); font-size:14px; }
   .dolar-strip .dot{ width:7px; height:7px; border-radius:50%; background:var(--green); }
 
   .cards{ display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:30px; }
   @media (max-width:780px){ .cards{ grid-template-columns:repeat(2, 1fr); } }
-  .card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 20px; position:relative; overflow:hidden; }
-  .card::before{ content:''; position:absolute; top:0; left:0; width:32px; height:3px; background:var(--red); }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 20px; position:relative; overflow:hidden; }
+  .card::before{ content:''; position:absolute; top:0; left:0; width:32px; height:3px; background:var(--green); }
   .card .label{ font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--gray); margin-bottom:8px; }
-  .card .value{ font-size:26px; font-weight:800; font-family:'Plus Jakarta Sans', sans-serif; }
+  .card .value{ font-size:26px; font-weight:800; font-family:'Plus Jakarta Sans', sans-serif; color:var(--navy); }
   .card .sub{ font-size:11.5px; color:var(--gray); margin-top:4px; }
 
   .section{ margin-bottom:34px; }
   .section-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
-  .section-head h2{ font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+  .section-head h2{ font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--navy); }
 
   /* ---- Modal nuevo envío ---- */
-  .modal-overlay{ position:fixed; inset:0; z-index:200; background:rgba(5,1,8,0.88); backdrop-filter:blur(6px); display:none; align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto; }
+  .modal-overlay{ position:fixed; inset:0; z-index:200; background:rgba(15,23,42,0.55); backdrop-filter:blur(4px); display:none; align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto; }
   .modal-overlay.show{ display:flex; }
-  .modal-box{ background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:28px; max-width:680px; width:100%; }
-  .modal-box h3{ font-size:18px; margin-bottom:18px; }
+  .modal-box{ background:#fff; border:1px solid var(--line); border-radius:18px; padding:28px; max-width:680px; width:100%; }
+  .modal-box h3{ font-size:18px; margin-bottom:18px; color:var(--navy); }
   .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
   @media (max-width:560px){ .form-row{ grid-template-columns:1fr; } }
   .form-group label{ display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:var(--gray); margin-bottom:6px; }
-  .form-group input{ width:100%; background:var(--ink); border:1px solid var(--line); color:var(--white); padding:11px 13px; border-radius:9px; font-size:14px; font-family:inherit; }
-  .form-group input:focus{ outline:2px solid var(--red); }
+  .form-group input{ width:100%; background:#fff; border:1px solid var(--line); color:var(--navy); padding:11px 13px; border-radius:9px; font-size:14px; font-family:inherit; }
+  .form-group input:focus{ outline:2px solid var(--green); border-color:transparent; }
 
   .productos-list{ margin-top:8px; margin-bottom:14px; }
   .producto-row{ display:grid; grid-template-columns: 2fr 0.7fr 1fr auto; gap:8px; margin-bottom:8px; align-items:end; }
   @media (max-width:680px){ .producto-row{ grid-template-columns:1fr 1fr; } }
-  .producto-row input{ width:100%; background:var(--ink); border:1px solid var(--line); color:var(--white); padding:10px 11px; border-radius:8px; font-size:13px; font-family:inherit; }
-  .producto-row .rm-btn{ background:rgba(248,113,113,0.12); border:1px solid rgba(248,113,113,0.3); color:#f87171; border-radius:8px; padding:10px 12px; cursor:pointer; font-size:13px; }
+  .producto-row input{ width:100%; background:#fff; border:1px solid var(--line); color:var(--navy); padding:10px 11px; border-radius:8px; font-size:13px; font-family:inherit; }
+  .producto-row .rm-btn{ background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); color:var(--red); border-radius:8px; padding:10px 12px; cursor:pointer; font-size:13px; }
   .mini-label{ font-size:10px; color:var(--gray); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block; }
 
   .btn-add-prod{ background:none; border:1.5px dashed var(--line); color:var(--gray); padding:10px; border-radius:8px; width:100%; cursor:pointer; font-size:13px; font-family:inherit; margin-bottom:18px; }
-  .btn-add-prod:hover{ border-color:var(--red); color:var(--white); }
+  .btn-add-prod:hover{ border-color:var(--green); color:var(--navy); }
 
   .modal-actions{ display:flex; gap:10px; justify-content:flex-end; }
   .btn-cancel{ background:none; border:1px solid var(--line); color:var(--gray); padding:11px 20px; border-radius:9px; cursor:pointer; font-size:13.5px; font-family:inherit; }
-  .btn-save{ background:linear-gradient(135deg, var(--red), var(--orange)); border:none; color:#fff; padding:11px 24px; border-radius:9px; cursor:pointer; font-size:13.5px; font-weight:700; font-family:inherit; }
+  .btn-save{ background:var(--green); border:none; color:#fff; padding:11px 24px; border-radius:9px; cursor:pointer; font-size:13.5px; font-weight:700; font-family:inherit; }
+  .btn-save:hover{ background:var(--green-dark); }
 
   /* ---- Envíos (cards expandibles) ---- */
-  .envio-card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; margin-bottom:14px; overflow:hidden; }
+  .envio-card{ background:#fff; border:1px solid var(--line); border-radius:14px; margin-bottom:14px; overflow:hidden; }
   .envio-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; cursor:pointer; gap:12px; flex-wrap:wrap; }
-  .envio-head:hover{ background:rgba(192,38,211,0.04); }
+  .envio-head:hover{ background:rgba(16,185,129,0.04); }
   .envio-head-left{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
   .envio-fecha{ font-size:12.5px; color:var(--gray); min-width:90px; }
   .envio-codigo{ font-size:13px; font-weight:700; }
   .envio-codigo a{ color:var(--blue); text-decoration:none; }
   .envio-codigo a:hover{ text-decoration:underline; }
   .envio-resumen{ display:flex; gap:18px; font-size:12.5px; color:var(--gray); flex-wrap:wrap; }
-  .envio-resumen strong{ color:var(--white); }
+  .envio-resumen strong{ color:var(--navy); }
   .envio-chevron{ color:var(--gray); font-size:13px; transition:transform .2s; }
   .envio-body{ display:none; border-top:1px solid var(--line); padding:0 20px 18px; }
   .envio-body.open{ display:block; }
   .envio-card.open .envio-chevron{ transform:rotate(180deg); }
 
   table{ width:100%; border-collapse:collapse; font-size:12.5px; margin-top:12px; }
-  th{ text-align:left; padding:9px 10px; color:var(--gray); font-weight:600; text-transform:uppercase; font-size:10px; letter-spacing:0.5px; border-bottom:1px solid var(--line); white-space:nowrap; }
-  td{ padding:9px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th{ text-align:left; padding:9px 10px; color:var(--gray); font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:0.5px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  td{ padding:9px 10px; border-bottom:1px solid var(--line); white-space:nowrap; color:var(--navy); }
   tr:last-child td{ border-bottom:none; }
   td.num{ text-align:right; font-family:'Plus Jakarta Sans', sans-serif; }
-  td.highlight{ color:var(--green); font-weight:700; }
-  .delete-envio{ background:none; border:none; color:var(--gray); font-size:11.5px; cursor:pointer; margin-top:10px; }
-  .delete-envio:hover{ color:#f87171; }
-  .peor{ color:#f87171; font-weight:700; }
+  td.highlight{ color:var(--green-dark); font-weight:700; }
+  .delete-envio{ background:none; border:none; color:var(--gray); font-size:11.5px; cursor:pointer; margin-top:10px; font-family:inherit; }
+  .delete-envio:hover{ color:var(--red); }
+  .peor{ color:var(--red); font-weight:700; }
   .resumen-row{ cursor:pointer; }
-  .resumen-row:hover td{ background:rgba(192,38,211,0.05); }
+  .resumen-row:hover td{ background:rgba(16,185,129,0.05); }
   .chevron-mini{ color:var(--gray); font-size:10px; margin-left:6px; }
-  .resumen-detail-row td{ padding:0 !important; background:rgba(0,0,0,0.15); }
+  .resumen-detail-row td{ padding:0 !important; background:rgba(15,23,42,0.02); }
   .resumen-detail-row table{ margin:0; }
   .resumen-detail-row th, .resumen-detail-row td{ padding:8px 16px; font-size:12px; }
   .warn-chip{
     display:inline-flex; align-items:center; gap:4px;
-    background:rgba(251,191,36,0.15); color:var(--yellow);
+    background:rgba(245,158,11,0.12); color:var(--gold);
     padding:3px 10px; border-radius:20px; font-size:10.5px; font-weight:700;
     text-transform:uppercase; letter-spacing:0.4px; white-space:nowrap;
   }
-  .envio-productos-nombres{ font-size:13px; color:var(--white); font-weight:600; }
+  .envio-productos-nombres{ font-size:13px; color:var(--navy); font-weight:700; }
   .envio-productos-nombres .extra{ color:var(--gray); font-weight:400; }
   .estado-chip{
     display:inline-flex; align-items:center; gap:4px;
     padding:3px 10px; border-radius:20px; font-size:10.5px; font-weight:700;
     text-transform:uppercase; letter-spacing:0.4px; white-space:nowrap;
   }
-  .estado-chip.en-camino{ background:rgba(96,165,250,0.15); color:var(--blue); }
-  .estado-chip.recibido{ background:rgba(52,211,153,0.15); color:var(--green); }
+  .estado-chip.en-camino{ background:rgba(59,130,246,0.12); color:var(--blue); }
+  .estado-chip.recibido{ background:rgba(16,185,129,0.12); color:var(--green-dark); }
   .btn-toggle-estado{
-    background:none; border:1px solid var(--line); color:var(--white);
-    padding:9px 16px; border-radius:8px; font-size:12.5px; font-weight:600;
+    background:none; border:1px solid var(--line); color:var(--navy);
+    padding:9px 16px; border-radius:8px; font-size:12.5px; font-weight:700;
     cursor:pointer; font-family:inherit;
   }
-  .btn-toggle-estado:hover{ border-color:var(--red); }
+  .btn-toggle-estado:hover{ border-color:var(--green); }
 
   .empty-state{ padding:40px 20px; text-align:center; color:var(--gray); font-size:13.5px; }
 
   /* ---- Resumen por producto ---- */
-  .table-wrap{ background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:auto; }
+  .table-wrap{ background:#fff; border:1px solid var(--line); border-radius:14px; overflow:auto; }
   .table-wrap table{ margin-top:0; min-width:640px; }
   .table-wrap th, .table-wrap td{ padding:12px 16px; }
 </style>
 </head>
 <body>
 
-<!-- ============ LOGIN ============ -->
-<div id="loginScreen">
-  <div class="login-box">
-    <h1 class="display">RS Importaciones</h1>
-    <p>Panel de control · Costos e impuestos</p>
-    <input type="email" id="loginEmail" placeholder="Email" autocomplete="username">
-    <input type="password" id="loginPassword" placeholder="Contraseña" autocomplete="current-password">
-    <button id="loginBtn">Entrar</button>
-    <div class="login-error" id="loginError"></div>
+<!-- ============ AUTH (login / registro) ============ -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo display"><span class="dot"></span>Mi Importación</div>
+    <h1 class="display" id="authTitle">Bienvenido</h1>
+    <p id="authSubtitle">Entrá para ver el seguimiento de tus envíos.</p>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tabLogin">Iniciar sesión</div>
+      <div class="auth-tab" id="tabRegister">Crear cuenta</div>
+    </div>
+
+    <input type="email" id="authEmail" placeholder="Email" autocomplete="username">
+    <input type="password" id="authPassword" placeholder="Contraseña" autocomplete="current-password">
+    <button class="submit" id="authSubmitBtn">Entrar</button>
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-hint" id="authHint"></div>
   </div>
 </div>
 
 <!-- ============ APP ============ -->
 <div id="app">
   <div class="topbar">
-    <div class="mark display">RS <span>IMPORTACIONES</span></div>
+    <div class="mark display"><span class="dot"></span>Mi Importación</div>
     <div class="topbar-actions">
+      <span class="topbar-email" id="userEmailTxt"></span>
       <button class="btn-small primary" id="nuevoEnvioBtn">+ Nuevo envío</button>
       <button class="btn-small" id="logoutBtn">Salir</button>
     </div>
@@ -194,7 +213,7 @@
   </div>
 
   <div class="section">
-    <div class="section-head"><h2>Envíos</h2></div>
+    <div class="section-head"><h2>Tus envíos</h2></div>
     <div id="enviosContainer"></div>
     <div class="empty-state" id="enviosEmpty" style="display:none;">Todavía no cargaste ningún envío. Tocá "+ Nuevo envío" para empezar.</div>
   </div>
@@ -230,7 +249,7 @@
         <input type="date" id="fEnvioFecha">
       </div>
       <div class="form-group">
-        <label>Código de seguimiento (DHL)</label>
+        <label>Código de seguimiento (courier)</label>
         <input type="text" id="fEnvioCodigo" placeholder="Ej: 1234567890">
       </div>
     </div>
@@ -267,9 +286,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-/* Mismo proyecto de Firebase que ya usás para el panel de fundas.
-   Esto agrega una colección nueva ("importaciones_envios"), no toca
-   nada de lo que ya tenés. */
+/* Mismo proyecto de Firebase que ya usás (web-fundas). Esto agrega una
+   colección NUEVA y separada ("guia_importar_envios"), no toca nada de
+   lo que ya tenés en el panel de fundas ni en el de importaciones interno.
+   Cada documento se guarda con el userId del cliente logueado, y las
+   reglas de seguridad de Firestore (ver nota al final del archivo) hacen
+   que cada cliente SOLO pueda leer/escribir sus propios envíos. */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyB9ijMoFzLhgtsWJ6OjV964ZI9EJ1t5HY4",
   authDomain: "web-fundas.firebaseapp.com",
@@ -279,39 +301,95 @@ const FIREBASE_CONFIG = {
   appId: "1:451427162225:web:84f2c992e0e542e9a4e3d0"
 };
 
-const COLLECTION = "importaciones_envios";
+const COLLECTION = "guia_importar_envios";
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-const loginScreen = document.getElementById('loginScreen');
+const authScreen = document.getElementById('authScreen');
 const appEl = document.getElementById('app');
-const loginEmail = document.getElementById('loginEmail');
-const loginPassword = document.getElementById('loginPassword');
-const loginBtn = document.getElementById('loginBtn');
-const loginError = document.getElementById('loginError');
+const authEmail = document.getElementById('authEmail');
+const authPassword = document.getElementById('authPassword');
+const authSubmitBtn = document.getElementById('authSubmitBtn');
+const authError = document.getElementById('authError');
+const authHint = document.getElementById('authHint');
+const authTitle = document.getElementById('authTitle');
+const authSubtitle = document.getElementById('authSubtitle');
+const tabLogin = document.getElementById('tabLogin');
+const tabRegister = document.getElementById('tabRegister');
 const logoutBtn = document.getElementById('logoutBtn');
 
-loginBtn.addEventListener('click', () => {
-  loginError.textContent = '';
-  auth.signInWithEmailAndPassword(loginEmail.value.trim(), loginPassword.value)
-    .catch((err) => {
-      loginError.textContent = 'No se pudo entrar: revisá el email y la contraseña.';
-      console.error(err);
-    });
+let authMode = 'login'; // 'login' | 'register'
+
+function setAuthMode(mode){
+  authMode = mode;
+  authError.textContent = '';
+  if(mode === 'login'){
+    tabLogin.classList.add('active'); tabRegister.classList.remove('active');
+    authTitle.textContent = 'Bienvenido de nuevo';
+    authSubtitle.textContent = 'Entrá para ver el seguimiento de tus envíos.';
+    authSubmitBtn.textContent = 'Entrar';
+    authHint.innerHTML = '¿Todavía no tenés cuenta? <a href="#" id="goRegister" style="color:var(--green-dark);font-weight:700;text-decoration:none;">Creá una acá</a>';
+  } else {
+    tabRegister.classList.add('active'); tabLogin.classList.remove('active');
+    authTitle.textContent = 'Creá tu cuenta';
+    authSubtitle.textContent = 'Usá el mismo email con el que compraste el curso (o cualquiera que uses siempre).';
+    authSubmitBtn.textContent = 'Crear cuenta';
+    authHint.innerHTML = '¿Ya tenés cuenta? <a href="#" id="goLogin" style="color:var(--green-dark);font-weight:700;text-decoration:none;">Iniciá sesión</a>';
+  }
+  const goRegister = document.getElementById('goRegister');
+  if(goRegister) goRegister.addEventListener('click', (e) => { e.preventDefault(); setAuthMode('register'); });
+  const goLogin = document.getElementById('goLogin');
+  if(goLogin) goLogin.addEventListener('click', (e) => { e.preventDefault(); setAuthMode('login'); });
+}
+setAuthMode('login');
+
+tabLogin.addEventListener('click', () => setAuthMode('login'));
+tabRegister.addEventListener('click', () => setAuthMode('register'));
+
+authSubmitBtn.addEventListener('click', () => {
+  authError.textContent = '';
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+  if(!email || !password){
+    authError.textContent = 'Completá el email y la contraseña.';
+    return;
+  }
+  if(password.length < 6){
+    authError.textContent = 'La contraseña tiene que tener al menos 6 caracteres.';
+    return;
+  }
+  const accion = authMode === 'login'
+    ? auth.signInWithEmailAndPassword(email, password)
+    : auth.createUserWithEmailAndPassword(email, password);
+
+  accion.catch((err) => {
+    const mensajes = {
+      'auth/user-not-found': 'No encontramos una cuenta con ese email. Probá creando una cuenta nueva.',
+      'auth/wrong-password': 'La contraseña no es correcta.',
+      'auth/invalid-credential': 'Email o contraseña incorrectos.',
+      'auth/email-already-in-use': 'Ya existe una cuenta con ese email. Iniciá sesión en vez de crear una nueva.',
+      'auth/invalid-email': 'Ese email no es válido.',
+      'auth/weak-password': 'La contraseña es muy débil, usá al menos 6 caracteres.'
+    };
+    authError.textContent = mensajes[err.code] || ('No se pudo procesar: ' + err.message);
+    console.error(err);
+  });
 });
-loginPassword.addEventListener('keydown', (e) => { if(e.key === 'Enter') loginBtn.click(); });
+[authEmail, authPassword].forEach(el => el.addEventListener('keydown', (e) => { if(e.key === 'Enter') authSubmitBtn.click(); }));
 logoutBtn.addEventListener('click', () => auth.signOut());
 
 auth.onAuthStateChanged((user) => {
   if(user){
-    loginScreen.style.display = 'none';
+    authScreen.style.display = 'none';
     appEl.style.display = 'block';
-    init();
+    document.getElementById('userEmailTxt').textContent = user.email;
+    init(user.uid);
   } else {
-    loginScreen.style.display = 'flex';
+    authScreen.style.display = 'flex';
     appEl.style.display = 'none';
+    authEmail.value = ''; authPassword.value = '';
   }
 });
 
@@ -387,6 +465,7 @@ function leerProductosDelModal(){
    ==================================================== */
 const modalOverlay = document.getElementById('modalOverlay');
 let editingEnvioId = null;
+let currentUserId = null;
 
 function abrirModalNuevo(){
   editingEnvioId = null;
@@ -409,11 +488,7 @@ function abrirModalEditar(envio){
   document.getElementById('fEnvioFecha').value = envio.fecha || '';
   document.getElementById('fEnvioCodigo').value = envio.codigo || '';
   document.getElementById('fEnvioImpuestos').value = envio.impuestosARS || '';
-  // Compatibilidad: envíos viejos tenían el flete en ARS directo.
-  const fleteUSDMostrar = envio.fleteUSD !== undefined
-    ? envio.fleteUSD
-    : (envio.fleteARS && envio.dolarAlPago ? (envio.fleteARS / envio.dolarAlPago).toFixed(2) : '');
-  document.getElementById('fEnvioFlete').value = fleteUSDMostrar;
+  document.getElementById('fEnvioFlete').value = envio.fleteUSD !== undefined ? envio.fleteUSD : '';
   document.getElementById('fEnvioDolar').value = envio.dolarAlPago || '';
   productosList.innerHTML = '';
   (envio.productos || []).forEach(p => agregarFilaProducto(p));
@@ -440,18 +515,8 @@ document.getElementById('modalSaveBtn').addEventListener('click', async () => {
     return;
   }
 
-  const datos = {
-    fecha,
-    codigo,
-    impuestosARS,
-    fleteUSD,
-    dolarAlPago,
-    productos
-  };
-
-  if(!editingEnvioId){
-    datos.estado = 'en_camino';
-  }
+  const datos = { fecha, codigo, impuestosARS, fleteUSD, dolarAlPago, productos, userId: currentUserId };
+  if(!editingEnvioId){ datos.estado = 'en_camino'; }
 
   try {
     if(editingEnvioId){
@@ -470,16 +535,14 @@ document.getElementById('modalSaveBtn').addEventListener('click', async () => {
 /* ====================================================
    CÁLCULO DE COSTOS (prorrateo)
    ==================================================== */
-function linkDHL(codigo){
+function linkTracking(codigo){
   if(!codigo) return null;
-  return `https://www.dhl.com/ar-es/home/tracking/tracking-express.html?submit=1&tracking-id=${encodeURIComponent(codigo)}`;
+  return `https://www.17track.net/es#nums=${encodeURIComponent(codigo)}`;
 }
 
 function calcularEnvio(envio){
   const valorTotalUSD = envio.productos.reduce((acc, p) => acc + (p.precioUnitarioUSD * p.cantidad), 0);
 
-  // Flete: se carga en USD y se reparte proporcional al VALOR de cada
-  // producto (no al peso, porque no siempre se puede medir exacto).
   let fleteARS_hist, fleteARS_hoy;
   if(envio.fleteUSD !== undefined && envio.fleteUSD !== null){
     fleteARS_hist = envio.fleteUSD * envio.dolarAlPago;
@@ -524,16 +587,22 @@ function fmtARS(n){
 }
 
 /* ====================================================
-   DATOS EN VIVO Y RENDER
+   DATOS EN VIVO Y RENDER (filtrados por usuario)
    ==================================================== */
 let allEnvios = [];
+let unsubscribeEnvios = null;
 
-function init(){
+function init(uid){
+  currentUserId = uid;
   cargarDolarHoy();
-  db.collection(COLLECTION).orderBy('creadoEn', 'desc').onSnapshot((snapshot) => {
-    allEnvios = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderTodo();
-  }, (err) => console.error('Error leyendo envíos:', err));
+  if(unsubscribeEnvios) unsubscribeEnvios();
+  unsubscribeEnvios = db.collection(COLLECTION)
+    .where('userId', '==', uid)
+    .orderBy('creadoEn', 'desc')
+    .onSnapshot((snapshot) => {
+      allEnvios = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderTodo();
+    }, (err) => console.error('Error leyendo envíos:', err));
 }
 
 function renderTodo(){
@@ -546,10 +615,7 @@ function renderStats(){
   let unidades = 0, totalARS = 0, enCamino = 0, recibidos = 0;
   allEnvios.forEach(envio => {
     const { productosCalc } = calcularEnvio(envio);
-    productosCalc.forEach(p => {
-      unidades += p.cantidad;
-      totalARS += p.costoTotalARS_hist;
-    });
+    productosCalc.forEach(p => { unidades += p.cantidad; totalARS += p.costoTotalARS_hist; });
     if(envio.estado === 'recibido') recibidos++; else enCamino++;
   });
   document.getElementById('statEnvios').textContent = allEnvios.length;
@@ -571,7 +637,7 @@ function renderEnvios(){
     const { valorTotalUSD, productosCalc } = calcularEnvio(envio);
     const totalARS = productosCalc.reduce((a,p) => a + p.costoTotalARS_hist, 0);
     const unidades = productosCalc.reduce((a,p) => a + p.cantidad, 0);
-    const dhl = linkDHL(envio.codigo);
+    const tracking = linkTracking(envio.codigo);
     const faltaImpuestos = !envio.impuestosARS || envio.impuestosARS <= 0;
     const estaRecibido = envio.estado === 'recibido';
 
@@ -600,7 +666,7 @@ function renderEnvios(){
         <div class="envio-head-left">
           <span class="envio-fecha">${envio.fecha}</span>
           <span class="envio-productos-nombres">${nombresHtml}</span>
-          <span class="envio-codigo">${dhl ? `<a href="${dhl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📦 ${escapeHtml(envio.codigo)} ↗</a>` : '<span class="warn-chip">⚠ Falta código</span>'}</span>
+          <span class="envio-codigo">${tracking ? `<a href="${tracking}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📦 ${escapeHtml(envio.codigo)} ↗</a>` : '<span class="warn-chip">⚠ Falta código</span>'}</span>
           <span class="estado-chip ${estaRecibido ? 'recibido' : 'en-camino'}">${estaRecibido ? '✅ Recibido' : '🚚 En camino'}</span>
           ${faltaImpuestos ? '<span class="warn-chip">⚠ Falta cargar impuestos</span>' : ''}
         </div>
@@ -637,10 +703,7 @@ function renderEnvios(){
 
     const head = card.querySelector('.envio-head');
     const body = card.querySelector('.envio-body');
-    head.addEventListener('click', () => {
-      card.classList.toggle('open');
-      body.classList.toggle('open');
-    });
+    head.addEventListener('click', () => { card.classList.toggle('open'); body.classList.toggle('open'); });
 
     card.querySelector('.btn-toggle-estado').addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -651,10 +714,7 @@ function renderEnvios(){
       });
     });
 
-    card.querySelector('.btn-editar-envio').addEventListener('click', (e) => {
-      e.stopPropagation();
-      abrirModalEditar(envio);
-    });
+    card.querySelector('.btn-editar-envio').addEventListener('click', (e) => { e.stopPropagation(); abrirModalEditar(envio); });
 
     card.querySelector('.btn-eliminar-envio').addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -675,11 +735,7 @@ function renderResumenProductos(){
       if(!acumulado[p.nombre]) acumulado[p.nombre] = { unidades: 0, totalARS: 0, compras: [] };
       acumulado[p.nombre].unidades += p.cantidad;
       acumulado[p.nombre].totalARS += p.costoTotalARS_hist;
-      acumulado[p.nombre].compras.push({
-        fecha: envio.fecha,
-        cantidad: p.cantidad,
-        costoUnitario: p.costoUnitarioARS_hist
-      });
+      acumulado[p.nombre].compras.push({ fecha: envio.fecha, cantidad: p.cantidad, costoUnitario: p.costoUnitarioARS_hist });
     });
   });
 
