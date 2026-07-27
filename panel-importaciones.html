@@ -295,7 +295,18 @@
         <input type="date" id="fEnvioFecha">
       </div>
       <div class="form-group">
-        <label>Código de seguimiento (courier)</label>
+        <label>Empresa de envío</label>
+        <select id="fEnvioCourier" class="select-producto">
+          <option value="dhl">DHL</option>
+          <option value="fedex">FedEx</option>
+          <option value="ups">UPS</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row" style="margin-bottom:12px;">
+      <div class="form-group" style="margin-bottom:0;">
+        <label>Código de seguimiento</label>
         <input type="text" id="fEnvioCodigo" placeholder="Ej: 1234567890">
       </div>
     </div>
@@ -603,6 +614,7 @@ function abrirModalNuevo(){
   document.getElementById('modalTitle').textContent = 'Nuevo envío';
   document.getElementById('modalSaveBtn').textContent = 'Guardar envío';
   document.getElementById('fEnvioFecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('fEnvioCourier').value = 'dhl';
   document.getElementById('fEnvioCodigo').value = '';
   document.getElementById('fEnvioImpuestos').value = '';
   document.getElementById('fEnvioFlete').value = '';
@@ -617,6 +629,7 @@ function abrirModalEditar(envio){
   document.getElementById('modalTitle').textContent = 'Editar envío';
   document.getElementById('modalSaveBtn').textContent = 'Guardar cambios';
   document.getElementById('fEnvioFecha').value = envio.fecha || '';
+  document.getElementById('fEnvioCourier').value = envio.courier || 'dhl';
   document.getElementById('fEnvioCodigo').value = envio.codigo || '';
   document.getElementById('fEnvioImpuestos').value = envio.impuestosARS || '';
   document.getElementById('fEnvioFlete').value = envio.fleteUSD !== undefined ? envio.fleteUSD : '';
@@ -642,6 +655,7 @@ modalOverlay.addEventListener('click', (e) => { if(e.target === modalOverlay) ce
 
 document.getElementById('modalSaveBtn').addEventListener('click', async () => {
   const fecha = document.getElementById('fEnvioFecha').value;
+  const courier = document.getElementById('fEnvioCourier').value;
   const codigo = document.getElementById('fEnvioCodigo').value.trim();
   const impuestosARS = parseFloat(document.getElementById('fEnvioImpuestos').value) || 0;
   const fleteUSD = parseFloat(document.getElementById('fEnvioFlete').value) || 0;
@@ -653,7 +667,7 @@ document.getElementById('modalSaveBtn').addEventListener('click', async () => {
     return;
   }
 
-  const datos = { fecha, codigo, impuestosARS, fleteUSD, dolarAlPago, productos, userId: currentUserId };
+  const datos = { fecha, courier, codigo, impuestosARS, fleteUSD, dolarAlPago, productos, userId: currentUserId };
   if(!editingEnvioId){ datos.estado = 'en_camino'; }
 
   try {
@@ -673,9 +687,20 @@ document.getElementById('modalSaveBtn').addEventListener('click', async () => {
 /* ====================================================
    CÁLCULO DE COSTOS (prorrateo)
    ==================================================== */
-function linkTracking(codigo){
+const COURIER_INFO = {
+  dhl:   { nombre: 'DHL',   icono: '📦', url: (c) => `https://www.dhl.com/ar-es/home/tracking/tracking-express.html?submit=1&tracking-id=${encodeURIComponent(c)}` },
+  fedex: { nombre: 'FedEx', icono: '📦', url: (c) => `https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(c)}` },
+  ups:   { nombre: 'UPS',   icono: '📦', url: (c) => `https://www.ups.com/track?loc=es_AR&tracknum=${encodeURIComponent(c)}` }
+};
+
+function linkTracking(codigo, courier){
   if(!codigo) return null;
-  return `https://www.17track.net/es#nums=${encodeURIComponent(codigo)}`;
+  const info = COURIER_INFO[courier] || COURIER_INFO.dhl;
+  return info.url(codigo);
+}
+
+function nombreCourier(courier){
+  return (COURIER_INFO[courier] || COURIER_INFO.dhl).nombre;
 }
 
 function calcularEnvio(envio){
@@ -803,7 +828,7 @@ function renderEnvios(){
     const { valorTotalUSD, productosCalc } = calcularEnvio(envio);
     const totalARS = productosCalc.reduce((a,p) => a + p.costoTotalARS_hist, 0);
     const unidades = productosCalc.reduce((a,p) => a + p.cantidad, 0);
-    const tracking = linkTracking(envio.codigo);
+    const tracking = linkTracking(envio.codigo, envio.courier);
     const faltaImpuestos = !envio.impuestosARS || envio.impuestosARS <= 0;
     const estaRecibido = envio.estado === 'recibido';
 
@@ -832,7 +857,7 @@ function renderEnvios(){
         <div class="envio-head-left">
           <span class="envio-fecha">${envio.fecha}</span>
           <span class="envio-productos-nombres">${nombresHtml}</span>
-          <span class="envio-codigo">${tracking ? `<a href="${tracking}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📦 ${escapeHtml(envio.codigo)} ↗</a>` : '<span class="warn-chip">⚠ Falta código</span>'}</span>
+          <span class="envio-codigo">${tracking ? `<a href="${tracking}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📦 ${nombreCourier(envio.courier)}: ${escapeHtml(envio.codigo)} ↗</a>` : '<span class="warn-chip">⚠ Falta código</span>'}</span>
           <span class="estado-chip ${estaRecibido ? 'recibido' : 'en-camino'}">${estaRecibido ? '✅ Recibido' : '🚚 En camino'}</span>
           ${faltaImpuestos ? '<span class="warn-chip">⚠ Falta cargar impuestos</span>' : ''}
         </div>
