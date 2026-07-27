@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Presupuestos y Envíos — Importación Argentina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0F172A; --panel:#F8FAFC; --line:#E2E8F0; --white:#FFFFFF; --gray:#64748B;
+    --green:#10B981; --green-dark:#0EA271; --gold:#F59E0B; --red:#EF4444; --blue:#3B82F6;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{ background:var(--panel); color:var(--navy); font-family:'Manrope', sans-serif; min-height:100vh; }
+  .display{ font-family:'Plus Jakarta Sans', sans-serif; font-weight:800; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:28px 20px 70px; }
+
+  header.top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap; gap:10px; }
+  .brand{ display:flex; align-items:center; gap:8px; font-size:16px; font-weight:800; }
+  .brand .dot{ width:9px; height:9px; border-radius:3px; background:var(--green); }
+  .top-sub{ font-size:12.5px; color:var(--gray); margin-bottom:24px; }
+
+  .dolar-strip{
+    display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--gray);
+    margin-bottom:22px; padding:10px 14px; background:#fff; border:1px solid var(--line); border-radius:10px; flex-wrap:wrap;
+  }
+  .dolar-strip strong{ color:var(--green-dark); font-size:14px; }
+  .dolar-strip .dot{ width:7px; height:7px; border-radius:50%; background:var(--green); }
+  .dolar-strip input{ width:100px; border:1px solid var(--line); border-radius:6px; padding:5px 8px; font-size:12.5px; font-family:inherit; margin-left:4px; }
+
+  .layout{ display:grid; grid-template-columns:1.15fr 0.85fr; gap:22px; align-items:start; }
+  @media (max-width:960px){ .layout{ grid-template-columns:1fr; } }
+
+  .panel{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:22px 24px; margin-bottom:20px; }
+  .panel h2{ font-size:14px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .panel h2 .num{ width:22px; height:22px; border-radius:6px; background:var(--green); color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center; font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; }
+
+  .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+  @media (max-width:520px){ .form-row{ grid-template-columns:1fr; } }
+  .form-group label{ display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--gray); margin-bottom:6px; }
+  .form-group input, .form-group select{ width:100%; background:#fff; border:1px solid var(--line); color:var(--navy); padding:10px 12px; border-radius:8px; font-size:13.5px; font-family:inherit; }
+  .form-group input:focus, .form-group select:focus{ outline:2px solid var(--green); border-color:transparent; }
+  .form-hint{ font-size:10.5px; color:var(--gray); margin-top:4px; line-height:1.4; }
+
+  .toggle-group{ display:flex; gap:8px; background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:4px; }
+  .toggle-opt{ flex:1; text-align:center; padding:9px 6px; border-radius:6px; font-size:12.5px; font-weight:700; cursor:pointer; color:var(--gray); }
+  .toggle-opt.active{ background:var(--navy); color:#fff; }
+
+  .warn-box{
+    display:flex; gap:10px; align-items:flex-start;
+    background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3);
+    border-radius:10px; padding:12px 14px; margin-top:10px; margin-bottom:6px; font-size:12px; color:#92400E; line-height:1.55;
+  }
+  .warn-box svg{ width:18px; height:18px; color:var(--gold); flex-shrink:0; margin-top:1px; }
+  .warn-box.danger{ background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.25); color:#991B1B; }
+  .warn-box.danger svg{ color:var(--red); }
+  .warn-box b{ display:block; margin-bottom:2px; }
+
+  .productos-table{ margin-bottom:6px; }
+  .producto-row{ display:grid; grid-template-columns:1.6fr 0.6fr 0.9fr auto; gap:8px; margin-bottom:8px; align-items:end; }
+  @media (max-width:640px){ .producto-row{ grid-template-columns:1fr 1fr; } }
+  .producto-row input{ width:100%; background:#fff; border:1px solid var(--line); color:var(--navy); padding:9px 10px; border-radius:7px; font-size:13px; font-family:inherit; }
+  .producto-row .rm-btn{ background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); color:var(--red); border-radius:7px; padding:9px 11px; cursor:pointer; font-size:13px; }
+  .mini-label{ font-size:9.5px; color:var(--gray); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:3px; display:block; }
+  .btn-add{ background:none; border:1.5px dashed var(--line); color:var(--gray); padding:10px; border-radius:8px; width:100%; cursor:pointer; font-size:12.5px; font-family:inherit; }
+  .btn-add:hover{ border-color:var(--green); color:var(--navy); }
+
+  /* ---- resultado ---- */
+  .result-sticky{ position:sticky; top:20px; }
+  .result-total{ text-align:center; padding:8px 0 18px; border-bottom:1px solid var(--line); margin-bottom:14px; }
+  .result-total .label{ font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--gray); }
+  .result-total .value{ font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:32px; color:var(--navy); margin-top:4px; }
+  .result-total .sub{ font-size:12px; color:var(--gray); margin-top:2px; }
+
+  .result-line{ display:flex; justify-content:space-between; align-items:center; padding:7px 0; font-size:12.5px; border-bottom:1px dashed var(--line); }
+  .result-line:last-child{ border-bottom:none; }
+  .result-line .k{ color:var(--gray); }
+  .result-line .v{ font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; color:var(--navy); }
+  .result-line.total .v{ color:var(--green-dark); font-size:14px; }
+  .result-line.total .k{ color:var(--navy); font-weight:700; }
+
+  .result-section-title{ font-size:10.5px; text-transform:uppercase; letter-spacing:0.5px; color:var(--gray); margin:14px 0 6px; }
+
+  .producto-result-card{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .producto-result-card h4{ font-size:12.5px; margin-bottom:8px; }
+  .producto-result-card .result-line{ font-size:11.5px; padding:4px 0; }
+
+  .margen-box{ background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:12px 14px; margin-top:6px; }
+  .margen-box .result-line .v{ color:var(--green-dark); }
+
+  /* ---- normativa ---- */
+  .normativa-list{ display:flex; flex-direction:column; gap:12px; }
+  .normativa-item{ border-left:3px solid var(--green); padding-left:12px; }
+  .normativa-item h4{ font-size:12.5px; margin-bottom:3px; }
+  .normativa-item p{ font-size:11.5px; color:var(--gray); line-height:1.55; }
+  .normativa-item .fuente{ font-size:10px; color:#94A3B8; margin-top:2px; }
+  .disclaimer{ font-size:10.5px; color:var(--gray); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-top:14px; line-height:1.5; }
+
+  footer.foot{ text-align:center; font-size:11px; color:var(--gray); margin-top:30px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand display"><span class="dot"></span>Calculadora de Presupuestos y Envíos</div>
+  </header>
+  <p class="top-sub">Costo real de importar (impuestos, percepciones y flete incluidos) según tu condición fiscal y régimen de importación — Argentina.</p>
+
+  <div class="dolar-strip">
+    <span class="dot"></span>
+    <span>Dólar oficial ahora: <strong id="dolarHoyTxt">cargando...</strong></span>
+    <span style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+      Usar otro valor: <input type="number" id="dolarManual" step="0.01" placeholder="opcional">
+    </span>
+  </div>
+
+  <div class="layout">
+    <!-- ============ COLUMNA IZQUIERDA: FORMULARIO ============ -->
+    <div>
+
+      <div class="panel">
+        <h2><span class="num">1</span>Régimen y condición fiscal</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Régimen de importación</label>
+            <div class="toggle-group" id="toggleRegimen">
+              <div class="toggle-opt active" data-val="formal">Formal</div>
+              <div class="toggle-opt" data-val="simplificado">Simplificado (courier)</div>
+            </div>
+            <div class="form-hint" id="hintRegimen">Despacho con despachante de aduana. Se pagan arancel, tasa de estadística, IVA y percepciones por separado.</div>
+          </div>
+          <div class="form-group">
+            <label>Condición fiscal</label>
+            <div class="toggle-group" id="toggleCondicion">
+              <div class="toggle-opt active" data-val="ri">Responsable Inscripto</div>
+              <div class="toggle-opt" data-val="mono">Monotributista</div>
+            </div>
+            <div class="form-hint" id="hintCondicion">Percepciones más bajas y recuperables como crédito fiscal de IVA.</div>
+          </div>
+        </div>
+
+        <div class="warn-box" id="warnSimplificado" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          <div><b>Régimen simplificado (courier)</b>Pensado para envíos de hasta USD 3.000. Se paga una alícuota única del 50% sobre el valor CIF, sin discriminar impuestos por separado.</div>
+        </div>
+
+        <div class="warn-box danger" id="warnMono" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          <div><b>Monotributo e importación: ojo con el canal que usás</b>Podés importar mercadería para vender siempre que lo hagas por el <b>régimen formal</b> de importación, pagando el arancel, IVA y percepciones que correspondan. Lo que genera riesgo de exclusión (retroactiva) del monotributo es usar el <b>régimen de envíos personales/puerta a puerta</b> — pensado para uso propio — para meter mercadería que después se vende. Confirmá siempre tu situación puntual con tu contador.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="num">2</span>Productos del envío</h2>
+        <div class="productos-table" id="productosList"></div>
+        <button type="button" class="btn-add" id="addProductoBtn">+ Agregar producto</button>
+      </div>
+
+      <div class="panel">
+        <h2><span class="num">3</span>Logística internacional</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Flete internacional total (USD)</label>
+            <input type="number" id="fFlete" placeholder="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Seguro internacional (USD)</label>
+            <input type="number" id="fSeguro" placeholder="0" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="num">4</span>Alícuotas aplicables</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Arancel de importación (%)</label>
+            <input type="number" id="fArancel" step="0.1" value="20">
+            <div class="form-hint">Varía según la posición arancelaria (NCM) del producto. Consultalo en el Nomenclador Arancelario o con tu despachante.</div>
+          </div>
+          <div class="form-group">
+            <label>Tasa de estadística (%)</label>
+            <input type="number" id="fTasaEst" step="0.1" value="3">
+            <div class="form-hint">3% es el valor general vigente para régimen formal (con tope en algunos casos).</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>IVA (%)</label>
+            <input type="number" id="fIva" step="0.1" value="21">
+          </div>
+          <div class="form-group">
+            <label>Percepción IVA adicional (%)</label>
+            <input type="number" id="fPercIva" step="0.1" value="20">
+            <div class="form-hint">RG 2937: 20% (bienes alícuota general) o 10% (bienes con IVA reducido 10,5%).</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Percepción Ganancias (%)</label>
+            <input type="number" id="fPercGan" step="0.1" value="6">
+            <div class="form-hint">Referencia habitual: 6% inscripto en Ganancias, más alta si no lo estás. Confirmar con despachante.</div>
+          </div>
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <div class="form-hint" style="margin-top:10px;">Estos porcentajes se autocompletan según el régimen y la condición fiscal elegidos arriba, pero podés editarlos manualmente si tu caso puntual es distinto.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="num">5</span>Gastos locales</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Honorarios despachante de aduana (USD)</label>
+            <input type="number" id="fDespachante" placeholder="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Courier / handling en destino (ARS)</label>
+            <input type="number" id="fHandling" placeholder="0" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Otros gastos (ARS)</label>
+          <input type="number" id="fOtros" placeholder="0" step="0.01">
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="num">6</span>Precio de venta</h2>
+        <div class="form-group">
+          <label>Markup deseado (%)</label>
+          <input type="number" id="fMarkup" step="1" value="100">
+          <div class="form-hint">100% = duplicás el costo para fijar el precio de venta al público.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============ COLUMNA DERECHA: RESULTADO ============ -->
+    <div class="result-sticky">
+      <div class="panel">
+        <h2>Resultado</h2>
+        <div class="result-total">
+          <div class="label">Costo total del envío</div>
+          <div class="value" id="rTotalARS">$0</div>
+          <div class="sub" id="rTotalUSD">US$ 0</div>
+        </div>
+
+        <div class="result-section-title">Desglose</div>
+        <div class="result-line"><span class="k">Valor FOB total</span><span class="v" id="rFOB">—</span></div>
+        <div class="result-line"><span class="k">Valor CIF (FOB + flete + seguro)</span><span class="v" id="rCIF">—</span></div>
+        <div class="result-line"><span class="k">Derechos de importación</span><span class="v" id="rDerechos">—</span></div>
+        <div class="result-line"><span class="k">Tasa de estadística</span><span class="v" id="rTasaEst">—</span></div>
+        <div class="result-line"><span class="k">IVA</span><span class="v" id="rIva">—</span></div>
+        <div class="result-line"><span class="k">Percepción IVA adicional</span><span class="v" id="rPercIva">—</span></div>
+        <div class="result-line"><span class="k">Percepción Ganancias</span><span class="v" id="rPercGan">—</span></div>
+        <div class="result-line total"><span class="k">Total impuestos aduaneros</span><span class="v" id="rTotalImpuestos">—</span></div>
+
+        <div class="result-section-title">Por producto</div>
+        <div id="productosResult"></div>
+
+        <div class="margen-box">
+          <div class="result-line"><span class="k">Precio de venta sugerido (total)</span><span class="v" id="rPrecioVenta">—</span></div>
+          <div class="result-line"><span class="k">Margen bruto</span><span class="v" id="rMargen">—</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Normativa de referencia</h2>
+        <div class="normativa-list">
+          <div class="normativa-item">
+            <h4>Régimen simplificado (courier)</h4>
+            <p>Envíos de hasta USD 3.000 por destinatario. Alícuota única del 50% sobre el valor CIF, sin discriminar impuestos.</p>
+          </div>
+          <div class="normativa-item">
+            <h4>Tasa de estadística</h4>
+            <p>3% sobre el valor CIF en el régimen formal (con excepciones y topes según el caso).</p>
+            <div class="fuente">Resoluciones vigentes — verificar tasa aplicable a tu NCM.</div>
+          </div>
+          <div class="normativa-item">
+            <h4>Percepción de IVA en la importación</h4>
+            <p>RG 2937 (AFIP/ARCA) y modificatorias: 20% sobre bienes con IVA general (21%), o 10% sobre bienes con IVA reducido (10,5%). Es un anticipo — los Responsables Inscriptos lo computan como crédito fiscal.</p>
+            <div class="fuente">Fuente: RG (AFIP) 2937/2010 y modif. (RG 4461/2019).</div>
+          </div>
+          <div class="normativa-item">
+            <h4>Percepción de Ganancias en la importación</h4>
+            <p>Anticipo del Impuesto a las Ganancias que se liquida junto con la importación. La alícuota varía según tu inscripción en Ganancias — confirmá el porcentaje vigente con tu despachante.</p>
+          </div>
+          <div class="normativa-item">
+            <h4>Certificado de exclusión de percepciones</h4>
+            <p>Si sos RI y acumulás saldo a favor de forma recurrente (importás más de lo que facturás), podés tramitar ante ARCA un certificado que reduce o elimina las percepciones.</p>
+          </div>
+          <div class="normativa-item">
+            <h4>Monotributo e importaciones</h4>
+            <p>El monotributo es incompatible con importar mercadería para reventa <b>usando el régimen de envíos personales</b> (pensado para uso propio). Importar para comercializar por el régimen formal, pagando los impuestos correspondientes, es otra situación — confirmá con tu contador según tu actividad y categoría.</p>
+          </div>
+        </div>
+        <div class="disclaimer">⚠️ Estos valores son de referencia y cambian con el tiempo (tipo de cambio, resoluciones, categorías de monotributo, etc.). Esta calculadora no reemplaza el asesoramiento de tu despachante de aduana o contador — usala para tener una estimación rápida antes de importar.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">Calculadora de Presupuestos y Envíos · Guía Importar</footer>
+</div>
+
+<script>
+/* ====================================================
+   DÓLAR OFICIAL EN VIVO
+   ==================================================== */
+let dolarHoy = null;
+let dolarManualVal = null;
+
+async function cargarDolarHoy(){
+  try {
+    const res = await fetch('https://dolarapi.com/v1/dolares/oficial');
+    const data = await res.json();
+    dolarHoy = data.venta;
+    document.getElementById('dolarHoyTxt').textContent = '$' + dolarHoy.toLocaleString('es-AR');
+    recalcular();
+  } catch(err){
+    document.getElementById('dolarHoyTxt').textContent = 'No disponible (usá el campo manual)';
+    console.error('Error cargando dólar:', err);
+  }
+}
+document.getElementById('dolarManual').addEventListener('input', (e) => {
+  dolarManualVal = parseFloat(e.target.value) || null;
+  recalcular();
+});
+
+function dolarActivo(){ return dolarManualVal || dolarHoy || 0; }
+
+/* ====================================================
+   TOGGLES: régimen y condición fiscal
+   ==================================================== */
+let regimen = 'formal';
+let condicion = 'ri';
+
+const ALICUOTAS_DEFAULT = {
+  formal_ri:   { percIva: 20, percGan: 6 },
+  formal_mono: { percIva: 20, percGan: 11 },
+};
+
+function setToggle(groupId, val, cb){
+  const group = document.getElementById(groupId);
+  [...group.children].forEach(opt => opt.classList.toggle('active', opt.dataset.val === val));
+  cb(val);
+}
+
+document.getElementById('toggleRegimen').addEventListener('click', (e) => {
+  const opt = e.target.closest('.toggle-opt');
+  if(!opt) return;
+  regimen = opt.dataset.val;
+  setToggle('toggleRegimen', regimen, () => {});
+  actualizarHints();
+  recalcular();
+});
+
+document.getElementById('toggleCondicion').addEventListener('click', (e) => {
+  const opt = e.target.closest('.toggle-opt');
+  if(!opt) return;
+  condicion = opt.dataset.val;
+  setToggle('toggleCondicion', condicion, () => {});
+  aplicarDefaultsFiscales();
+  actualizarHints();
+  recalcular();
+});
+
+function aplicarDefaultsFiscales(){
+  const key = 'formal_' + condicion;
+  const d = ALICUOTAS_DEFAULT[key];
+  if(d){
+    document.getElementById('fPercIva').value = d.percIva;
+    document.getElementById('fPercGan').value = d.percGan;
+  }
+}
+
+function actualizarHints(){
+  document.getElementById('warnSimplificado').style.display = regimen === 'simplificado' ? 'flex' : 'none';
+  document.getElementById('warnMono').style.display = condicion === 'mono' ? 'flex' : 'none';
+  document.getElementById('hintRegimen').textContent = regimen === 'formal'
+    ? 'Despacho con despachante de aduana. Se pagan arancel, tasa de estadística, IVA y percepciones por separado.'
+    : 'Envíos de hasta USD 3.000. Alícuota única del 50% sobre el CIF, sin discriminar impuestos.';
+  document.getElementById('hintCondicion').textContent = condicion === 'ri'
+    ? 'Percepciones más bajas y recuperables como crédito fiscal de IVA.'
+    : 'Revisá el aviso sobre monotributo e importaciones más abajo.';
+}
+
+/* ====================================================
+   PRODUCTOS (líneas dinámicas)
+   ==================================================== */
+const productosList = document.getElementById('productosList');
+let rowCount = 0;
+
+function agregarFilaProducto(){
+  const id = 'r' + (rowCount++);
+  const row = document.createElement('div');
+  row.className = 'producto-row';
+  row.dataset.rowId = id;
+  row.innerHTML = `
+    <div>
+      <span class="mini-label">Producto</span>
+      <input type="text" class="p-nombre" placeholder="Ej: Funda iPhone 15">
+    </div>
+    <div>
+      <span class="mini-label">Cant.</span>
+      <input type="number" class="p-cantidad" placeholder="1">
+    </div>
+    <div>
+      <span class="mini-label">Precio unit. (USD)</span>
+      <input type="number" step="0.01" class="p-precio" placeholder="0.00">
+    </div>
+    <button type="button" class="rm-btn">✕</button>
+  `;
+  row.querySelector('.rm-btn').addEventListener('click', () => { row.remove(); recalcular(); });
+  row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', recalcular));
+  productosList.appendChild(row);
+}
+document.getElementById('addProductoBtn').addEventListener('click', agregarFilaProducto);
+
+function leerProductos(){
+  const filas = [...productosList.querySelectorAll('.producto-row')];
+  return filas.map(row => ({
+    nombre: row.querySelector('.p-nombre').value.trim() || 'Producto',
+    cantidad: parseFloat(row.querySelector('.p-cantidad').value) || 0,
+    precioUnitarioUSD: parseFloat(row.querySelector('.p-precio').value) || 0
+  })).filter(p => p.cantidad > 0 && p.precioUnitarioUSD > 0);
+}
+
+/* ====================================================
+   CÁLCULO
+   ==================================================== */
+function fmtARS(n){
+  if(n === null || n === undefined || isNaN(n)) return '—';
+  return '$' + n.toLocaleString('es-AR', { maximumFractionDigits: 0 });
+}
+function fmtUSD(n){
+  if(n === null || n === undefined || isNaN(n)) return '—';
+  return 'US$ ' + n.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+}
+
+['fFlete','fSeguro','fArancel','fTasaEst','fIva','fPercIva','fPercGan','fDespachante','fHandling','fOtros','fMarkup']
+  .forEach(id => document.getElementById(id).addEventListener('input', recalcular));
+
+function recalcular(){
+  const productos = leerProductos();
+  const dolar = dolarActivo();
+
+  const flete = parseFloat(document.getElementById('fFlete').value) || 0;
+  const seguro = parseFloat(document.getElementById('fSeguro').value) || 0;
+  const arancelPct = parseFloat(document.getElementById('fArancel').value) || 0;
+  const tasaEstPct = parseFloat(document.getElementById('fTasaEst').value) || 0;
+  const ivaPct = parseFloat(document.getElementById('fIva').value) || 0;
+  const percIvaPct = parseFloat(document.getElementById('fPercIva').value) || 0;
+  const percGanPct = parseFloat(document.getElementById('fPercGan').value) || 0;
+  const despachanteUSD = parseFloat(document.getElementById('fDespachante').value) || 0;
+  const handlingARS = parseFloat(document.getElementById('fHandling').value) || 0;
+  const otrosARS = parseFloat(document.getElementById('fOtros').value) || 0;
+  const markupPct = parseFloat(document.getElementById('fMarkup').value) || 0;
+
+  const fobTotal = productos.reduce((a,p) => a + p.cantidad * p.precioUnitarioUSD, 0);
+  const cif = fobTotal + flete + seguro;
+
+  const esFormal = regimen === 'formal';
+  const derechos = esFormal ? (arancelPct/100) * cif : 0.5 * cif;
+  const tasaEst = esFormal ? (tasaEstPct/100) * cif : 0;
+  const baseIva = cif + derechos + tasaEst;
+  const iva = (ivaPct/100) * baseIva;
+  const percIva = esFormal ? (percIvaPct/100) * baseIva : 0;
+  const percGan = esFormal ? (percGanPct/100) * baseIva : 0;
+  const totalImpuestos = derechos + tasaEst + iva + percIva + percGan;
+
+  const costoTotalUSD = cif + totalImpuestos + despachanteUSD;
+  const costoTotalARS = costoTotalUSD * dolar + handlingARS + otrosARS;
+
+  document.getElementById('rTotalARS').textContent = fmtARS(costoTotalARS);
+  document.getElementById('rTotalUSD').textContent = fmtUSD(costoTotalUSD);
+  document.getElementById('rFOB').textContent = fmtUSD(fobTotal);
+  document.getElementById('rCIF').textContent = fmtUSD(cif);
+  document.getElementById('rDerechos').textContent = fmtUSD(derechos);
+  document.getElementById('rTasaEst').textContent = fmtUSD(tasaEst);
+  document.getElementById('rIva').textContent = fmtUSD(iva);
+  document.getElementById('rPercIva').textContent = fmtUSD(percIva);
+  document.getElementById('rPercGan').textContent = fmtUSD(percGan);
+  document.getElementById('rTotalImpuestos').textContent = fmtUSD(totalImpuestos);
+
+  const precioVentaARS = costoTotalARS * (1 + markupPct/100);
+  const margenARS = precioVentaARS - costoTotalARS;
+  document.getElementById('rPrecioVenta').textContent = fmtARS(precioVentaARS);
+  document.getElementById('rMargen').textContent = fmtARS(margenARS);
+
+  // Desglose por producto (prorrateo por valor)
+  const contenedor = document.getElementById('productosResult');
+  contenedor.innerHTML = '';
+  if(productos.length === 0 || fobTotal === 0){
+    contenedor.innerHTML = '<div style="font-size:11.5px;color:var(--gray);padding:6px 0;">Agregá al menos un producto con cantidad y precio.</div>';
+    return;
+  }
+
+  productos.forEach(p => {
+    const valorUSD = p.cantidad * p.precioUnitarioUSD;
+    const prop = fobTotal > 0 ? valorUSD / fobTotal : 0;
+    const costoAsignadoARS = costoTotalARS * prop;
+    const costoUnitARS = costoAsignadoARS / p.cantidad;
+    const precioVentaUnitARS = costoUnitARS * (1 + markupPct/100);
+
+    const card = document.createElement('div');
+    card.className = 'producto-result-card';
+    card.innerHTML = `
+      <h4>${escapeHtml(p.nombre)} (${p.cantidad} u.)</h4>
+      <div class="result-line"><span class="k">Costo unitario</span><span class="v">${fmtARS(costoUnitARS)}</span></div>
+      <div class="result-line"><span class="k">Precio de venta sugerido</span><span class="v">${fmtARS(precioVentaUnitARS)}</span></div>
+    `;
+    contenedor.appendChild(card);
+  });
+}
+
+function escapeHtml(str){
+  if(str === undefined || str === null) return '';
+  return String(str).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ====================================================
+   INIT
+   ==================================================== */
+agregarFilaProducto();
+actualizarHints();
+cargarDolarHoy();
+recalcular();
+</script>
+
+</body>
+</html>
