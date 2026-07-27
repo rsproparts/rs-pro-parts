@@ -126,11 +126,8 @@
         <div class="form-row">
           <div class="form-group">
             <label>Régimen de importación</label>
-            <div class="toggle-group" id="toggleRegimen">
-              <div class="toggle-opt active" data-val="formal">Formal</div>
-              <div class="toggle-opt" data-val="simplificado">Simplificado (courier)</div>
-            </div>
-            <div class="form-hint" id="hintRegimen">Despacho con despachante de aduana. Se pagan arancel, tasa de estadística, IVA y percepciones por separado.</div>
+            <input type="text" value="Envíos courier (hasta USD 3.000)" disabled style="background:var(--panel); color:var(--gray);">
+            <div class="form-hint">Alícuota única sobre el valor CIF, sin discriminar impuestos por separado (no requiere despachante).</div>
           </div>
           <div class="form-group">
             <label>Condición fiscal</label>
@@ -138,13 +135,13 @@
               <div class="toggle-opt active" data-val="ri">Responsable Inscripto</div>
               <div class="toggle-opt" data-val="mono">Monotributista</div>
             </div>
-            <div class="form-hint" id="hintCondicion">Percepciones más bajas y recuperables como crédito fiscal de IVA.</div>
+            <div class="form-hint" id="hintCondicion">En el régimen courier pagás lo mismo con cualquiera de las dos — la diferencia es legal, no de monto (ver aviso abajo).</div>
           </div>
         </div>
 
-        <div class="warn-box" id="warnSimplificado" style="display:none;">
+        <div class="warn-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-          <div><b>Régimen simplificado (courier)</b>Pensado para envíos de hasta USD 3.000. Se paga una alícuota única del 50% sobre el valor CIF, sin discriminar impuestos por separado.</div>
+          <div><b>Monotributista y RI pagan lo mismo al llegar la mercadería</b>El régimen courier aplica una alícuota única sobre el CIF que no distingue tu condición fiscal — no hay percepciones separadas para recuperar. Esa distinción (RI recupera parte como crédito fiscal) solo existe en el régimen formal con despachante.</div>
         </div>
 
         <div class="warn-box danger" id="warnMono" style="display:none;">
@@ -174,22 +171,11 @@
       </div>
 
       <div class="panel">
-        <h2><span class="num">4</span>Alícuotas aplicables</h2>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Arancel de importación (%)</label>
-            <input type="number" id="fArancel" step="0.1" value="20">
-            <div class="form-hint">Varía según la posición arancelaria (NCM) del producto. Consultalo en el Nomenclador Arancelario o con tu despachante.</div>
-          </div>
-          <div class="form-group">
-            <label>Tasa de estadística (%)</label>
-            <input type="number" id="fTasaEst" step="0.1" value="3">
-            <div class="form-hint">3% es el valor general vigente para régimen formal (con tope en algunos casos).</div>
-          </div>
-        </div>
+        <h2><span class="num">4</span>Alícuota del régimen courier</h2>
         <div class="form-group">
-          <label>IVA (%)</label>
-          <input type="number" id="fIva" step="0.1" value="21">
+          <label>Alícuota única sobre el CIF (%)</label>
+          <input type="number" id="fAlicuotaCourier" step="0.1" value="50">
+          <div class="form-hint">50% es el valor general vigente para el régimen simplificado (courier, hasta USD 3.000). Confirmalo con tu courier ya que puede variar.</div>
         </div>
       </div>
 
@@ -235,9 +221,7 @@
         <div class="result-section-title">Desglose</div>
         <div class="result-line"><span class="k">Valor FOB total</span><span class="v" id="rFOB">—</span></div>
         <div class="result-line"><span class="k">Valor CIF (FOB + flete + seguro)</span><span class="v" id="rCIF">—</span></div>
-        <div class="result-line"><span class="k">Derechos de importación</span><span class="v" id="rDerechos">—</span></div>
-        <div class="result-line"><span class="k">Tasa de estadística</span><span class="v" id="rTasaEst">—</span></div>
-        <div class="result-line"><span class="k">IVA</span><span class="v" id="rIva">—</span></div>
+        <div class="result-line"><span class="k">Alícuota courier (sobre CIF)</span><span class="v" id="rDerechos">—</span></div>
         <div class="result-line total"><span class="k">Total impuestos aduaneros</span><span class="v" id="rTotalImpuestos">—</span></div>
 
         <div class="result-section-title">Por producto</div>
@@ -314,9 +298,8 @@ document.getElementById('dolarManual').addEventListener('input', (e) => {
 function dolarActivo(){ return dolarManualVal || dolarHoy || 0; }
 
 /* ====================================================
-   TOGGLES: régimen y condición fiscal
+   TOGGLE: condición fiscal (el régimen ahora es siempre courier)
    ==================================================== */
-let regimen = 'formal';
 let condicion = 'ri';
 
 function setToggle(groupId, val, cb){
@@ -324,15 +307,6 @@ function setToggle(groupId, val, cb){
   [...group.children].forEach(opt => opt.classList.toggle('active', opt.dataset.val === val));
   cb(val);
 }
-
-document.getElementById('toggleRegimen').addEventListener('click', (e) => {
-  const opt = e.target.closest('.toggle-opt');
-  if(!opt) return;
-  regimen = opt.dataset.val;
-  setToggle('toggleRegimen', regimen, () => {});
-  actualizarHints();
-  recalcular();
-});
 
 document.getElementById('toggleCondicion').addEventListener('click', (e) => {
   const opt = e.target.closest('.toggle-opt');
@@ -344,14 +318,7 @@ document.getElementById('toggleCondicion').addEventListener('click', (e) => {
 });
 
 function actualizarHints(){
-  document.getElementById('warnSimplificado').style.display = regimen === 'simplificado' ? 'flex' : 'none';
   document.getElementById('warnMono').style.display = condicion === 'mono' ? 'flex' : 'none';
-  document.getElementById('hintRegimen').textContent = regimen === 'formal'
-    ? 'Despacho con despachante de aduana. Se pagan arancel, tasa de estadística, IVA y percepciones por separado.'
-    : 'Envíos de hasta USD 3.000. Alícuota única del 50% sobre el CIF, sin discriminar impuestos.';
-  document.getElementById('hintCondicion').textContent = condicion === 'ri'
-    ? 'Percepciones más bajas y recuperables como crédito fiscal de IVA.'
-    : 'Revisá el aviso sobre monotributo e importaciones más abajo.';
 }
 
 /* ====================================================
@@ -419,9 +386,7 @@ function recalcular(){
 
   const flete = parseFloat(document.getElementById('fFlete').value) || 0;
   const seguro = parseFloat(document.getElementById('fSeguro').value) || 0;
-  const arancelPct = parseFloat(document.getElementById('fArancel').value) || 0;
-  const tasaEstPct = parseFloat(document.getElementById('fTasaEst').value) || 0;
-  const ivaPct = parseFloat(document.getElementById('fIva').value) || 0;
+  const alicuotaPct = parseFloat(document.getElementById('fAlicuotaCourier').value) || 0;
   const despachanteUSD = parseFloat(document.getElementById('fDespachante').value) || 0;
   const handlingARS = parseFloat(document.getElementById('fHandling').value) || 0;
   const otrosARS = parseFloat(document.getElementById('fOtros').value) || 0;
@@ -430,12 +395,7 @@ function recalcular(){
   const fobTotal = productos.reduce((a,p) => a + p.cantidad * p.precioUnitarioUSD, 0);
   const cif = fobTotal + flete + seguro;
 
-  const esFormal = regimen === 'formal';
-  const derechos = esFormal ? (arancelPct/100) * cif : 0.5 * cif;
-  const tasaEst = esFormal ? (tasaEstPct/100) * cif : 0;
-  const baseIva = cif + derechos + tasaEst;
-  const iva = (ivaPct/100) * baseIva;
-  const totalImpuestos = derechos + tasaEst + iva;
+  const totalImpuestos = (alicuotaPct/100) * cif;
 
   const costoTotalUSD = cif + totalImpuestos + despachanteUSD;
   const costoTotalARS = costoTotalUSD * dolar + handlingARS + otrosARS;
@@ -444,9 +404,7 @@ function recalcular(){
   document.getElementById('rTotalUSD').textContent = fmtUSD(costoTotalUSD);
   document.getElementById('rFOB').textContent = fmtUSD(fobTotal);
   document.getElementById('rCIF').textContent = fmtUSD(cif);
-  document.getElementById('rDerechos').textContent = fmtUSD(derechos);
-  document.getElementById('rTasaEst').textContent = fmtUSD(tasaEst);
-  document.getElementById('rIva').textContent = fmtUSD(iva);
+  document.getElementById('rDerechos').textContent = fmtUSD(totalImpuestos);
   document.getElementById('rTotalImpuestos').textContent = fmtUSD(totalImpuestos);
 
   const precioVentaARS = costoTotalARS * (1 + markupPct/100);
