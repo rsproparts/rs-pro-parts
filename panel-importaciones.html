@@ -598,11 +598,20 @@ function init(uid){
   if(unsubscribeEnvios) unsubscribeEnvios();
   unsubscribeEnvios = db.collection(COLLECTION)
     .where('userId', '==', uid)
-    .orderBy('creadoEn', 'desc')
     .onSnapshot((snapshot) => {
       allEnvios = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Ordenamos acá (no en Firestore) para no depender de un índice compuesto.
+      allEnvios.sort((a, b) => {
+        const ta = a.creadoEn && a.creadoEn.toMillis ? a.creadoEn.toMillis() : new Date(a.fecha).getTime();
+        const tb = b.creadoEn && b.creadoEn.toMillis ? b.creadoEn.toMillis() : new Date(b.fecha).getTime();
+        return tb - ta;
+      });
       renderTodo();
-    }, (err) => console.error('Error leyendo envíos:', err));
+    }, (err) => {
+      console.error('Error leyendo envíos:', err);
+      document.getElementById('enviosContainer').innerHTML =
+        '<div class="empty-state" style="color:#DC2626;">No se pudieron cargar los envíos: ' + escapeHtml(err.message) + '</div>';
+    });
 }
 
 function renderTodo(){
