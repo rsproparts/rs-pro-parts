@@ -6,38 +6,38 @@
 <title>Tiendanube: Landing Pages Como Experto — Generador de Prompt</title>
 <style>
   :root{
-    --primario:#a200ff;
-    --primario-oscuro:#6b00cc;
-    --acento:#c14dff;
-    --bg:#0a0010;
-    --card:#160a1e;
-    --border:rgba(162,0,255,0.25);
-    --text:#f0f0f0;
-    --muted:#999;
+    --primario:#2563EB;
+    --primario-oscuro:#1D4ED8;
+    --acento:#3B82F6;
+    --bg:#ffffff;
+    --card:#ffffff;
+    --border:#E2E8F0;
+    --text:#0F172A;
+    --muted:#64748B;
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
     font-family:'Poppins',-apple-system,BlinkMacSystemFont,sans-serif;
-    background:linear-gradient(180deg,#0a0010 0%,#120018 100%);
+    background:var(--bg);
     color:var(--text);
     padding-bottom:80px;
   }
   header.hero{
-    background:linear-gradient(135deg,#1a0033 0%,#3d0080 45%,#a200ff 100%);
+    background:linear-gradient(135deg,#0F172A 0%,#1E293B 45%,#2563EB 100%);
     padding:44px 20px 38px 20px;
     text-align:center;
   }
   header.hero .kicker{
-    font-size:11px;letter-spacing:3px;font-weight:700;color:#d9b3ff;
+    font-size:11px;letter-spacing:3px;font-weight:700;color:#93C5FD;
     text-transform:uppercase;margin-bottom:10px;
   }
   header.hero h1{
     font-size:26px;font-weight:900;margin:0 0 10px 0;line-height:1.2;
   }
-  header.hero h1 span{color:#ff9de8;}
+  header.hero h1 span{color:#60A5FA;}
   header.hero p{
-    font-size:13.5px;color:#eaddff;max-width:540px;margin:0 auto;line-height:1.6;
+    font-size:13.5px;color:#CBD5E1;max-width:540px;margin:0 auto;line-height:1.6;
   }
   main{
     max-width:640px;margin:0 auto;padding:24px 16px;
@@ -48,9 +48,10 @@
     border-radius:14px;
     padding:20px;
     margin-bottom:16px;
+    box-shadow:0 1px 3px rgba(15,23,42,0.06);
   }
   .card h2{
-    font-size:15px;font-weight:900;color:#fff;margin:0 0 4px 0;
+    font-size:15px;font-weight:900;color:var(--text);margin:0 0 4px 0;
     display:flex;align-items:center;gap:8px;
   }
   .card h2 .n{
@@ -62,12 +63,12 @@
     font-size:11.5px;color:var(--muted);margin:0 0 14px 0;line-height:1.5;
   }
   label{
-    display:block;font-size:12px;font-weight:700;color:#ddd;margin:12px 0 5px 0;
+    display:block;font-size:12px;font-weight:700;color:#334155;margin:12px 0 5px 0;
   }
   label:first-of-type{margin-top:0;}
   input[type="text"],input[type="number"],textarea{
-    width:100%;background:#0d0512;border:1px solid rgba(255,255,255,0.12);
-    border-radius:8px;color:#fff;padding:10px 12px;font-size:13px;
+    width:100%;background:#F8FAFC;border:1px solid #E2E8F0;
+    border-radius:8px;color:var(--text);padding:10px 12px;font-size:13px;
     font-family:inherit;
   }
   input[type="text"]:focus,input[type="number"]:focus,textarea:focus{
@@ -78,7 +79,7 @@
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
   @media(max-width:480px){.row3{grid-template-columns:1fr;}}
   .foto-item{
-    background:#0d0512;border:1px solid rgba(255,255,255,0.08);
+    background:#F8FAFC;border:1px solid #E2E8F0;
     border-radius:10px;padding:12px;margin-bottom:8px;
   }
   .foto-item .foto-label{
@@ -93,19 +94,19 @@
   .swatches{display:flex;gap:10px;margin-top:10px;}
   .swatch{flex:1;text-align:center;}
   .swatch .box{
-    height:36px;border-radius:8px;margin-bottom:5px;border:1px solid rgba(255,255,255,0.15);
+    height:36px;border-radius:8px;margin-bottom:5px;border:1px solid #E2E8F0;
   }
   .swatch span{font-size:9.5px;color:var(--muted);font-weight:700;}
   .toggle-row{
     display:flex;align-items:center;justify-content:space-between;
-    background:#0d0512;border:1px solid rgba(255,255,255,0.1);
+    background:#F8FAFC;border:1px solid #E2E8F0;
     border-radius:10px;padding:10px 14px;margin-bottom:10px;
   }
   .toggle-row span{font-size:12.5px;font-weight:700;}
   .switch{position:relative;width:42px;height:24px;flex:0 0 auto;}
   .switch input{opacity:0;width:0;height:0;}
   .slider{
-    position:absolute;inset:0;background:#333;border-radius:99px;cursor:pointer;
+    position:absolute;inset:0;background:#CBD5E1;border-radius:99px;cursor:pointer;
     transition:.2s;
   }
   .slider::before{
@@ -117,15 +118,15 @@
   .conditional{display:none;margin-top:6px;}
   .conditional.show{display:block;}
   .callout{
-    background:rgba(162,0,255,0.08);border-left:3px solid var(--primario);
-    border-radius:6px;padding:10px 12px;font-size:11px;color:#ddd;
+    background:#EFF6FF;border-left:3px solid var(--primario);
+    border-radius:6px;padding:10px 12px;font-size:11px;color:#334155;
     margin:10px 0;line-height:1.5;
   }
   .callout.warn{background:rgba(255,149,0,0.08);border-left-color:#ff9500;}
   .callout b{color:var(--acento);}
   .optional-tag{
     font-size:9.5px;font-weight:800;color:var(--muted);
-    background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:99px;
+    background:#F1F5F9;padding:2px 8px;border-radius:99px;
     margin-left:6px;text-transform:uppercase;
   }
   .btn-generate{
@@ -133,14 +134,14 @@
     background:linear-gradient(135deg,var(--primario-oscuro),var(--primario),var(--acento));
     color:#fff;font-family:inherit;font-size:16px;font-weight:900;
     text-transform:uppercase;letter-spacing:0.6px;cursor:pointer;
-    box-shadow:0 8px 30px rgba(162,0,255,0.4);margin-top:8px;
+    box-shadow:0 8px 30px rgba(37,99,235,0.35);margin-top:8px;
   }
   .btn-generate:active{transform:scale(0.98);}
   #resultado{display:none;}
   #resultado.show{display:block;}
   #promptOutput{
-    width:100%;min-height:280px;background:#0d0512;border:1px solid var(--border);
-    border-radius:10px;color:#ddd;font-family:'Courier New',monospace;font-size:11px;
+    width:100%;min-height:280px;background:#F8FAFC;border:1px solid #E2E8F0;
+    border-radius:10px;color:#0F172A;font-family:'Courier New',monospace;font-size:11px;
     padding:14px;line-height:1.6;white-space:pre-wrap;
   }
   .action-btns{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
@@ -156,7 +157,7 @@
   }
   .copied-msg.show{display:block;}
   footer{
-    text-align:center;font-size:10.5px;color:#665;padding:30px 20px 10px 20px;
+    text-align:center;font-size:10.5px;color:#475569;padding:30px 20px 10px 20px;
   }
   .required::after{content:" *";color:var(--acento);}
 </style>
