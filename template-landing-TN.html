@@ -198,8 +198,13 @@
   <div class="card">
     <h2><span class="n">2</span> Colores de marca</h2>
     <p class="hint">No hace falta elegir un código de color exacto — con que describas el "clima" que buscás alcanza. Claude arma la paleta completa y coherente a partir de eso.</p>
+    <div class="callout warn">
+      ⚠️ Esta landing tiene <b>fondo oscuro (casi negro) en todos sus bloques</b>, sea cual sea tu marca. Por eso, si describís un color de por sí oscuro como principal (azul marino, verde petróleo, marrón, negro), el texto y los acentos pueden quedar difíciles de leer — Claude va a elegir automáticamente una variante más clara/vibrante de ese color para que se lea bien, aunque tu sitio use ese tono oscuro en otro lado.
+    </div>
     <label>¿Qué colores o clima querés para tu landing?</label>
     <textarea id="colorDescripcion" placeholder='Ej: "rojo agresivo tipo oferta", "violeta premium", "verde natural/eco", "azul tecnológico" — o si ya tenés un color de marca definido, describilo (ej: "el celeste de mi logo").'></textarea>
+    <label>¿Cómo es tu tienda actualmente? (fondo claro/oscuro, colores que ya usás)</label>
+    <input type="text" id="colorContextoSitio" placeholder='Ej: "mi tienda tiene fondo negro y detalles en violeta" o "fondo blanco, logo celeste"'>
   </div>
 
   <!-- 3. PRECIO Y PAGOS -->
@@ -519,7 +524,9 @@ function generarPrompt(){
 'URL del producto en la tienda: '+vOr('slugURL','(no especificada — el cliente la completa antes de publicar)')+'\n'+
 'Descripción del producto: '+descripcion+'\n\n'+
 '== COLORES DE MARCA ==\n'+
-vOr('colorDescripcion','(no especificó — elegí una paleta que combine bien con el tipo de producto)')+'\n\n'+
+'Clima/color deseado: '+vOr('colorDescripcion','(no especificó — elegí una paleta que combine bien con el tipo de producto)')+'\n'+
+'Cómo es la tienda actualmente (contexto, no define el color de la landing): '+vOr('colorContextoSitio','(no especificado)')+'\n'+
+'IMPORTANTE: toda la landing tiene fondo oscuro/casi negro en todos sus bloques (esto no cambia). Por lo tanto, elegí CONFIG.colores.primario con suficiente luminosidad y saturación como para leerse bien como texto y como acentos sobre ese fondo oscuro — evitá tonos oscuros o apagados (azul marino, verde petróleo, marrón, gris oscuro) como color principal, incluso si el cliente los menciona; en ese caso, usá una variante más clara/vibrante del mismo color en vez de descartarlo.\n\n'+
 '== PRECIO Y PAGOS ==\n'+
 'Precio final (tarjeta): '+vOr('precioFinal','(no especificado)')+'\n'+
 'Precio de lista (tachado): '+vOr('precioLista','no aplica')+'\n'+
