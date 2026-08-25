@@ -102,9 +102,6 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="brand-text"><strong>RS Team</strong><span>Horas &amp; Gráficas</span></div>
     </div>
     <form id="loginForm">
-      <label>Usuario
-        <input type="text" id="loginUsername" autocomplete="username" required>
-      </label>
       <label>Contraseña
         <input type="password" id="loginPassword" autocomplete="current-password" required>
       </label>
@@ -122,9 +119,6 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="brand-text"><strong>RS Team</strong><span id="userLabel"></span></div>
     </div>
     <div class="topbar-right">
-      <div id="ownerEmployeeSwitch" class="employee-switch" hidden>
-        <label>Viendo a <select id="employeeSelect"></select></label>
-      </div>
       <button id="logoutBtn" class="btn btn-ghost">Salir</button>
     </div>
   </header>
@@ -135,7 +129,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <button class="tab-btn active" data-tab="horas">Horas</button>
     <button class="tab-btn" data-tab="graficas">Gráficas</button>
     <button class="tab-btn" data-tab="resumen">Resumen</button>
-    <button class="tab-btn" data-tab="config" id="configTabBtn" hidden>Config</button>
+    <button class="tab-btn" data-tab="config">Tarifa</button>
   </nav>
 
   <main class="content">
@@ -210,23 +204,14 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 
     <section id="tab-config" class="tab-panel">
       <div class="card">
-        <h2>Tarifa por hora</h2>
+        <h2>Precio de la hora</h2>
         <p class="hint" id="currentRateLabel">Tarifa vigente: —</p>
         <form id="rateForm" class="form-row">
-          <label>Nueva tarifa ($/hora) <input type="number" id="newRateValue" min="1" step="100" required></label>
-          <label>Rige desde <input type="date" id="newRateDate" required></label>
-          <button type="submit" class="btn btn-primary">Actualizar tarifa</button>
+          <label>Nuevo precio por hora ($) <input type="number" id="newRateValue" min="0" step="1" required></label>
+          <button type="submit" class="btn btn-primary">Actualizar</button>
         </form>
-        <p class="hint">Los días anteriores a esa fecha siguen calculándose con la tarifa vieja — nada retroactivo se recalcula.</p>
+        <p class="hint">Rige desde hoy en adelante — los días ya cargados quedan con el precio viejo, no se recalculan.</p>
         <table class="data-table" id="rateHistoryTable"><thead><tr><th>Vigente desde</th><th>Valor por hora</th></tr></thead><tbody></tbody></table>
-      </div>
-      <div class="card">
-        <h2>Comisión por gráfica</h2>
-        <form id="commissionForm" class="form-row">
-          <label>Moto chica <input type="number" id="commissionChica" min="0" step="500" required></label>
-          <label>Moto grande <input type="number" id="commissionGrande" min="0" step="500" required></label>
-          <button type="submit" class="btn btn-primary">Guardar</button>
-        </form>
       </div>
     </section>
 
@@ -253,17 +238,19 @@ const firebaseConfig = {
 };
 
 /* ============================================================
-   PASO 2 — Definí quién es el dueño y quién(es) empleado(s).
-   Usá el MISMO mail con el que crees a cada uno en
-   Firebase → Authentication → Users.
-   No hace falta que el mail exista de verdad, solo que tenga formato de mail.
+   PASO 2 — Un solo login para toda la app (no hay que elegir
+   "Ramiro" o "Alexis" al entrar). Se usa siempre esta cuenta de
+   Firebase por debajo, aunque la contraseña la sepan los dos.
    ============================================================ */
-const OWNER = { email: "ramiro@rsteam.local", name: "Ramiro" };
-const EMPLOYEES = [
-  { email: "alexis@rsteam.local", name: "Alexis" }
-  // Para sumar otro empleado en el futuro, agregá otra línea acá:
-  // , { email: "otro@rsteam.local", name: "Otro Nombre" }
-];
+const SINGLE_USER_EMAIL = "ramiro@rsteam.local";
+
+/* ============================================================
+   Valores fijos de comisión por gráfica. Si en algún momento
+   los querés cambiar, editá estos dos números acá y volvé a
+   subir el archivo.
+   ============================================================ */
+const COMMISSION_CHICA = 10000;
+const COMMISSION_GRANDE = 20000;
 
 /* ============================================================
    De acá para abajo no hace falta tocar nada.
@@ -273,7 +260,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 const DAY_NAMES = ['Lun','Mar','Mié','Jue','Vie','Sáb'];
-let state = { user: null, role: null, viewingEmail: null, charts: {}, commissionSettings: {motoChica:10000, motoGrande:20000} };
+let state = { user: null, viewingEmail: null, charts: {} };
 
 const $ = (s) => document.querySelector(s);
 const $all = (s) => document.querySelectorAll(s);
@@ -293,30 +280,18 @@ function getRateForDate(hourlyRates, dateStr){
 }
 
 /* ---------------- LOGIN ---------------- */
-// El "usuario" que escriben lo mapeamos a su mail interno para que no tengan que tipear el mail completo.
-function usernameToEmail(username){
-  const u = username.trim().toLowerCase();
-  if (u === 'ramiro' || u === OWNER.email) return OWNER.email;
-  const emp = EMPLOYEES.find(e => e.name.toLowerCase() === u || e.email === u);
-  return emp ? emp.email : (u.includes('@') ? u : null);
-}
-
 $('#loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   $('#loginError').hidden = true;
-  const email = usernameToEmail($('#loginUsername').value);
-  if (!email) { $('#loginError').textContent = 'Usuario no reconocido.'; $('#loginError').hidden = false; return; }
   try {
-    await auth.signInWithEmailAndPassword(email, $('#loginPassword').value);
+    await auth.signInWithEmailAndPassword(SINGLE_USER_EMAIL, $('#loginPassword').value);
   } catch (err) {
-    $('#loginError').textContent = 'Usuario o contraseña incorrectos.';
+    $('#loginError').textContent = 'Contraseña incorrecta.';
     $('#loginError').hidden = false;
   }
 });
 
 $('#logoutBtn').addEventListener('click', () => auth.signOut());
-
-const ALL_USERS = [OWNER, ...EMPLOYEES];
 
 auth.onAuthStateChanged(async (user) => {
   $('#loadingScreen').hidden = true;
@@ -326,25 +301,12 @@ auth.onAuthStateChanged(async (user) => {
     return;
   }
   state.user = user;
-  // Todos los usuarios tienen los mismos permisos: pueden ver/editar tarifa,
-  // comisiones, y los registros de cualquiera. "role" queda solo para saber
-  // de quién son las horas/ventas que se cargan por default al entrar.
-  state.role = 'all';
-  state.viewingEmail = user.email;
+  state.viewingEmail = SINGLE_USER_EMAIL;
 
   $('#loginView').hidden = true;
   $('#appView').hidden = false;
-  const myName = ALL_USERS.find(u => u.email === user.email)?.name || user.email;
-  $('#userLabel').textContent = myName;
-  $('#configTabBtn').hidden = false;
-  $('#ownerEmployeeSwitch').hidden = false;
+  $('#userLabel').textContent = 'RS Team';
 
-  const select = $('#employeeSelect');
-  select.innerHTML = ALL_USERS.map(u => `<option value="${u.email}">${u.name}</option>`).join('');
-  select.value = user.email;
-  select.addEventListener('change', async () => { state.viewingEmail = select.value; await refreshAllTabs(); });
-
-  await loadCommissionSettings();
   await loadRates();
   await refreshAllTabs();
 });
@@ -409,7 +371,7 @@ $('#hoursForm').addEventListener('submit', async (e) => {
   try {
     const rates = await getHourlyRates();
     const rate = getRateForDate(rates, date);
-    if (!rate) { alert('No hay tarifa por hora cargada. Pedile al dueño que cargue una en "Config".'); return; }
+    if (!rate) { alert('No hay tarifa por hora cargada todavía. Andá a la pestaña "Tarifa" y cargá una primero.'); return; }
     const existing = await db.collection('hoursEntries').where('userEmail','==',email).where('date','==',date).get();
     if (!existing.empty) {
       await existing.docs[0].ref.update({ hours, rateApplied: rate, updatedAt: new Date().toISOString() });
@@ -455,16 +417,17 @@ $('#saleDate').value = todayStr();
 
 function updateCommissionPreview() {
   const size = $('#saleSize').value;
-  const amount = size === 'grande' ? state.commissionSettings.motoGrande : state.commissionSettings.motoChica;
+  const amount = size === 'grande' ? COMMISSION_GRANDE : COMMISSION_CHICA;
   $('#commissionPreview').textContent = money(amount);
 }
 $('#saleSize').addEventListener('change', updateCommissionPreview);
+updateCommissionPreview();
 
 $('#salesForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = state.viewingEmail;
   const size = $('#saleSize').value;
-  const commission = size === 'grande' ? state.commissionSettings.motoGrande : state.commissionSettings.motoChica;
+  const commission = size === 'grande' ? COMMISSION_GRANDE : COMMISSION_CHICA;
   try {
     await db.collection('graphicsSales').add({
       userEmail: email,
@@ -594,11 +557,11 @@ function renderChart(canvasId, labels, data, label) {
   });
 }
 
-/* ---------------- CONFIG ---------------- */
+/* ---------------- TARIFA ---------------- */
 $('#rateForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   try {
-    const newRate = { hourlyRate: Number($('#newRateValue').value), effectiveFrom: $('#newRateDate').value };
+    const newRate = { hourlyRate: Number($('#newRateValue').value), effectiveFrom: todayStr() };
     await configDoc().set({ hourlyRates: firebase.firestore.FieldValue.arrayUnion(newRate) }, { merge: true });
     $('#rateForm').reset();
     await loadRates();
@@ -609,32 +572,12 @@ async function loadRates() {
   const rates = await getHourlyRates();
   const rate = getRateForDate(rates, todayStr());
   $('#currentRateLabel').textContent = 'Tarifa vigente: ' + (rate ? money(rate) + '/hora' : 'sin definir');
-  $('#newRateDate').value = todayStr();
   const tbody = $('#rateHistoryTable tbody'); tbody.innerHTML = '';
   [...rates].sort((a,b)=>b.effectiveFrom.localeCompare(a.effectiveFrom)).forEach(r => {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${fmtShort(r.effectiveFrom)}</td><td>${money(r.hourlyRate)}</td>`;
     tbody.appendChild(tr);
   });
-}
-
-$('#commissionForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const motoChica = Number($('#commissionChica').value);
-  const motoGrande = Number($('#commissionGrande').value);
-  await configDoc().set({ motoChica, motoGrande }, { merge: true });
-  state.commissionSettings = { motoChica, motoGrande };
-  updateCommissionPreview();
-  alert('Valores de comisión actualizados.');
-});
-
-async function loadCommissionSettings() {
-  const snap = await configDoc().get();
-  const data = snap.exists ? snap.data() : {};
-  state.commissionSettings = { motoChica: data.motoChica ?? 10000, motoGrande: data.motoGrande ?? 20000 };
-  $('#commissionChica').value = state.commissionSettings.motoChica;
-  $('#commissionGrande').value = state.commissionSettings.motoGrande;
-  updateCommissionPreview();
 }
 
 async function refreshAllTabs() {
