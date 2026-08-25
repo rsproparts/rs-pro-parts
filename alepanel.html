@@ -316,6 +316,8 @@ $('#loginForm').addEventListener('submit', async (e) => {
 
 $('#logoutBtn').addEventListener('click', () => auth.signOut());
 
+const ALL_USERS = [OWNER, ...EMPLOYEES];
+
 auth.onAuthStateChanged(async (user) => {
   $('#loadingScreen').hidden = true;
   if (!user) {
@@ -323,26 +325,27 @@ auth.onAuthStateChanged(async (user) => {
     $('#loginView').hidden = false;
     return;
   }
-  const isOwner = user.email === OWNER.email;
   state.user = user;
-  state.role = isOwner ? 'owner' : 'employee';
-  state.viewingEmail = isOwner ? (EMPLOYEES[0] ? EMPLOYEES[0].email : null) : user.email;
+  // Todos los usuarios tienen los mismos permisos: pueden ver/editar tarifa,
+  // comisiones, y los registros de cualquiera. "role" queda solo para saber
+  // de quién son las horas/ventas que se cargan por default al entrar.
+  state.role = 'all';
+  state.viewingEmail = user.email;
 
   $('#loginView').hidden = true;
   $('#appView').hidden = false;
-  const myName = isOwner ? OWNER.name : (EMPLOYEES.find(e => e.email === user.email)?.name || user.email);
-  $('#userLabel').textContent = myName + (isOwner ? ' · Dueño' : ' · Empleado');
-  $('#configTabBtn').hidden = !isOwner;
-  $('#ownerEmployeeSwitch').hidden = !isOwner;
+  const myName = ALL_USERS.find(u => u.email === user.email)?.name || user.email;
+  $('#userLabel').textContent = myName;
+  $('#configTabBtn').hidden = false;
+  $('#ownerEmployeeSwitch').hidden = false;
 
-  if (isOwner) {
-    const select = $('#employeeSelect');
-    select.innerHTML = EMPLOYEES.map(e => `<option value="${e.email}">${e.name}</option>`).join('');
-    select.addEventListener('change', async () => { state.viewingEmail = select.value; await refreshAllTabs(); });
-  }
+  const select = $('#employeeSelect');
+  select.innerHTML = ALL_USERS.map(u => `<option value="${u.email}">${u.name}</option>`).join('');
+  select.value = user.email;
+  select.addEventListener('change', async () => { state.viewingEmail = select.value; await refreshAllTabs(); });
 
   await loadCommissionSettings();
-  if (isOwner) await loadRates();
+  await loadRates();
   await refreshAllTabs();
 });
 
@@ -433,7 +436,7 @@ async function loadHours() {
     const dayName = dayIdx === 0 ? 'Dom' : DAY_NAMES[dayIdx - 1];
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${dayName}</td><td>${fmtShort(e.date)}</td><td>${e.hours}</td><td>${money(e.rateApplied)}</td><td class="money">${money(e.hours*e.rateApplied)}</td>
-      <td>${state.role==='owner' ? `<button class="btn btn-small btn-danger" data-del-hour="${e.id}">Borrar</button>` : ''}</td>`;
+      <td><button class="btn btn-small btn-danger" data-del-hour="${e.id}">Borrar</button></td>`;
     tbody.appendChild(tr);
   });
   $('#hoursEmptyMsg').hidden = weekEntries.length > 0;
@@ -494,7 +497,7 @@ async function loadSales() {
     tr.innerHTML = `<td>${s.clientName} ${s.clientLastName}</td><td>${s.motoModel}</td>
       <td><span class="pill pill-${s.size}">${s.size==='grande'?'Grande':'Chica'}</span></td>
       <td>${money(s.priceCharged)}</td><td class="money">${money(s.commission)}</td>
-      <td>${state.role==='owner' ? `<button class="btn btn-small btn-danger" data-del-sale="${s.id}">Borrar</button>` : ''}</td>`;
+      <td><button class="btn btn-small btn-danger" data-del-sale="${s.id}">Borrar</button></td>`;
     tbody.appendChild(tr);
   });
   $('#salesEmptyMsg').hidden = weekSales.length > 0;
@@ -591,7 +594,7 @@ function renderChart(canvasId, labels, data, label) {
   });
 }
 
-/* ---------------- CONFIG (dueño) ---------------- */
+/* ---------------- CONFIG ---------------- */
 $('#rateForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   try {
