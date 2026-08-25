@@ -102,6 +102,9 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
       <div class="brand-text"><strong>RS Team</strong><span>Horas &amp; Gráficas</span></div>
     </div>
     <form id="loginForm">
+      <label>Email
+        <input type="email" id="loginEmail" autocomplete="username" required>
+      </label>
       <label>Contraseña
         <input type="password" id="loginPassword" autocomplete="current-password" required>
       </label>
@@ -238,13 +241,6 @@ const firebaseConfig = {
 };
 
 /* ============================================================
-   PASO 2 — Un solo login para toda la app (no hay que elegir
-   "Ramiro" o "Alexis" al entrar). Se usa siempre esta cuenta de
-   Firebase por debajo, aunque la contraseña la sepan los dos.
-   ============================================================ */
-const SINGLE_USER_EMAIL = "ramiro@rsteam.local";
-
-/* ============================================================
    Valores fijos de comisión por gráfica. Si en algún momento
    los querés cambiar, editá estos dos números acá y volvé a
    subir el archivo.
@@ -284,9 +280,9 @@ $('#loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   $('#loginError').hidden = true;
   try {
-    await auth.signInWithEmailAndPassword(SINGLE_USER_EMAIL, $('#loginPassword').value);
+    await auth.signInWithEmailAndPassword($('#loginEmail').value.trim(), $('#loginPassword').value);
   } catch (err) {
-    $('#loginError').textContent = 'Contraseña incorrecta.';
+    $('#loginError').textContent = 'Email o contraseña incorrectos.';
     $('#loginError').hidden = false;
   }
 });
@@ -301,11 +297,11 @@ auth.onAuthStateChanged(async (user) => {
     return;
   }
   state.user = user;
-  state.viewingEmail = SINGLE_USER_EMAIL;
+  state.viewingEmail = user.email;
 
   $('#loginView').hidden = true;
   $('#appView').hidden = false;
-  $('#userLabel').textContent = 'RS Team';
+  $('#userLabel').textContent = user.email;
 
   await loadRates();
   await refreshAllTabs();
