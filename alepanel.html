@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>RS Team — Horas y Gráficas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== Tokens ===== */
+:root{
+  --bg:#14181C; --panel:#1B2027; --panel-2:#20262E; --border:#2A3038;
+  --text:#F3F1EC; --text-muted:#93A0AC;
+  --accent:#E8590C; --accent-soft:#E8590C22;
+  --money:#2FB6A3; --money-soft:#2FB6A322;
+  --danger:#E5484D; --radius:10px;
+  --font-display:'Rajdhani',sans-serif; --font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;-webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;letter-spacing:.02em;margin:0 0 12px;}
+h2{font-size:1.15rem;text-transform:uppercase;}
+button{font-family:var(--font-body);}
+.btn{border:1px solid var(--border);background:var(--panel-2);color:var(--text);padding:10px 18px;border-radius:var(--radius);font-weight:600;cursor:pointer;transition:transform .05s ease,background .15s ease,border-color .15s ease;}
+.btn:hover{border-color:var(--accent);}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn-primary:hover{background:#ff6a1a;}
+.btn-ghost{background:transparent;}
+.btn-block{width:100%;}
+.btn-small{padding:6px 10px;font-size:.8rem;}
+.btn-danger{color:var(--danger);border-color:var(--danger);background:transparent;}
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:radial-gradient(circle at 20% 15%,#E8590C14,transparent 45%),radial-gradient(circle at 85% 85%,#2FB6A314,transparent 40%),var(--bg);}
+.login-card{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:32px 28px;}
+.login-card .brand{margin-bottom:24px;}
+.login-card form{display:flex;flex-direction:column;gap:16px;}
+.login-card label{display:flex;flex-direction:column;gap:6px;font-size:.85rem;color:var(--text-muted);}
+input,select{background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:11px 12px;border-radius:8px;font-size:1rem;font-family:var(--font-body);width:100%;}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.error-msg{color:var(--danger);font-size:.85rem;margin:4px 0 0;}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-mark{font-family:var(--font-display);font-weight:700;background:var(--accent);color:#fff;width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.brand-text{display:flex;flex-direction:column;line-height:1.2;}
+.brand-text strong{font-family:var(--font-display);font-size:1.05rem;}
+.brand-text span{font-size:.75rem;color:var(--text-muted);}
+.app-shell{max-width:720px;margin:0 auto;padding-bottom:60px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;background:var(--bg);}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.employee-switch label{font-size:.75rem;color:var(--text-muted);display:flex;gap:6px;align-items:center;}
+.employee-switch select{padding:6px 8px;width:auto;}
+.week-track-wrap{padding:16px 18px 4px;}
+.week-track{display:flex;gap:6px;}
+.day-checkpoint{flex:1;height:44px;border-radius:8px;background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-display);font-size:.7rem;color:var(--text-muted);position:relative;overflow:hidden;}
+.day-checkpoint .d{font-weight:700;letter-spacing:.05em;z-index:1;}
+.day-checkpoint .h{font-size:.62rem;z-index:1;}
+.day-checkpoint.filled{border-color:var(--accent);color:#fff;}
+.day-checkpoint.filled::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--accent),#b5430a);opacity:.85;}
+.tabs{display:flex;gap:4px;padding:12px 18px 0;border-bottom:1px solid var(--border);overflow-x:auto;}
+.tab-btn{background:transparent;border:none;color:var(--text-muted);font-family:var(--font-display);font-weight:600;letter-spacing:.03em;text-transform:uppercase;font-size:.82rem;padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--accent);}
+.content{padding:18px;display:flex;flex-direction:column;gap:18px;}
+.tab-panel{display:none;flex-direction:column;gap:18px;}
+.tab-panel.active{display:flex;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.form-row{display:flex;flex-wrap:wrap;gap:12px;align-items:end;}
+.form-row label{display:flex;flex-direction:column;gap:6px;font-size:.8rem;color:var(--text-muted);flex:1 1 140px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-grid label{display:flex;flex-direction:column;gap:6px;font-size:.8rem;color:var(--text-muted);}
+.form-grid button{grid-column:1/-1;}
+.commission-preview{grid-column:1/-1;background:var(--money-soft);border:1px dashed var(--money);color:var(--money);padding:10px 12px;border-radius:8px;font-size:.9rem;}
+.hint{color:var(--text-muted);font-size:.8rem;margin:8px 0 0;}
+.data-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.88rem;}
+.data-table th{text-align:left;color:var(--text-muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;padding:6px 8px;border-bottom:1px solid var(--border);}
+.data-table td{padding:8px;border-bottom:1px solid var(--border);}
+.data-table tr:last-child td{border-bottom:none;}
+.empty-msg{color:var(--text-muted);font-size:.85rem;margin-top:10px;}
+.money{color:var(--money);font-weight:600;}
+.pill{padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:600;}
+.pill-chica{background:#2FB6A322;color:#2FB6A3;}
+.pill-grande{background:#E8590C22;color:#E8590C;}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.summary-card{display:flex;flex-direction:column;gap:6px;}
+.summary-label{color:var(--text-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;}
+.summary-value{font-family:var(--font-display);font-size:2rem;font-weight:700;color:var(--money);}
+.summary-breakdown{display:flex;flex-direction:column;gap:2px;font-size:.78rem;color:var(--text-muted);margin-top:4px;}
+.summary-sub{font-size:.72rem;color:var(--text-muted);margin-top:6px;}
+.loading-msg{color:var(--text-muted);font-size:.85rem;text-align:center;padding:40px 0;}
+@media (max-width:520px){.summary-grid{grid-template-columns:1fr;} .form-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div id="loadingScreen" class="loading-msg" style="padding-top:100px;">Cargando…</div>
+
+<!-- ===== LOGIN ===== -->
+<div id="loginView" class="login-screen" hidden>
+  <div class="login-card">
+    <div class="brand">
+      <span class="brand-mark">RS</span>
+      <div class="brand-text"><strong>RS Team</strong><span>Horas &amp; Gráficas</span></div>
+    </div>
+    <form id="loginForm">
+      <label>Usuario
+        <input type="text" id="loginUsername" autocomplete="username" required>
+      </label>
+      <label>Contraseña
+        <input type="password" id="loginPassword" autocomplete="current-password" required>
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+      <p id="loginError" class="error-msg" hidden></p>
+    </form>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="appView" class="app-shell" hidden>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">RS</span>
+      <div class="brand-text"><strong>RS Team</strong><span id="userLabel"></span></div>
+    </div>
+    <div class="topbar-right">
+      <div id="ownerEmployeeSwitch" class="employee-switch" hidden>
+        <label>Viendo a <select id="employeeSelect"></select></label>
+      </div>
+      <button id="logoutBtn" class="btn btn-ghost">Salir</button>
+    </div>
+  </header>
+
+  <section class="week-track-wrap"><div class="week-track" id="weekTrack"></div></section>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="horas">Horas</button>
+    <button class="tab-btn" data-tab="graficas">Gráficas</button>
+    <button class="tab-btn" data-tab="resumen">Resumen</button>
+    <button class="tab-btn" data-tab="config" id="configTabBtn" hidden>Config</button>
+  </nav>
+
+  <main class="content">
+
+    <section id="tab-horas" class="tab-panel active">
+      <div class="card">
+        <h2>Cargar horas trabajadas</h2>
+        <form id="hoursForm" class="form-row">
+          <label>Fecha <input type="date" id="hoursDate" required></label>
+          <label>Horas <input type="number" id="hoursQty" min="0.5" max="24" step="0.5" placeholder="ej: 8" required></label>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </form>
+        <p class="hint">Lunes a viernes se estima entre 7 y 9 hs, sábados entre 3 y 5 hs — cargá lo que realmente trabajaste cada día.</p>
+      </div>
+      <div class="card">
+        <h2>Esta semana</h2>
+        <table class="data-table" id="hoursTable"><thead><tr><th>Día</th><th>Fecha</th><th>Horas</th><th>Tarifa</th><th>Subtotal</th><th></th></tr></thead><tbody></tbody></table>
+        <p class="empty-msg" id="hoursEmptyMsg" hidden>Todavía no cargaste horas esta semana.</p>
+      </div>
+    </section>
+
+    <section id="tab-graficas" class="tab-panel">
+      <div class="card">
+        <h2>Registrar venta de gráfica</h2>
+        <form id="salesForm" class="form-grid">
+          <label>Nombre cliente <input type="text" id="saleFirstName" required></label>
+          <label>Apellido cliente <input type="text" id="saleLastName" required></label>
+          <label>Modelo de moto <input type="text" id="saleMotoModel" placeholder="ej: Honda CRF 250" required></label>
+          <label>Tamaño de moto
+            <select id="saleSize" required>
+              <option value="chica">Moto chica</option>
+              <option value="grande">Moto grande</option>
+            </select>
+          </label>
+          <label>Precio cobrado <input type="number" id="salePrice" min="0" step="100" required></label>
+          <label>Fecha <input type="date" id="saleDate" required></label>
+          <div class="commission-preview">Te corresponden <strong id="commissionPreview">—</strong></div>
+          <button type="submit" class="btn btn-primary">Guardar venta</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Ventas de esta semana</h2>
+        <table class="data-table" id="salesTable"><thead><tr><th>Cliente</th><th>Moto</th><th>Tamaño</th><th>Cobrado</th><th>Comisión</th><th></th></tr></thead><tbody></tbody></table>
+        <p class="empty-msg" id="salesEmptyMsg" hidden>Todavía no cargaste ventas de gráficas esta semana.</p>
+      </div>
+    </section>
+
+    <section id="tab-resumen" class="tab-panel">
+      <div class="summary-grid">
+        <div class="card summary-card">
+          <span class="summary-label">Ganancia semana actual</span>
+          <span class="summary-value" id="weekTotal">$0</span>
+          <div class="summary-breakdown">
+            <span>Horas: <strong id="weekHoursPart">$0</strong> (<span id="weekHoursQty">0</span> hs)</span>
+            <span>Gráficas: <strong id="weekCommissionPart">$0</strong> (<span id="weekSalesCount">0</span>)</span>
+          </div>
+          <span class="summary-sub" id="weekRange"></span>
+        </div>
+        <div class="card summary-card">
+          <span class="summary-label">Ganancia mes actual</span>
+          <span class="summary-value" id="monthTotal">$0</span>
+          <div class="summary-breakdown">
+            <span>Horas: <strong id="monthHoursPart">$0</strong> (<span id="monthHoursQty">0</span> hs)</span>
+            <span>Gráficas: <strong id="monthCommissionPart">$0</strong> (<span id="monthSalesCount">0</span>)</span>
+          </div>
+          <span class="summary-sub" id="monthLabel"></span>
+        </div>
+      </div>
+      <div class="card"><h2>Últimas semanas</h2><canvas id="weeklyChart" height="220"></canvas></div>
+      <div class="card"><h2>Últimos meses</h2><canvas id="monthlyChart" height="220"></canvas></div>
+    </section>
+
+    <section id="tab-config" class="tab-panel">
+      <div class="card">
+        <h2>Tarifa por hora</h2>
+        <p class="hint" id="currentRateLabel">Tarifa vigente: —</p>
+        <form id="rateForm" class="form-row">
+          <label>Nueva tarifa ($/hora) <input type="number" id="newRateValue" min="1" step="100" required></label>
+          <label>Rige desde <input type="date" id="newRateDate" required></label>
+          <button type="submit" class="btn btn-primary">Actualizar tarifa</button>
+        </form>
+        <p class="hint">Los días anteriores a esa fecha siguen calculándose con la tarifa vieja — nada retroactivo se recalcula.</p>
+        <table class="data-table" id="rateHistoryTable"><thead><tr><th>Vigente desde</th><th>Valor por hora</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="card">
+        <h2>Comisión por gráfica</h2>
+        <form id="commissionForm" class="form-row">
+          <label>Moto chica <input type="number" id="commissionChica" min="0" step="500" required></label>
+          <label>Moto grande <input type="number" id="commissionGrande" min="0" step="500" required></label>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ FIREBASE (backend gratis: login + base de datos compartida) ============ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+
+<script>
+/* ============================================================
+   PASO 1 — Pegá acá la configuración de TU proyecto Firebase.
+   (Instrucciones completas al final de este archivo, en el comentario.)
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "PEGAR_ACA",
+  authDomain: "PEGAR_ACA",
+  projectId: "PEGAR_ACA",
+  storageBucket: "PEGAR_ACA",
+  messagingSenderId: "PEGAR_ACA",
+  appId: "PEGAR_ACA"
+};
+
+/* ============================================================
+   PASO 2 — Definí quién es el dueño y quién(es) empleado(s).
+   Usá el MISMO mail con el que crees a cada uno en
+   Firebase → Authentication → Users.
+   No hace falta que el mail exista de verdad, solo que tenga formato de mail.
+   ============================================================ */
+const OWNER = { email: "ramiro@rsteam.local", name: "Ramiro" };
+const EMPLOYEES = [
+  { email: "alexis@rsteam.local", name: "Alexis" }
+  // Para sumar otro empleado en el futuro, agregá otra línea acá:
+  // , { email: "otro@rsteam.local", name: "Otro Nombre" }
+];
+
+/* ============================================================
+   De acá para abajo no hace falta tocar nada.
+   ============================================================ */
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const DAY_NAMES = ['Lun','Mar','Mié','Jue','Vie','Sáb'];
+let state = { user: null, role: null, viewingEmail: null, charts: {}, commissionSettings: {motoChica:10000, motoGrande:20000} };
+
+const $ = (s) => document.querySelector(s);
+const $all = (s) => document.querySelectorAll(s);
+const money = (n) => '$' + Math.round(n || 0).toLocaleString('es-AR');
+const todayStr = () => fmt(new Date());
+
+function parseLocalDate(dateStr){ const [y,m,d]=dateStr.split('-').map(Number); return new Date(y,m-1,d); }
+function fmt(date){ return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0'); }
+function fmtShort(dateStr){ return parseLocalDate(dateStr).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'}); }
+function getWeekStart(dateStr){ const date=parseLocalDate(dateStr); const day=date.getDay(); const diff = day===0?-6:1-day; const monday=new Date(date); monday.setDate(date.getDate()+diff); return monday; }
+function getMonthKey(dateStr){ return dateStr.slice(0,7); }
+function getRateForDate(hourlyRates, dateStr){
+  const target = parseLocalDate(dateStr).getTime();
+  const applicable = hourlyRates.filter(r => parseLocalDate(r.effectiveFrom).getTime() <= target)
+    .sort((a,b) => parseLocalDate(b.effectiveFrom) - parseLocalDate(a.effectiveFrom));
+  return applicable.length ? applicable[0].hourlyRate : null;
+}
+
+/* ---------------- LOGIN ---------------- */
+// El "usuario" que escriben lo mapeamos a su mail interno para que no tengan que tipear el mail completo.
+function usernameToEmail(username){
+  const u = username.trim().toLowerCase();
+  if (u === 'ramiro' || u === OWNER.email) return OWNER.email;
+  const emp = EMPLOYEES.find(e => e.name.toLowerCase() === u || e.email === u);
+  return emp ? emp.email : (u.includes('@') ? u : null);
+}
+
+$('#loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('#loginError').hidden = true;
+  const email = usernameToEmail($('#loginUsername').value);
+  if (!email) { $('#loginError').textContent = 'Usuario no reconocido.'; $('#loginError').hidden = false; return; }
+  try {
+    await auth.signInWithEmailAndPassword(email, $('#loginPassword').value);
+  } catch (err) {
+    $('#loginError').textContent = 'Usuario o contraseña incorrectos.';
+    $('#loginError').hidden = false;
+  }
+});
+
+$('#logoutBtn').addEventListener('click', () => auth.signOut());
+
+auth.onAuthStateChanged(async (user) => {
+  $('#loadingScreen').hidden = true;
+  if (!user) {
+    $('#appView').hidden = true;
+    $('#loginView').hidden = false;
+    return;
+  }
+  const isOwner = user.email === OWNER.email;
+  state.user = user;
+  state.role = isOwner ? 'owner' : 'employee';
+  state.viewingEmail = isOwner ? (EMPLOYEES[0] ? EMPLOYEES[0].email : null) : user.email;
+
+  $('#loginView').hidden = true;
+  $('#appView').hidden = false;
+  const myName = isOwner ? OWNER.name : (EMPLOYEES.find(e => e.email === user.email)?.name || user.email);
+  $('#userLabel').textContent = myName + (isOwner ? ' · Dueño' : ' · Empleado');
+  $('#configTabBtn').hidden = !isOwner;
+  $('#ownerEmployeeSwitch').hidden = !isOwner;
+
+  if (isOwner) {
+    const select = $('#employeeSelect');
+    select.innerHTML = EMPLOYEES.map(e => `<option value="${e.email}">${e.name}</option>`).join('');
+    select.addEventListener('change', async () => { state.viewingEmail = select.value; await refreshAllTabs(); });
+  }
+
+  await loadCommissionSettings();
+  if (isOwner) await loadRates();
+  await refreshAllTabs();
+});
+
+/* ---------------- TABS ---------------- */
+$('#tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  $all('.tab-btn').forEach(b => b.classList.remove('active'));
+  $all('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  $('#tab-' + btn.dataset.tab).classList.add('active');
+  if (btn.dataset.tab === 'resumen') loadResumen();
+});
+
+/* ---------------- FIRESTORE HELPERS ---------------- */
+const configDoc = () => db.collection('config').doc('main');
+
+async function getHourlyRates() {
+  const snap = await configDoc().get();
+  return (snap.exists && snap.data().hourlyRates) || [];
+}
+
+async function getHoursEntries(email) {
+  const snap = await db.collection('hoursEntries').where('userEmail', '==', email).get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function getSales(email) {
+  const snap = await db.collection('graphicsSales').where('userEmail', '==', email).get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+/* ---------------- WEEK TRACK (elemento firma) ---------------- */
+async function renderWeekTrack() {
+  const email = state.viewingEmail;
+  const track = $('#weekTrack');
+  if (!email) { track.innerHTML = ''; return; }
+  const monday = getWeekStart(todayStr());
+  const entries = await getHoursEntries(email);
+  const byDate = {}; entries.forEach(e => byDate[e.date] = e);
+  track.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    const dStr = fmt(d);
+    const entry = byDate[dStr];
+    const div = document.createElement('div');
+    div.className = 'day-checkpoint' + (entry ? ' filled' : '');
+    div.innerHTML = `<span class="d">${DAY_NAMES[i]}</span><span class="h">${entry ? entry.hours + 'h' : '—'}</span>`;
+    track.appendChild(div);
+  }
+}
+
+/* ---------------- HORAS ---------------- */
+$('#hoursDate').value = todayStr();
+
+$('#hoursForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = state.viewingEmail;
+  const date = $('#hoursDate').value;
+  const hours = Number($('#hoursQty').value);
+  try {
+    const rates = await getHourlyRates();
+    const rate = getRateForDate(rates, date);
+    if (!rate) { alert('No hay tarifa por hora cargada. Pedile al dueño que cargue una en "Config".'); return; }
+    const existing = await db.collection('hoursEntries').where('userEmail','==',email).where('date','==',date).get();
+    if (!existing.empty) {
+      await existing.docs[0].ref.update({ hours, rateApplied: rate, updatedAt: new Date().toISOString() });
+    } else {
+      await db.collection('hoursEntries').add({ userEmail: email, date, hours, rateApplied: rate, createdAt: new Date().toISOString() });
+    }
+    $('#hoursQty').value = '';
+    await loadHours(); await renderWeekTrack();
+  } catch (err) { alert(err.message); }
+});
+
+async function loadHours() {
+  const email = state.viewingEmail;
+  if (!email) return;
+  const entries = await getHoursEntries(email);
+  const monday = fmt(getWeekStart(todayStr()));
+  const satDate = getWeekStart(todayStr()); satDate.setDate(satDate.getDate() + 5);
+  const saturday = fmt(satDate);
+  const weekEntries = entries.filter(e => e.date >= monday && e.date <= saturday).sort((a,b) => a.date.localeCompare(b.date));
+
+  const tbody = $('#hoursTable tbody'); tbody.innerHTML = '';
+  weekEntries.forEach(e => {
+    const dayIdx = parseLocalDate(e.date).getDay();
+    const dayName = dayIdx === 0 ? 'Dom' : DAY_NAMES[dayIdx - 1];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${dayName}</td><td>${fmtShort(e.date)}</td><td>${e.hours}</td><td>${money(e.rateApplied)}</td><td class="money">${money(e.hours*e.rateApplied)}</td>
+      <td>${state.role==='owner' ? `<button class="btn btn-small btn-danger" data-del-hour="${e.id}">Borrar</button>` : ''}</td>`;
+    tbody.appendChild(tr);
+  });
+  $('#hoursEmptyMsg').hidden = weekEntries.length > 0;
+}
+
+$('#hoursTable').addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-del-hour]');
+  if (!btn) return;
+  if (!confirm('¿Borrar este registro de horas?')) return;
+  await db.collection('hoursEntries').doc(btn.dataset.delHour).delete();
+  await loadHours(); await renderWeekTrack();
+});
+
+/* ---------------- GRAFICAS ---------------- */
+$('#saleDate').value = todayStr();
+
+function updateCommissionPreview() {
+  const size = $('#saleSize').value;
+  const amount = size === 'grande' ? state.commissionSettings.motoGrande : state.commissionSettings.motoChica;
+  $('#commissionPreview').textContent = money(amount);
+}
+$('#saleSize').addEventListener('change', updateCommissionPreview);
+
+$('#salesForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = state.viewingEmail;
+  const size = $('#saleSize').value;
+  const commission = size === 'grande' ? state.commissionSettings.motoGrande : state.commissionSettings.motoChica;
+  try {
+    await db.collection('graphicsSales').add({
+      userEmail: email,
+      clientName: $('#saleFirstName').value.trim(),
+      clientLastName: $('#saleLastName').value.trim(),
+      motoModel: $('#saleMotoModel').value.trim(),
+      size,
+      priceCharged: Number($('#salePrice').value),
+      commission,
+      date: $('#saleDate').value,
+      createdAt: new Date().toISOString()
+    });
+    $('#salesForm').reset(); $('#saleDate').value = todayStr(); updateCommissionPreview();
+    await loadSales();
+  } catch (err) { alert(err.message); }
+});
+
+async function loadSales() {
+  const email = state.viewingEmail;
+  if (!email) return;
+  const sales = await getSales(email);
+  const monday = fmt(getWeekStart(todayStr()));
+  const satDate = getWeekStart(todayStr()); satDate.setDate(satDate.getDate() + 5);
+  const saturday = fmt(satDate);
+  const weekSales = sales.filter(s => s.date >= monday && s.date <= saturday).sort((a,b)=>b.date.localeCompare(a.date));
+
+  const tbody = $('#salesTable tbody'); tbody.innerHTML = '';
+  weekSales.forEach(s => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${s.clientName} ${s.clientLastName}</td><td>${s.motoModel}</td>
+      <td><span class="pill pill-${s.size}">${s.size==='grande'?'Grande':'Chica'}</span></td>
+      <td>${money(s.priceCharged)}</td><td class="money">${money(s.commission)}</td>
+      <td>${state.role==='owner' ? `<button class="btn btn-small btn-danger" data-del-sale="${s.id}">Borrar</button>` : ''}</td>`;
+    tbody.appendChild(tr);
+  });
+  $('#salesEmptyMsg').hidden = weekSales.length > 0;
+}
+
+$('#salesTable').addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-del-sale]');
+  if (!btn) return;
+  if (!confirm('¿Borrar esta venta?')) return;
+  await db.collection('graphicsSales').doc(btn.dataset.delSale).delete();
+  await loadSales();
+});
+
+/* ---------------- RESUMEN ---------------- */
+function buildWeeklyMap(hoursEntries, sales) {
+  const map = {};
+  for (const e of hoursEntries) {
+    const ws = fmt(getWeekStart(e.date));
+    map[ws] = map[ws] || { weekStart: ws, hours: 0, hoursPay: 0, commissionPay: 0, salesCount: 0 };
+    map[ws].hours += e.hours; map[ws].hoursPay += e.hours * e.rateApplied;
+  }
+  for (const s of sales) {
+    const ws = fmt(getWeekStart(s.date));
+    map[ws] = map[ws] || { weekStart: ws, hours: 0, hoursPay: 0, commissionPay: 0, salesCount: 0 };
+    map[ws].commissionPay += s.commission; map[ws].salesCount += 1;
+  }
+  return map;
+}
+function buildMonthlyMap(hoursEntries, sales) {
+  const map = {};
+  for (const e of hoursEntries) {
+    const mk = getMonthKey(e.date);
+    map[mk] = map[mk] || { month: mk, hours: 0, hoursPay: 0, commissionPay: 0, salesCount: 0 };
+    map[mk].hours += e.hours; map[mk].hoursPay += e.hours * e.rateApplied;
+  }
+  for (const s of sales) {
+    const mk = getMonthKey(s.date);
+    map[mk] = map[mk] || { month: mk, hours: 0, hoursPay: 0, commissionPay: 0, salesCount: 0 };
+    map[mk].commissionPay += s.commission; map[mk].salesCount += 1;
+  }
+  return map;
+}
+
+async function loadResumen() {
+  const email = state.viewingEmail;
+  if (!email) return;
+  const [hoursEntries, sales] = await Promise.all([getHoursEntries(email), getSales(email)]);
+  const weeklyMap = buildWeeklyMap(hoursEntries, sales);
+  const monthlyMap = buildMonthlyMap(hoursEntries, sales);
+
+  const today = todayStr();
+  const weekStart = fmt(getWeekStart(today));
+  const weekEndDate = getWeekStart(today); weekEndDate.setDate(weekEndDate.getDate() + 5);
+  const weekEnd = fmt(weekEndDate);
+  const monthKey = getMonthKey(today);
+
+  const week = weeklyMap[weekStart] || { hours:0, hoursPay:0, commissionPay:0, salesCount:0 };
+  const month = monthlyMap[monthKey] || { hours:0, hoursPay:0, commissionPay:0, salesCount:0 };
+
+  $('#weekTotal').textContent = money(week.hoursPay + week.commissionPay);
+  $('#weekHoursPart').textContent = money(week.hoursPay);
+  $('#weekHoursQty').textContent = week.hours;
+  $('#weekCommissionPart').textContent = money(week.commissionPay);
+  $('#weekSalesCount').textContent = week.salesCount;
+  $('#weekRange').textContent = `Semana del ${fmtShort(weekStart)} al ${fmtShort(weekEnd)} · se paga el sábado`;
+
+  $('#monthTotal').textContent = money(month.hoursPay + month.commissionPay);
+  $('#monthHoursPart').textContent = money(month.hoursPay);
+  $('#monthHoursQty').textContent = month.hours;
+  $('#monthCommissionPart').textContent = money(month.commissionPay);
+  $('#monthSalesCount').textContent = month.salesCount;
+  $('#monthLabel').textContent = 'Mes ' + monthKey;
+
+  const weeklyList = Object.values(weeklyMap).sort((a,b)=>a.weekStart.localeCompare(b.weekStart)).slice(-8);
+  const monthlyList = Object.values(monthlyMap).sort((a,b)=>a.month.localeCompare(b.month)).slice(-6);
+  renderChart('weeklyChart', weeklyList.map(w=>fmtShort(w.weekStart)), weeklyList.map(w=>w.hoursPay+w.commissionPay), 'Ganancia por semana');
+  renderChart('monthlyChart', monthlyList.map(m=>m.month), monthlyList.map(m=>m.hoursPay+m.commissionPay), 'Ganancia por mes');
+}
+
+function renderChart(canvasId, labels, data, label) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  if (state.charts[canvasId]) state.charts[canvasId].destroy();
+  state.charts[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label, data, backgroundColor: '#2FB6A3', borderRadius: 6, maxBarThickness: 36 }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#93A0AC' } },
+        y: { grid: { color: '#2A3038' }, ticks: { color: '#93A0AC', callback: v => '$' + v.toLocaleString('es-AR') } }
+      }
+    }
+  });
+}
+
+/* ---------------- CONFIG (dueño) ---------------- */
+$('#rateForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const newRate = { hourlyRate: Number($('#newRateValue').value), effectiveFrom: $('#newRateDate').value };
+    await configDoc().set({ hourlyRates: firebase.firestore.FieldValue.arrayUnion(newRate) }, { merge: true });
+    $('#rateForm').reset();
+    await loadRates();
+  } catch (err) { alert(err.message); }
+});
+
+async function loadRates() {
+  const rates = await getHourlyRates();
+  const rate = getRateForDate(rates, todayStr());
+  $('#currentRateLabel').textContent = 'Tarifa vigente: ' + (rate ? money(rate) + '/hora' : 'sin definir');
+  $('#newRateDate').value = todayStr();
+  const tbody = $('#rateHistoryTable tbody'); tbody.innerHTML = '';
+  [...rates].sort((a,b)=>b.effectiveFrom.localeCompare(a.effectiveFrom)).forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${fmtShort(r.effectiveFrom)}</td><td>${money(r.hourlyRate)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+$('#commissionForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const motoChica = Number($('#commissionChica').value);
+  const motoGrande = Number($('#commissionGrande').value);
+  await configDoc().set({ motoChica, motoGrande }, { merge: true });
+  state.commissionSettings = { motoChica, motoGrande };
+  updateCommissionPreview();
+  alert('Valores de comisión actualizados.');
+});
+
+async function loadCommissionSettings() {
+  const snap = await configDoc().get();
+  const data = snap.exists ? snap.data() : {};
+  state.commissionSettings = { motoChica: data.motoChica ?? 10000, motoGrande: data.motoGrande ?? 20000 };
+  $('#commissionChica').value = state.commissionSettings.motoChica;
+  $('#commissionGrande').value = state.commissionSettings.motoGrande;
+  updateCommissionPreview();
+}
+
+async function refreshAllTabs() {
+  await Promise.all([renderWeekTrack(), loadHours(), loadSales()]);
+  if ($('#tab-resumen').classList.contains('active')) await loadResumen();
+}
+</script>
